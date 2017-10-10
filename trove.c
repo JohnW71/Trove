@@ -1,14 +1,15 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h> // exit()
-#include <string.h> // strcmp()
+#include <string.h> // strcmp(), strcpy()
 
 #define MAXENTRIES 100
 #define MAXTITLE 20
 #define MAXID 20
 #define MAXPW 20
-// #define MAXMISC 50
+#define MAXMISC 50
 
 void list();
 void add();
@@ -24,7 +25,7 @@ struct entry
 	char title[MAXTITLE];
 	char id[MAXID];
 	char pw[MAXPW];
-	//	char misc[MAXMISC];
+	char misc[MAXMISC];
 } entries[MAXENTRIES];
 
 int entryCount = 0;
@@ -79,17 +80,65 @@ void list()
 	printf("   Title               ID                  Password            Misc\n");
 
 	for (int i = 0; i < entryCount; ++i)
-		printf("%d: %-*s%-*s%-*s\n", i, MAXTITLE, entries[i].title,
-										MAXID, entries[i].id,
-										MAXPW, entries[i].pw);
+		printf("%d: %-*s%-*s%-*s%s\n", i, MAXTITLE, entries[i].title,
+										  MAXID, entries[i].id,
+										  MAXPW, entries[i].pw,
+										  entries[i].misc);
 }
 
+//TODO remove \n from each entered line
 void add()
 {
-	printf("Enter title ID password:\n");
-	scanf("%s %s %s", entries[entryCount].title,
-					  entries[entryCount].id,
-					  entries[entryCount].pw);
+	if (entryCount >= MAXENTRIES)
+	{
+		printf("DB is full!\n");
+		return;
+	}
+
+	getchar();
+
+//	printf("Enter title ID password:\n");
+//	scanf("%s %s %s %s", entries[entryCount].title,
+//						 entries[entryCount].id,
+//						 entries[entryCount].pw,
+//						 entries[entryCount].misc);
+
+	char *line = NULL;
+	size_t size = 0;
+
+	printf("Enter title:\n");
+	if (getline(&line, &size, stdin) == -1)
+	{
+		printf("No line\n");
+		return;
+	}
+	strcpy(entries[entryCount].title, line);
+
+	printf("Enter ID:\n");
+	if (getline(&line, &size, stdin) == -1)
+	{
+		printf("No line\n");
+		return;
+	}
+	strcpy(entries[entryCount].id, line);
+
+	printf("Enter password:\n");
+	if (getline(&line, &size, stdin) == -1)
+	{
+		printf("No line\n");
+		return;
+	}
+	strcpy(entries[entryCount].pw, line);
+
+	printf("Enter notes:\n");
+	if (getline(&line, &size, stdin) == -1)
+	{
+		printf("No line\n");
+		return;
+	}
+	strcpy(entries[entryCount].misc, line);
+
+	free(line);
 	++entryCount;
 	saveEntries();
 }
@@ -106,9 +155,10 @@ void find()
 		if (strcmp(entries[i].title, title) == 0)
 		{
 			printf("\n   Title               ID                  Password            Misc\n");
-			printf("%d: %-*s%-*s%-*s\n", i, MAXTITLE, entries[i].title,
+			printf("%d: %-*s%-*s%-*s%s\n", i, MAXTITLE, entries[i].title,
 											MAXID, entries[i].id,
-											MAXPW, entries[i].pw);
+											MAXPW, entries[i].pw,
+											entries[i].misc);
 			return;
 		}
 	}
@@ -125,10 +175,48 @@ void edit()
 
 	if (choice >= 0 && choice < entryCount)
 	{
-		printf("Enter updated title ID password:\n");
-		scanf("%s %s %s", entries[choice].title,
-						  entries[choice].id,
-						  entries[choice].pw);
+//		printf("Enter updated title ID password:\n");
+//		scanf("%s %s %s", entries[choice].title,
+//						  entries[choice].id,
+//						  entries[choice].pw);
+
+		getchar();
+		char *line = NULL;
+		size_t size = 0;
+
+		printf("Enter title:\n");
+		if (getline(&line, &size, stdin) == -1)
+		{
+			printf("No line\n");
+			return;
+		}
+		strcpy(entries[choice].title, line);
+
+		printf("Enter ID:\n");
+		if (getline(&line, &size, stdin) == -1)
+		{
+			printf("No line\n");
+			return;
+		}
+		strcpy(entries[choice].id, line);
+
+		printf("Enter password:\n");
+		if (getline(&line, &size, stdin) == -1)
+		{
+			printf("No line\n");
+			return;
+		}
+		strcpy(entries[choice].pw, line);
+
+		printf("Enter notes:\n");
+		if (getline(&line, &size, stdin) == -1)
+		{
+			printf("No line\n");
+			return;
+		}
+		strcpy(entries[choice].misc, line);
+
+		free(line);
 		saveEntries();
 	}
 }
@@ -152,18 +240,19 @@ void readEntries()
 {
 	entryCount = 0;
 
-	FILE *f = fopen("trove.txt", "r");
+	FILE *f = fopen("trove.db", "r");
 	if (f == NULL)
 	{
-		printf("\nNo existing entries found\n");
+//		printf("\nCan't read or DB\n");
 		return;
 	}
 
 	while (!feof(f))
 	{
-		fscanf(f, "%s %s %s\n", entries[entryCount].title,
-								entries[entryCount].id,
-								entries[entryCount].pw);
+		fscanf(f, "%s,%s,%s,%s\n", entries[entryCount].title,
+								   entries[entryCount].id,
+								   entries[entryCount].pw,
+								   entries[entryCount].misc);
 		++entryCount;
 	}
 
@@ -172,7 +261,7 @@ void readEntries()
 
 void saveEntries()
 {
-	FILE *f = fopen("trove.txt", "w");
+	FILE *f = fopen("trove.db", "w");
 	if (f == NULL)
 	{
 		printf("Error saving entries!\n");
@@ -182,9 +271,10 @@ void saveEntries()
 	for (int i = 0; i < entryCount; ++i)
 	{
 		if (entries[i].title[0] != '\0') // skip deleted entries
-			fprintf(f, "%s %s %s\n", entries[i].title,
-									 entries[i].id,
-									 entries[i].pw);
+			fprintf(f, "%s,%s,%s,%s\n", entries[i].title,
+										entries[i].id,
+										entries[i].pw,
+										entries[i].misc);
 	}
 
 	fclose(f);
@@ -193,3 +283,4 @@ void saveEntries()
 void readSettings()
 {
 }
+
