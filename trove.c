@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO dynamic memory
+//TODO handle error checking on edit/delete
 //TODO password protect database
 //TODO encryption
 //TODO settings
@@ -11,7 +11,6 @@
 #include <string.h> // strcmp(), strcpy()
 #include <time.h> // srand()
 
-#define MAXENTRIES 100
 #define MAXTITLE 21
 #define MAXID 21
 #define MAXPW 21
@@ -34,7 +33,7 @@ struct entry
 	char id[MAXID];
 	char pw[MAXPW];
 	char misc[MAXMISC];
-} entries[MAXENTRIES];
+} *entries = NULL;
 
 int entryCount = 0;
 
@@ -102,12 +101,6 @@ void list()
 
 void add()
 {
-	if (entryCount >= MAXENTRIES)
-	{
-		printf("DB is full!\n");
-		return;
-	}
-
 	char line[MAXLINE];
 	int line_ctr;
 	int data_ctr;
@@ -121,6 +114,8 @@ void add()
 
 	if (line[0] == '\n')
 		return;
+
+	entries = realloc(entries, (entryCount+1) * sizeof *entries);
 
 	line_ctr = 0;
 	data_ctr = 0;
@@ -334,11 +329,13 @@ void readEntries()
 	char line[MAXLINE];
 	char data[MAXLINE];
 	entryCount = 0;
+	entries = NULL;
 
 	while (!feof(f))
 	{
 		if (fgets(line, MAXLINE, f) != NULL)
 		{
+			entries = realloc(entries, (entryCount+1) * sizeof *entries);
 			int field = 0;
 			int line_ctr = 0;
 			int data_ctr = 0;
