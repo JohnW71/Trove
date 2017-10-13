@@ -1,6 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO password protect database
 //TODO encryption
 //TODO settings
 //TODO GUI
@@ -21,10 +20,12 @@ void add();
 void find();
 void edit();
 void delete();
+void readSettings();
 void readEntries();
 void saveEntries();
-void readSettings();
 void generatePassword(char *buf);
+void setDBpassword();
+void removeDBpassword();
 
 struct entry
 {
@@ -35,6 +36,7 @@ struct entry
 } *entries = NULL;
 
 int entryCount = 0;
+char DBpassword[MAXPW];
 
 int main()
 {
@@ -53,6 +55,8 @@ int main()
 		printf("3 - Find\n");
 		printf("4 - Edit\n");
 		printf("5 - Delete\n");
+		printf("6 - Set DB password\n");
+		printf("7 - Remove DB password\n");
 		printf("0 - Quit\n");
 		printf("\n-> ");
 
@@ -68,19 +72,29 @@ int main()
 		switch (choice)
 		{
 			case 1:
-				list();
+				if (entryCount > 0)
+					list();
 				break;
 			case 2:
 				add();
 				break;
 			case 3:
-				find();
+				if (entryCount > 0)
+					find();
 				break;
 			case 4:
-				edit();
+				if (entryCount > 0)
+					edit();
 				break;
 			case 5:
-				delete();
+				if (entryCount > 0)
+					delete();
+				break;
+			case 6:
+				setDBpassword();
+				break;
+			case 7:
+				removeDBpassword();
 				break;
 		}
 	}
@@ -90,12 +104,11 @@ int main()
 void list()
 {
 	printf("    Title                ID                   Password             Misc\n");
-
 	for (int i = 0; i < entryCount; ++i)
-		printf("%2d: %-*s%-*s%-*s%s\n", i, MAXTITLE, entries[i].title,
-										  MAXID, entries[i].id,
-										  MAXPW, entries[i].pw,
-										  entries[i].misc);
+		printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
+										MAXID, entries[i].id,
+										MAXPW, entries[i].pw,
+										entries[i].misc);
 }
 
 void add()
@@ -206,7 +219,7 @@ void find()
 		if (strcmp(entries[i].title, title) == 0)
 		{
 			printf("\n    Title                ID                   Password             Misc\n");
-			printf("%2d: %-*s%-*s%-*s%s\n", i, MAXTITLE, entries[i].title,
+			printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
 											MAXID, entries[i].id,
 											MAXPW, entries[i].pw,
 											entries[i].misc);
@@ -232,20 +245,18 @@ void edit()
 
 	int choice = atoi(line);
 
-	if (choice == 0)
-		return;
-
-	if (choice < 1 || choice >= entryCount)
+	if (choice < 1 || choice > entryCount)
 	{
-		printf("Range is 1 to %d\n", entryCount - 1);
+		printf("Range is 1 to %d\n", entryCount);
 		return;
 	}
 
 	int line_ctr;
 	int data_ctr;
+	--choice;
 
 	printf("\n    Title                ID                   Password             Misc\n");
-	printf("%2d: %-*s%-*s%-*s%s\n", choice, MAXTITLE, entries[choice].title,
+	printf("%2d: %-*s%-*s%-*s%s\n", choice+1, MAXTITLE, entries[choice].title,
 									MAXID, entries[choice].id,
 									MAXPW, entries[choice].pw,
 									entries[choice].misc);
@@ -339,18 +350,19 @@ void delete()
 
 	int choice = atoi(line);
 
-	if (choice == 0)
-		return;
-
-	if (choice < 1 || choice >= entryCount)
+	if (choice < 1 || choice > entryCount)
 	{
-		printf("Range is 1 to %d\n", entryCount - 1);
+		printf("Range is 1 to %d\n", entryCount);
 		return;
 	}
 
-	entries[choice].title[0] = '\0';
+	entries[choice - 1].title[0] = '\0';
 	saveEntries();
 	readEntries();
+}
+
+void readSettings()
+{
 }
 
 void readEntries()
@@ -363,8 +375,42 @@ void readEntries()
 
 	char line[MAXLINE];
 	char data[MAXLINE];
+	char password[MAXLINE];
 	entryCount = 0;
 	entries = NULL;
+
+	// check for password
+	if (fgets(line, MAXPW, f) != NULL)
+	{
+		if ((strcmp(line, ".\n") != 0) &&
+			(strcmp(line, DBpassword) != 0)) // DB has a password
+		{
+			printf("Enter password: ");
+
+			if (fgets(password, MAXPW, stdin) == NULL)
+			{
+				printf("Null!\n");
+				fclose(f);
+				exit(1);
+			}
+
+			if (password[0] == '\n')
+			{
+				printf("Blank line entered!\n");
+				fclose(f);
+				exit(1);
+			}
+
+			if (strcmp(password, line) != 0)
+			{
+				printf("Incorrect password entered!\n");
+				fclose(f);
+				exit(1);
+			}
+
+			strcpy(DBpassword, line);
+		}
+	}
 
 	while (!feof(f))
 	{
@@ -417,6 +463,11 @@ void saveEntries()
 		exit(1);
 	}
 
+	if (strlen(DBpassword) > 0)
+		fprintf(f, "%s", DBpassword);
+	else
+		fprintf(f, ".\n");
+
 	for (int i = 0; i < entryCount; ++i)
 	{
 		if (entries[i].title[0] != '\0') // skip deleted entries
@@ -426,10 +477,6 @@ void saveEntries()
 										entries[i].misc);
 	}
 	fclose(f);
-}
-
-void readSettings()
-{
 }
 
 // random chars from 33 to 126, not 44 (commas)
@@ -450,4 +497,29 @@ void generatePassword(char *buf)
 	}
 
 	buf[MAXPW] = '\0';
+}
+
+void setDBpassword()
+{
+	printf("Enter password up to %d chars: ", MAXPW - 1);
+
+	if (fgets(DBpassword, MAXPW, stdin) == NULL)
+	{
+		printf("No line\n");
+		return;
+	}
+
+	if (DBpassword[0] == '\n')
+		return;
+
+	saveEntries();
+	readEntries();
+}
+
+void removeDBpassword()
+{
+	strcpy(DBpassword, ".\n");
+	saveEntries();
+	readEntries();
+	printf("Password removed\n");
 }
