@@ -1,6 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO handle error checking on edit/delete
 //TODO password protect database
 //TODO encryption
 //TODO settings
@@ -43,7 +42,7 @@ int main()
 	readEntries();
 
 	int choice = -1;
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 
 	while (choice != 0)
 	{
@@ -185,11 +184,22 @@ void add()
 void find()
 {
 	char title[MAXTITLE];
-
 	printf("Enter title to find: ");
-	scanf("%s", title);
-	getchar();
-	//TODO catch errors
+
+	if (fgets(title, MAXLINE, stdin) == NULL)
+	{
+		printf("No line\n");
+		return;
+	}
+
+	if (title[0] == '\n')
+		return;
+
+	// remove \n from entered line
+	int i = -1;
+	while (title[++i] != '\0')
+		if (title[i] == '\n')
+			title[i] = '\0';
 
 	for (int i = 0; i < entryCount; ++i)
 	{
@@ -203,119 +213,144 @@ void find()
 			return;
 		}
 	}
-	printf("\nNot found\n");
+	printf("Not found\n");
 }
 
 void edit()
 {
-	int choice;
-
+	char line[MAXLINE];
 	printf("Enter # to edit: ");
-	scanf("%d", &choice);
-	getchar();
-	//TODO catch errors
 
-	if (choice >= 0 && choice < entryCount)
+	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		char line[MAXLINE];
-		int line_ctr;
-		int data_ctr;
-
-		printf("\n    Title                ID                   Password             Misc\n");
-		printf("%2d: %-*s%-*s%-*s%s\n", choice, MAXTITLE, entries[choice].title,
-										MAXID, entries[choice].id,
-										MAXPW, entries[choice].pw,
-										entries[choice].misc);
-		printf("\nEnter new title up to %d chars: ", MAXTITLE - 1);
-		if (fgets(line, MAXLINE, stdin) == NULL)
-		{
-			printf("No line\n");
-			return;
-		}
-
-		if (line[0] == '\n')
-			return;
-
-		line_ctr = 0;
-		data_ctr = 0;
-		while (line[line_ctr] != '\n' && line_ctr < MAXTITLE)
-		{
-			entries[choice].title[data_ctr++] = line[line_ctr++];
-		}
-		entries[choice].title[data_ctr] = '\0';
-
-		printf("Enter new ID up to %d chars: ", MAXID - 1);
-		if (fgets(line, MAXLINE, stdin) == NULL)
-		{
-			printf("No line\n");
-			return;
-		}
-
-		line_ctr = 0;
-		data_ctr = 0;
-		while (line[line_ctr] != '\n' && line_ctr < MAXID)
-		{
-			entries[choice].id[data_ctr++] = line[line_ctr++];
-		}
-		entries[choice].id[data_ctr] = '\0';
-
-		printf("Enter new password up to %d chars: (enter 'x' to generate random password)\n", MAXPW - 1);
-		if (fgets(line, MAXLINE, stdin) == NULL)
-		{
-			printf("No line\n");
-			return;
-		}
-
-		line_ctr = 0;
-		data_ctr = 0;
-
-		if (strcmp(line, "x\n") == 0)
-		{
-			generatePassword(entries[choice].pw);
-		}
-		else
-		{
-			while (line[line_ctr] != '\n' && line_ctr < MAXPW)
-			{
-				entries[choice].pw[data_ctr++] = line[line_ctr++];
-			}
-			entries[choice].pw[data_ctr] = '\0';
-		}
-
-		printf("Enter new misc up to %d chars:\n", MAXMISC - 1);
-		if (fgets(line, MAXLINE, stdin) == NULL)
-		{
-			printf("No line\n");
-			return;
-		}
-
-		line_ctr = 0;
-		data_ctr = 0;
-		while (line[line_ctr] != '\n' && line_ctr < MAXMISC)
-		{
-			entries[choice].misc[data_ctr++] = line[line_ctr++];
-		}
-		entries[choice].misc[data_ctr] = '\0';
-
-		saveEntries();
+		printf("No line\n");
+		return;
 	}
+
+	if (line[0] == '\n')
+		return;
+
+	int choice = atoi(line);
+
+	if (choice == 0)
+		return;
+
+	if (choice < 1 || choice >= entryCount)
+	{
+		printf("Range is 1 to %d\n", entryCount - 1);
+		return;
+	}
+
+	int line_ctr;
+	int data_ctr;
+
+	printf("\n    Title                ID                   Password             Misc\n");
+	printf("%2d: %-*s%-*s%-*s%s\n", choice, MAXTITLE, entries[choice].title,
+									MAXID, entries[choice].id,
+									MAXPW, entries[choice].pw,
+									entries[choice].misc);
+	printf("\nEnter new title up to %d chars: ", MAXTITLE - 1);
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		printf("No line\n");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	line_ctr = 0;
+	data_ctr = 0;
+	while (line[line_ctr] != '\n' && line_ctr < MAXTITLE)
+	{
+		entries[choice].title[data_ctr++] = line[line_ctr++];
+	}
+	entries[choice].title[data_ctr] = '\0';
+
+	printf("Enter new ID up to %d chars: ", MAXID - 1);
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		printf("No line\n");
+		return;
+	}
+
+	line_ctr = 0;
+	data_ctr = 0;
+	while (line[line_ctr] != '\n' && line_ctr < MAXID)
+	{
+		entries[choice].id[data_ctr++] = line[line_ctr++];
+	}
+	entries[choice].id[data_ctr] = '\0';
+
+	printf("Enter new password up to %d chars: (enter 'x' to generate random password)\n", MAXPW - 1);
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		printf("No line\n");
+		return;
+	}
+
+	line_ctr = 0;
+	data_ctr = 0;
+
+	if (strcmp(line, "x\n") == 0)
+	{
+		generatePassword(entries[choice].pw);
+	}
+	else
+	{
+		while (line[line_ctr] != '\n' && line_ctr < MAXPW)
+		{
+			entries[choice].pw[data_ctr++] = line[line_ctr++];
+		}
+		entries[choice].pw[data_ctr] = '\0';
+	}
+
+	printf("Enter new misc up to %d chars:\n", MAXMISC - 1);
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		printf("No line\n");
+		return;
+	}
+
+	line_ctr = 0;
+	data_ctr = 0;
+	while (line[line_ctr] != '\n' && line_ctr < MAXMISC)
+	{
+		entries[choice].misc[data_ctr++] = line[line_ctr++];
+	}
+	entries[choice].misc[data_ctr] = '\0';
+
+	saveEntries();
 }
 
 void delete()
 {
-	int choice;
-
+	char line[MAXLINE];
 	printf("Enter # to delete: ");
-	scanf("%d", &choice);
-	getchar();
-	//TODO catch errors
 
-	if (choice >= 0 && choice < entryCount)
+	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		entries[choice].title[0] = '\0';
-		saveEntries();
-		readEntries();
+		printf("No line\n");
+		return;
 	}
+
+	if (line[0] == '\n')
+		return;
+
+	int choice = atoi(line);
+
+	if (choice == 0)
+		return;
+
+	if (choice < 1 || choice >= entryCount)
+	{
+		printf("Range is 1 to %d\n", entryCount - 1);
+		return;
+	}
+
+	entries[choice].title[0] = '\0';
+	saveEntries();
+	readEntries();
 }
 
 void readEntries()
