@@ -199,7 +199,7 @@ void find()
 	char title[MAXTITLE];
 	printf("Enter title to find: ");
 
-	if (fgets(title, MAXLINE, stdin) == NULL)
+	if (fgets(title, MAXTITLE, stdin) == NULL)
 	{
 		printf("No line\n");
 		return;
