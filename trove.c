@@ -1,7 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 //TODO encryption
-//TODO settings
 //TODO GUI
 
 #include <stdio.h>
@@ -20,12 +19,13 @@ void add();
 void find();
 void edit();
 void delete();
-void readSettings();
 void readEntries();
 void saveEntries();
 void generatePassword(char *buf);
 void setDBpassword();
 void removeDBpassword();
+void readSettings();
+void setPasswordSize();
 
 struct entry
 {
@@ -36,6 +36,7 @@ struct entry
 } *entries = NULL;
 
 int entryCount = 0;
+int generationSize = 12;
 char DBpassword[MAXPW];
 
 int main()
@@ -57,6 +58,7 @@ int main()
 		printf("5 - Delete\n");
 		printf("6 - Set DB password\n");
 		printf("7 - Remove DB password\n");
+		printf("8 - Set password size\n");
 		printf("0 - Quit\n");
 		printf("\n-> ");
 
@@ -96,6 +98,9 @@ int main()
 			case 7:
 				removeDBpassword();
 				break;
+			case 8:
+				setPasswordSize();
+				break;
 		}
 	}
 	return 0;
@@ -127,7 +132,7 @@ void add()
 	if (line[0] == '\n')
 		return;
 
-	entries = realloc(entries, (entryCount+1) * sizeof *entries);
+	entries = realloc(entries, (entryCount + 1) * sizeof *entries);
 
 	line_ctr = 0;
 	data_ctr = 0;
@@ -152,7 +157,7 @@ void add()
 	}
 	entries[entryCount].id[data_ctr] = '\0';
 
-	printf("Enter password up to %d chars: (enter 'x' to generate random password)\n", MAXPW - 1);
+	printf("Enter password up to %d chars: (enter 'x' to generate random password of %d chars)\n", MAXPW - 1, generationSize);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
 		printf("No line\n");
@@ -215,7 +220,6 @@ void find()
 			title[i] = '\0';
 
 	for (int i = 0; i < entryCount; ++i)
-	{
 		if (strcmp(entries[i].title, title) == 0)
 		{
 			printf("\n    Title                ID                   Password             Misc\n");
@@ -225,7 +229,7 @@ void find()
 											entries[i].misc);
 			return;
 		}
-	}
+
 	printf("Not found\n");
 }
 
@@ -256,11 +260,12 @@ void edit()
 	--choice;
 
 	printf("\n    Title                ID                   Password             Misc\n");
-	printf("%2d: %-*s%-*s%-*s%s\n", choice+1, MAXTITLE, entries[choice].title,
+	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1, MAXTITLE, entries[choice].title,
 									MAXID, entries[choice].id,
 									MAXPW, entries[choice].pw,
 									entries[choice].misc);
 	printf("\nEnter new title up to %d chars: ", MAXTITLE - 1);
+
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
 		printf("No line\n");
@@ -293,7 +298,7 @@ void edit()
 	}
 	entries[choice].id[data_ctr] = '\0';
 
-	printf("Enter new password up to %d chars: (enter 'x' to generate random password)\n", MAXPW - 1);
+	printf("Enter new password up to %d chars: (enter 'x' to generate random password of %d chars)\n", MAXPW - 1, generationSize);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
 		printf("No line\n");
@@ -361,17 +366,11 @@ void delete()
 	readEntries();
 }
 
-void readSettings()
-{
-}
-
 void readEntries()
 {
 	FILE *f = fopen("trove.db", "r");
 	if (f == NULL)
-	{
 		return;
-	}
 
 	char line[MAXLINE];
 	char data[MAXLINE];
@@ -416,7 +415,7 @@ void readEntries()
 	{
 		if (fgets(line, MAXLINE, f) != NULL)
 		{
-			entries = realloc(entries, (entryCount+1) * sizeof *entries);
+			entries = realloc(entries, (entryCount + 1) * sizeof *entries);
 			int field = 0;
 			int line_ctr = 0;
 			int data_ctr = 0;
@@ -469,13 +468,11 @@ void saveEntries()
 		fprintf(f, ".\n");
 
 	for (int i = 0; i < entryCount; ++i)
-	{
 		if (entries[i].title[0] != '\0') // skip deleted entries
 			fprintf(f, "%s,%s,%s,%s\n", entries[i].title,
 										entries[i].id,
 										entries[i].pw,
 										entries[i].misc);
-	}
 	fclose(f);
 }
 
@@ -483,8 +480,7 @@ void saveEntries()
 void generatePassword(char *buf)
 {
 	int rn;
-
-	for (int i = 0; i < MAXPW - 1; ++i)
+	for (int i = 0; i < generationSize; ++i)
 	{
 		rn = rand() % 127;
 		if (rn < 33 || rn == 44)
@@ -495,8 +491,7 @@ void generatePassword(char *buf)
 
 		buf[i] = (char)rn;
 	}
-
-	buf[MAXPW] = '\0';
+	buf[generationSize] = '\0';
 }
 
 void setDBpassword()
@@ -522,4 +517,62 @@ void removeDBpassword()
 	saveEntries();
 	readEntries();
 	printf("Password removed\n");
+}
+
+void readSettings()
+{
+	FILE *f = fopen("trove.ini", "r");
+	if (f == NULL)
+		return;
+
+	char line[MAXLINE];
+	if (fgets(line, MAXLINE, f) != NULL)
+	{
+		char size[2];
+		char *sub = strstr(line, "=");
+
+		if (sub == NULL)
+			return;
+
+		strcpy(size, sub + 1);
+		generationSize = atoi(size);
+	}
+	fclose(f);
+}
+
+void setPasswordSize()
+{
+	char line[MAXLINE];
+	printf("Enter new size for password generation, up to %d: ", MAXPW - 1);
+
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		printf("No line\n");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	int i = -1;
+	while (line[++i] != '\0' && line[i] != '\n')
+		if ((int)line[0] < 48 || (int)line[0] > 57)
+			return;
+
+	if (atoi(line) > MAXPW - 1)
+	{
+		printf("Maximum password length of %d exceeded\n", MAXPW - 1);
+		return;
+	}
+
+	FILE *f = fopen("trove.ini", "w");
+	if (f == NULL)
+	{
+		printf("Error saving entries!\n");
+		return;
+	}
+
+	fprintf(f, "passwordsize=%s", line);
+	fclose(f);
+	generationSize = atoi(line);
 }
