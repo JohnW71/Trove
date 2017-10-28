@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+//TODO clipboard
 //TODO encryption
 //TODO GUI
 
@@ -7,6 +8,7 @@
 #include <stdlib.h> // exit(), rand()
 #include <string.h> // strcmp(), strcpy()
 #include <time.h> // srand()
+#include <windows.h>
 
 #define MAXTITLE 21
 #define MAXID 21
@@ -19,6 +21,7 @@ void add();
 void find();
 void edit();
 void delete();
+void clipboard();
 void readEntries();
 void saveEntries();
 void generatePassword(char *buf);
@@ -38,6 +41,7 @@ struct entry
 int entryCount = 0;
 int generationSize = 12;
 char DBpassword[MAXPW];
+char heading[] = "    Title                ID                   Password             Misc";
 
 int main()
 {
@@ -49,17 +53,18 @@ int main()
 
 	while (choice != 0)
 	{
-		printf("\nTrove v0.1\n");
-		printf("----------\n");
-		printf("1 - List\n");
-		printf("2 - Add\n");
-		printf("3 - Find\n");
-		printf("4 - Edit\n");
-		printf("5 - Delete\n");
-		printf("6 - Set DB password\n");
-		printf("7 - Remove DB password\n");
-		printf("8 - Set password size\n");
-		printf("0 - Quit\n");
+		puts("\nTrove v0.2");
+		puts("----------");
+		puts("1 - List");
+		puts("2 - Add");
+		puts("3 - Find");
+		puts("4 - Edit");
+		puts("5 - Delete");
+		puts("6 - Copy to clipboard");
+		puts("7 - Set DB password");
+		puts("8 - Remove DB password");
+		puts("9 - Set password size");
+		puts("0 - Quit");
 		printf("\n-> ");
 
 		char line[MAXLINE];
@@ -93,12 +98,16 @@ int main()
 					delete();
 				break;
 			case 6:
-				setDBpassword();
+				if (entryCount > 0)
+					clipboard();
 				break;
 			case 7:
-				removeDBpassword();
+				setDBpassword();
 				break;
 			case 8:
+				removeDBpassword();
+				break;
+			case 9:
 				setPasswordSize();
 				break;
 		}
@@ -108,7 +117,7 @@ int main()
 
 void list()
 {
-	printf("    Title                ID                   Password             Misc\n");
+	puts(heading);
 	for (int i = 0; i < entryCount; ++i)
 		printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
 										MAXID, entries[i].id,
@@ -125,7 +134,7 @@ void add()
 	printf("Enter title up to %d chars: ", MAXTITLE - 1);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -160,7 +169,7 @@ void add()
 	printf("Enter password up to %d chars: (enter 'x' to generate random password of %d chars)\n", MAXPW - 1, generationSize);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -183,7 +192,7 @@ void add()
 	printf("Enter misc up to %d chars:\n", MAXMISC - 1);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -206,7 +215,7 @@ void find()
 
 	if (fgets(title, MAXTITLE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -222,7 +231,7 @@ void find()
 	for (int i = 0; i < entryCount; ++i)
 		if (strcmp(entries[i].title, title) == 0)
 		{
-			printf("\n    Title                ID                   Password             Misc\n");
+			printf("\n%s\n", heading);
 			printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
 											MAXID, entries[i].id,
 											MAXPW, entries[i].pw,
@@ -230,7 +239,7 @@ void find()
 			return;
 		}
 
-	printf("Not found\n");
+	puts("Not found");
 }
 
 void edit()
@@ -240,7 +249,7 @@ void edit()
 
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -259,7 +268,7 @@ void edit()
 	int data_ctr;
 	--choice;
 
-	printf("\n    Title                ID                   Password             Misc\n");
+	printf("\n%s\n", heading);
 	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1, MAXTITLE, entries[choice].title,
 									MAXID, entries[choice].id,
 									MAXPW, entries[choice].pw,
@@ -268,7 +277,7 @@ void edit()
 
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -286,7 +295,7 @@ void edit()
 	printf("Enter new ID up to %d chars: ", MAXID - 1);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -301,7 +310,7 @@ void edit()
 	printf("Enter new password up to %d chars: (enter 'x' to generate random password of %d chars)\n", MAXPW - 1, generationSize);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -324,7 +333,7 @@ void edit()
 	printf("Enter new misc up to %d chars:\n", MAXMISC - 1);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -346,7 +355,7 @@ void delete()
 
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -364,6 +373,49 @@ void delete()
 	entries[choice - 1].title[0] = '\0';
 	saveEntries();
 	readEntries();
+}
+
+void clipboard()
+{
+	char line[MAXLINE];
+	printf("Enter # to copy to clipboard: ");
+
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	int choice = atoi(line);
+
+	if (choice < 1 || choice > entryCount)
+	{
+		printf("Range is 1 to %d\n", entryCount);
+		return;
+	}
+
+	--choice;
+
+	printf("\n%s\n", heading);
+	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1, MAXTITLE, entries[choice].title,
+									MAXID, entries[choice].id,
+									MAXPW, entries[choice].pw,
+									entries[choice].misc);
+
+	const char* output = entries[choice].pw;
+	const size_t len = strlen(output) + 1;
+	HGLOBAL hMem =  GlobalAlloc(GMEM_MOVEABLE, len);
+	memcpy(GlobalLock(hMem), output, len);
+	GlobalUnlock(hMem);
+	OpenClipboard(0);
+	EmptyClipboard();
+	SetClipboardData(CF_TEXT, hMem); // automatically does GlobalFree(hMem);
+	CloseClipboard();
+
+	puts("\nPassword copied to clipboard");
 }
 
 void readEntries()
@@ -388,21 +440,21 @@ void readEntries()
 
 			if (fgets(password, MAXPW, stdin) == NULL)
 			{
-				printf("Null!\n");
+				puts("Null!");
 				fclose(f);
 				exit(1);
 			}
 
 			if (password[0] == '\n')
 			{
-				printf("Blank line entered!\n");
+				puts("Blank line entered!");
 				fclose(f);
 				exit(1);
 			}
 
 			if (strcmp(password, line) != 0)
 			{
-				printf("Incorrect password entered!\n");
+				puts("Incorrect password entered!");
 				fclose(f);
 				exit(1);
 			}
@@ -458,7 +510,7 @@ void saveEntries()
 	FILE *f = fopen("trove.db", "w");
 	if (f == NULL)
 	{
-		printf("Error saving entries!\n");
+		puts("Error saving entries!");
 		exit(1);
 	}
 
@@ -500,7 +552,7 @@ void setDBpassword()
 
 	if (fgets(DBpassword, MAXPW, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -516,7 +568,7 @@ void removeDBpassword()
 	strcpy(DBpassword, ".\n");
 	saveEntries();
 	readEntries();
-	printf("Password removed\n");
+	puts("Password removed");
 }
 
 void readSettings()
@@ -532,7 +584,10 @@ void readSettings()
 		char *sub = strstr(line, "=");
 
 		if (sub == NULL)
+		{
+			fclose(f);
 			return;
+		}
 
 		strcpy(size, sub + 1);
 		generationSize = atoi(size);
@@ -547,7 +602,7 @@ void setPasswordSize()
 
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
-		printf("No line\n");
+		puts("No line");
 		return;
 	}
 
@@ -568,7 +623,7 @@ void setPasswordSize()
 	FILE *f = fopen("trove.ini", "w");
 	if (f == NULL)
 	{
-		printf("Error saving entries!\n");
+		puts("Error saving entries!");
 		return;
 	}
 
