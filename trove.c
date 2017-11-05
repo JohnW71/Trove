@@ -1,6 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO clipboard
 //TODO encryption
 //TODO GUI
 
@@ -15,6 +14,7 @@
 #define MAXPW 21
 #define MAXMISC 51
 #define MAXLINE 80
+#define MINPW 6
 
 void list();
 void add();
@@ -127,83 +127,75 @@ void list()
 
 void add()
 {
-	char line[MAXLINE];
-	int line_ctr;
-	int data_ctr;
+	char title[MAXLINE];
+	char password[MAXLINE];
+	char id[MAXLINE];
+	char misc[MAXLINE];
 
 	printf("Enter title up to %d chars: ", MAXTITLE - 1);
-	if (fgets(line, MAXLINE, stdin) == NULL)
+	if (fgets(title, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
 		return;
 	}
 
-	if (line[0] == '\n')
+	if (title[0] == '\n')
 		return;
 
-	entries = realloc(entries, (entryCount + 1) * sizeof *entries);
-
-	line_ctr = 0;
-	data_ctr = 0;
-	while (line[line_ctr] != '\n' && line_ctr < MAXTITLE)
-	{
-		entries[entryCount].title[data_ctr++] = line[line_ctr++];
-	}
-	entries[entryCount].title[data_ctr] = '\0';
+	int i = -1;
+	while (title[++i] != '\0')
+		if (title[i] == '\n' || i == MAXTITLE - 1)
+			title[i] = '\0';
 
 	printf("Enter ID up to %d chars: ", MAXID - 1);
-	if (fgets(line, MAXLINE, stdin) == NULL)
+	if (fgets(id, MAXLINE, stdin) == NULL)
 	{
 		printf("No line\n");
 		return;
 	}
 
-	line_ctr = 0;
-	data_ctr = 0;
-	while (line[line_ctr] != '\n' && line_ctr < MAXID)
-	{
-		entries[entryCount].id[data_ctr++] = line[line_ctr++];
-	}
-	entries[entryCount].id[data_ctr] = '\0';
+	if (id[0] == '\n')
+		return;
+
+	i = -1;
+	while (id[++i] != '\0')
+		if (id[i] == '\n' || i == MAXID - 1)
+			id[i] = '\0';
 
 	printf("Enter password up to %d chars: (enter 'x' to generate random password of %d chars)\n", MAXPW - 1, generationSize);
-	if (fgets(line, MAXLINE, stdin) == NULL)
+	if (fgets(password, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
 		return;
 	}
 
-	line_ctr = 0;
-	data_ctr = 0;
-
-	if (strcmp(line, "x\n") == 0)
-	{
-		generatePassword(entries[entryCount].pw);
-	}
+	if (strcmp(password, "x\n") == 0)
+		generatePassword(password);
 	else
 	{
-		while (line[line_ctr] != '\n' && line_ctr < MAXPW)
-		{
-			entries[entryCount].pw[data_ctr++] = line[line_ctr++];
-		}
-		entries[entryCount].pw[data_ctr] = '\0';
+		i = -1;
+		while (password[++i] != '\0')
+			if (password[i] == '\n' || i == MAXPW - 1)
+				password[i] = '\0';
 	}
 
 	printf("Enter misc up to %d chars:\n", MAXMISC - 1);
-	if (fgets(line, MAXLINE, stdin) == NULL)
+	if (fgets(misc, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
 		return;
 	}
 
-	line_ctr = 0;
-	data_ctr = 0;
-	while (line[line_ctr] != '\n' && line_ctr < MAXMISC)
-	{
-		entries[entryCount].misc[data_ctr++] = line[line_ctr++];
-	}
-	entries[entryCount].misc[data_ctr] = '\0';
+	i = -1;
+	while (misc[++i] != '\0')
+		if (misc[i] == '\n' || i == MAXMISC - 1)
+			misc[i] = '\0';
 
+	entries = realloc(entries, (entryCount + 1) * sizeof *entries);
+	strcpy(entries[entryCount].title, title);
+	strcpy(entries[entryCount].id, id);
+	strcpy(entries[entryCount].pw, password);
+	strcpy(entries[entryCount].misc, misc);
 	++entryCount;
 	saveEntries();
 }
@@ -232,7 +224,8 @@ void find()
 		if (strcmp(entries[i].title, title) == 0)
 		{
 			printf("\n%s\n", heading);
-			printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
+			printf("%2d: %-*s%-*s%-*s%s\n", i + 1,
+											MAXTITLE, entries[i].title,
 											MAXID, entries[i].id,
 											MAXPW, entries[i].pw,
 											entries[i].misc);
@@ -245,8 +238,13 @@ void find()
 void edit()
 {
 	char line[MAXLINE];
-	printf("Enter # to edit: ");
+	char title[MAXLINE];
+	char password[MAXLINE];
+	char id[MAXLINE];
+	char misc[MAXLINE];
+	int i;
 
+	printf("Enter # to edit: ");
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -264,87 +262,90 @@ void edit()
 		return;
 	}
 
-	int line_ctr;
-	int data_ctr;
 	--choice;
-
 	printf("\n%s\n", heading);
-	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1, MAXTITLE, entries[choice].title,
+	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1,
+									MAXTITLE, entries[choice].title,
 									MAXID, entries[choice].id,
 									MAXPW, entries[choice].pw,
 									entries[choice].misc);
 	printf("\nEnter new title up to %d chars: ", MAXTITLE - 1);
-
-	if (fgets(line, MAXLINE, stdin) == NULL)
+	if (fgets(title, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
 		return;
 	}
 
-	if (line[0] == '\n')
-		return;
-
-	line_ctr = 0;
-	data_ctr = 0;
-	while (line[line_ctr] != '\n' && line_ctr < MAXTITLE)
-	{
-		entries[choice].title[data_ctr++] = line[line_ctr++];
-	}
-	entries[choice].title[data_ctr] = '\0';
-
-	printf("Enter new ID up to %d chars: ", MAXID - 1);
-	if (fgets(line, MAXLINE, stdin) == NULL)
-	{
-		puts("No line");
-		return;
-	}
-
-	line_ctr = 0;
-	data_ctr = 0;
-	while (line[line_ctr] != '\n' && line_ctr < MAXID)
-	{
-		entries[choice].id[data_ctr++] = line[line_ctr++];
-	}
-	entries[choice].id[data_ctr] = '\0';
-
-	printf("Enter new password up to %d chars: (enter 'x' to generate random password of %d chars)\n", MAXPW - 1, generationSize);
-	if (fgets(line, MAXLINE, stdin) == NULL)
-	{
-		puts("No line");
-		return;
-	}
-
-	line_ctr = 0;
-	data_ctr = 0;
-
-	if (strcmp(line, "x\n") == 0)
-	{
-		generatePassword(entries[choice].pw);
-	}
+	if (title[0] == '\n')
+		strcpy(title, entries[choice].title);
 	else
 	{
-		while (line[line_ctr] != '\n' && line_ctr < MAXPW)
+		i = -1;
+		while (title[++i] != '\0')
+			if (title[i] == '\n' || i == MAXTITLE - 1)
+				title[i] = '\0';
+	}
+
+	printf("Enter new ID up to %d chars: ", MAXID - 1);
+	if (fgets(id, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (id[0] == '\n')
+		strcpy(id, entries[choice].id);
+	else
+	{
+		i = -1;
+		while (id[++i] != '\0')
+			if (id[i] == '\n' || i == MAXID - 1)
+				id[i] = '\0';
+	}
+
+	printf("Enter new password up to %d chars: (enter 'x' to generate random password of %d chars)\n", MAXPW - 1, generationSize);
+	if (fgets(password, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (strcmp(password, "x\n") == 0)
+		generatePassword(password);
+	else
+	{
+		if (password[0] == '\n')
+			strcpy(password, entries[choice].pw);
+		else
 		{
-			entries[choice].pw[data_ctr++] = line[line_ctr++];
+			i = -1;
+			while (password[++i] != '\0')
+				if (password[i] == '\n' || i == MAXPW - 1)
+					password[i] = '\0';
 		}
-		entries[choice].pw[data_ctr] = '\0';
 	}
 
 	printf("Enter new misc up to %d chars:\n", MAXMISC - 1);
-	if (fgets(line, MAXLINE, stdin) == NULL)
+	if (fgets(misc, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
 		return;
 	}
 
-	line_ctr = 0;
-	data_ctr = 0;
-	while (line[line_ctr] != '\n' && line_ctr < MAXMISC)
+	if (misc[0] == '\n')
+		strcpy(misc, entries[choice].misc);
+	else
 	{
-		entries[choice].misc[data_ctr++] = line[line_ctr++];
+		i = -1;
+		while (misc[++i] != '\0')
+			if (misc[i] == '\n' || i == MAXMISC - 1)
+				misc[i] = '\0';
 	}
-	entries[choice].misc[data_ctr] = '\0';
 
+	strcpy(entries[choice].title, title);
+	strcpy(entries[choice].id, id);
+	strcpy(entries[choice].pw, password);
+	strcpy(entries[choice].misc, misc);
 	saveEntries();
 }
 
@@ -378,8 +379,8 @@ void delete()
 void clipboard()
 {
 	char line[MAXLINE];
-	printf("Enter # to copy to clipboard: ");
 
+	printf("Enter # to copy to clipboard: ");
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -398,9 +399,9 @@ void clipboard()
 	}
 
 	--choice;
-
 	printf("\n%s\n", heading);
-	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1, MAXTITLE, entries[choice].title,
+	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1,
+									MAXTITLE, entries[choice].title,
 									MAXID, entries[choice].id,
 									MAXPW, entries[choice].pw,
 									entries[choice].misc);
@@ -540,7 +541,6 @@ void generatePassword(char *buf)
 			--i;
 			continue;
 		}
-
 		buf[i] = (char)rn;
 	}
 	buf[generationSize] = '\0';
@@ -598,8 +598,8 @@ void readSettings()
 void setPasswordSize()
 {
 	char line[MAXLINE];
-	printf("Enter new size for password generation, up to %d: ", MAXPW - 1);
 
+	printf("Enter new size for password generation, from %d to %d: ", MINPW, MAXPW - 1);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -613,6 +613,12 @@ void setPasswordSize()
 	while (line[++i] != '\0' && line[i] != '\n')
 		if ((int)line[0] < 48 || (int)line[0] > 57)
 			return;
+
+	if (atoi(line) < MINPW)
+	{
+		printf("Minimum password length of %d exceeded\n", MINPW);
+		return;
+	}
 
 	if (atoi(line) > MAXPW - 1)
 	{
