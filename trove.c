@@ -7,7 +7,10 @@
 #include <stdlib.h> // exit(), rand()
 #include <string.h> // strcmp(), strcpy()
 #include <time.h> // srand()
-#include <windows.h>
+
+#ifdef _WIN32
+	#include <windows.h>
+#endif
 
 #define MAXTITLE 21
 #define MAXID 21
@@ -378,6 +381,7 @@ void delete()
 
 void clipboard()
 {
+#ifdef _WIN32
 	char line[MAXLINE];
 
 	printf("Enter # to copy to clipboard: ");
@@ -417,6 +421,9 @@ void clipboard()
 	CloseClipboard();
 
 	puts("\nPassword copied to clipboard");
+#else
+	puts("Windows only\n");
+#endif
 }
 
 void readEntries()
