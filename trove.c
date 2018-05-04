@@ -56,14 +56,16 @@ int main()
 
 	while (choice != 0)
 	{
-		puts("\nTrove v0.2");
+		puts("\nTrove v0.3");
 		puts("----------");
 		puts("1 - List");
 		puts("2 - Add");
 		puts("3 - Find");
 		puts("4 - Edit");
 		puts("5 - Delete");
+#ifdef _WIN32
 		puts("6 - Copy to clipboard");
+#endif
 		puts("7 - Set DB password");
 		puts("8 - Remove DB password");
 		puts("9 - Set password size");
@@ -421,8 +423,6 @@ void clipboard()
 	CloseClipboard();
 
 	puts("\nPassword copied to clipboard");
-#else
-	puts("Windows only\n");
 #endif
 }
 
