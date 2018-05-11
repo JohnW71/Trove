@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h> // exit(), rand()
 #include <string.h> // strcmp(), strcpy()
-#include <time.h> // srand()
+#include <time.h>   // srand()
 
 #ifdef _WIN32
 	#include <windows.h>
@@ -83,38 +83,38 @@ int main()
 		choice = (int)line[0] - 48;
 		switch (choice)
 		{
-			case 1:
-				if (entryCount > 0)
-					list();
-				break;
-			case 2:
-				add();
-				break;
-			case 3:
-				if (entryCount > 0)
-					find();
-				break;
-			case 4:
-				if (entryCount > 0)
-					edit();
-				break;
-			case 5:
-				if (entryCount > 0)
-					delete();
-				break;
-			case 6:
-				if (entryCount > 0)
-					clipboard();
-				break;
-			case 7:
-				setDBpassword();
-				break;
-			case 8:
-				removeDBpassword();
-				break;
-			case 9:
-				setPasswordSize();
-				break;
+		case 1:
+			if (entryCount > 0)
+				list();
+			break;
+		case 2:
+			add();
+			break;
+		case 3:
+			if (entryCount > 0)
+				find();
+			break;
+		case 4:
+			if (entryCount > 0)
+				edit();
+			break;
+		case 5:
+			if (entryCount > 0)
+				delete();
+			break;
+		case 6:
+			if (entryCount > 0)
+				clipboard();
+			break;
+		case 7:
+			setDBpassword();
+			break;
+		case 8:
+			removeDBpassword();
+			break;
+		case 9:
+			setPasswordSize();
+			break;
 		}
 	}
 	return 0;
@@ -125,9 +125,9 @@ void list()
 	puts(heading);
 	for (int i = 0; i < entryCount; ++i)
 		printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
-										MAXID, entries[i].id,
-										MAXPW, entries[i].pw,
-										entries[i].misc);
+			   MAXID, entries[i].id,
+			   MAXPW, entries[i].pw,
+			   entries[i].misc);
 }
 
 void add()
@@ -230,10 +230,10 @@ void find()
 		{
 			printf("\n%s\n", heading);
 			printf("%2d: %-*s%-*s%-*s%s\n", i + 1,
-											MAXTITLE, entries[i].title,
-											MAXID, entries[i].id,
-											MAXPW, entries[i].pw,
-											entries[i].misc);
+				   MAXTITLE, entries[i].title,
+				   MAXID, entries[i].id,
+				   MAXPW, entries[i].pw,
+				   entries[i].misc);
 			return;
 		}
 
@@ -270,10 +270,10 @@ void edit()
 	--choice;
 	printf("\n%s\n", heading);
 	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1,
-									MAXTITLE, entries[choice].title,
-									MAXID, entries[choice].id,
-									MAXPW, entries[choice].pw,
-									entries[choice].misc);
+		   MAXTITLE, entries[choice].title,
+		   MAXID, entries[choice].id,
+		   MAXPW, entries[choice].pw,
+		   entries[choice].misc);
 	printf("\nEnter new title up to %d chars: ", MAXTITLE - 1);
 	if (fgets(title, MAXLINE, stdin) == NULL)
 	{
@@ -407,14 +407,14 @@ void clipboard()
 	--choice;
 	printf("\n%s\n", heading);
 	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1,
-									MAXTITLE, entries[choice].title,
-									MAXID, entries[choice].id,
-									MAXPW, entries[choice].pw,
-									entries[choice].misc);
+		   MAXTITLE, entries[choice].title,
+		   MAXID, entries[choice].id,
+		   MAXPW, entries[choice].pw,
+		   entries[choice].misc);
 
-	const char* output = entries[choice].pw;
+	const char *output = entries[choice].pw;
 	const size_t len = strlen(output) + 1;
-	HGLOBAL hMem =  GlobalAlloc(GMEM_MOVEABLE, len);
+	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
 	memcpy(GlobalLock(hMem), output, len);
 	GlobalUnlock(hMem);
 	OpenClipboard(0);
@@ -489,18 +489,18 @@ void readEntries()
 
 					switch (field)
 					{
-						case 0:
-							strcpy(entries[entryCount].title, data);
-							break;
-						case 1:
-							strcpy(entries[entryCount].id, data);
-							break;
-						case 2:
-							strcpy(entries[entryCount].pw, data);
-							break;
-						case 3:
-							strcpy(entries[entryCount].misc, data);
-							break;
+					case 0:
+						strcpy(entries[entryCount].title, data);
+						break;
+					case 1:
+						strcpy(entries[entryCount].id, data);
+						break;
+					case 2:
+						strcpy(entries[entryCount].pw, data);
+						break;
+					case 3:
+						strcpy(entries[entryCount].misc, data);
+						break;
 					}
 					++field;
 					continue;
@@ -530,9 +530,9 @@ void saveEntries()
 	for (int i = 0; i < entryCount; ++i)
 		if (entries[i].title[0] != '\0') // skip deleted entries
 			fprintf(f, "%s,%s,%s,%s\n", entries[i].title,
-										entries[i].id,
-										entries[i].pw,
-										entries[i].misc);
+					entries[i].id,
+					entries[i].pw,
+					entries[i].misc);
 	fclose(f);
 }
 
