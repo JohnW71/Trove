@@ -441,6 +441,13 @@ void readEntries()
 	// check for password
 	if (fgets(line, MAXPW, f) != NULL)
 	{
+		// find and convert CRLF endings
+		char *p = strrchr(line, '\r');
+		if (p && p[1] == '\n' && p[2] == '\0') {
+			p[0] = '\n';
+			p[1] = '\0';
+		}
+
 		if ((strcmp(line, ".\n") != 0) &&
 			(strcmp(line, DBpassword) != 0)) // DB has a password
 		{
