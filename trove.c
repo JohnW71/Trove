@@ -460,7 +460,7 @@ void readEntries()
 				exit(1);
 			}
 
-			if (password[0] == '\n')
+			if (password[0] == '\n') // || password[0] == '\r')
 			{
 				puts("Blank line entered!");
 				fclose(f);
