@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+//TODO add handling for min/max special, min/max numeric, min/max uppercase
+//TODO check for duplicate titles?
 //TODO encryption
 //TODO GUI
 
@@ -43,8 +45,17 @@ struct entry
 
 int entryCount = 0;
 int generationSize = 12;
+int minSpecial = 0;
+int maxSpecial = 0;
+int minNumeric = 0;
+int maxNumeric = 0;
+int minUppercase = 0;
+int maxUppercase = 0;
+
 char DBpassword[MAXPW];
 char heading[] = "    Title                ID                   Password             Misc";
+char iniFile[] = "trove.ini";
+char dbFile[] = "trove.db";
 
 int main()
 {
@@ -56,7 +67,7 @@ int main()
 
 	while (choice != 0)
 	{
-		puts("\nTrove v0.3");
+		puts("\nTrove v0.4");
 		puts("----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -83,38 +94,38 @@ int main()
 		choice = (int)line[0] - 48;
 		switch (choice)
 		{
-		case 1:
-			if (entryCount > 0)
-				list();
-			break;
-		case 2:
-			add();
-			break;
-		case 3:
-			if (entryCount > 0)
-				find();
-			break;
-		case 4:
-			if (entryCount > 0)
-				edit();
-			break;
-		case 5:
-			if (entryCount > 0)
-				delete();
-			break;
-		case 6:
-			if (entryCount > 0)
-				clipboard();
-			break;
-		case 7:
-			setDBpassword();
-			break;
-		case 8:
-			removeDBpassword();
-			break;
-		case 9:
-			setPasswordSize();
-			break;
+			case 1:
+				if (entryCount > 0)
+					list();
+				break;
+			case 2:
+				add();
+				break;
+			case 3:
+				if (entryCount > 0)
+					find();
+				break;
+			case 4:
+				if (entryCount > 0)
+					edit();
+				break;
+			case 5:
+				if (entryCount > 0)
+					delete();
+				break;
+			case 6:
+				if (entryCount > 0)
+					clipboard();
+				break;
+			case 7:
+				setDBpassword();
+				break;
+			case 8:
+				removeDBpassword();
+				break;
+			case 9:
+				setPasswordSize();
+				break;
 		}
 	}
 	return 0;
@@ -167,7 +178,8 @@ void add()
 		if (id[i] == '\n' || i == MAXID - 1)
 			id[i] = '\0';
 
-	printf("Enter password up to %d chars: (enter 'x' to generate random password of %d chars)\n", MAXPW - 1, generationSize);
+	printf("Enter password up to %d chars:\n(enter 'x' to generate random \
+password of %d chars)\n: ", MAXPW - 1, generationSize);
 	if (fgets(password, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -308,7 +320,8 @@ void edit()
 				id[i] = '\0';
 	}
 
-	printf("Enter new password up to %d chars: (enter 'x' to generate random password of %d chars)\n", MAXPW - 1, generationSize);
+	printf("Enter new password up to %d chars:\n(enter 'x' to generate random \
+password of %d chars)\n: ", MAXPW - 1, generationSize);
 	if (fgets(password, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -428,7 +441,7 @@ void clipboard()
 
 void readEntries()
 {
-	FILE *f = fopen("trove.db", "r");
+	FILE *f = fopen(dbFile, "r");
 	if (f == NULL)
 		return;
 
@@ -486,6 +499,7 @@ void readEntries()
 			int field = 0;
 			int line_ctr = 0;
 			int data_ctr = 0;
+
 			while (line[line_ctr] != '\0')
 			{
 				if (line[line_ctr] == ',' || line[line_ctr] == '\n')
@@ -522,7 +536,7 @@ void readEntries()
 
 void saveEntries()
 {
-	FILE *f = fopen("trove.db", "w");
+	FILE *f = fopen(dbFile, "w");
 	if (f == NULL)
 	{
 		puts("Error saving entries!");
@@ -587,7 +601,7 @@ void removeDBpassword()
 
 void readSettings()
 {
-	FILE *f = fopen("trove.ini", "r");
+	FILE *f = fopen(iniFile, "r");
 	if (f == NULL)
 		return;
 
@@ -630,17 +644,17 @@ void setPasswordSize()
 
 	if (atoi(line) < MINPW)
 	{
-		printf("Minimum password length of %d exceeded\n", MINPW);
+		printf("Minimum password length is %d\n", MINPW);
 		return;
 	}
 
 	if (atoi(line) > MAXPW - 1)
 	{
-		printf("Maximum password length of %d exceeded\n", MAXPW - 1);
+		printf("Maximum password length is %d\n", MAXPW - 1);
 		return;
 	}
 
-	FILE *f = fopen("trove.ini", "w");
+	FILE *f = fopen(iniFile, "w");
 	if (f == NULL)
 	{
 		puts("Error saving entries!");
