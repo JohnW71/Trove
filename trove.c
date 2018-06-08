@@ -1,7 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 //TODO add handling for min/max special, min/max numeric, min/max uppercase
-//TODO check for duplicate titles?
 //TODO encryption
 //TODO GUI
 
@@ -163,6 +162,13 @@ void add()
 	while (title[++i] != '\0')
 		if (title[i] == '\n' || i == MAXTITLE - 1)
 			title[i] = '\0';
+
+	for (int i = 0; i < entryCount; ++i)
+		if (strcmp(entries[i].title, title) == 0)
+		{
+			puts("Title is already in use");
+			return;
+		}
 
 	printf("Enter ID up to %d chars: ", MAXID - 1);
 	if (fgets(id, MAXLINE, stdin) == NULL)
@@ -604,7 +610,10 @@ void readSettings()
 {
 	FILE *f = fopen(iniFile, "r");
 	if (f == NULL)
+	{
+		writeSettings();
 		return;
+	}
 
 	char line[MAXLINE];
 
