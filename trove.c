@@ -33,6 +33,7 @@ void generatePassword(char *buf);
 void setDBpassword();
 void removeDBpassword();
 void readSettings();
+void writeSettings();
 void setPasswordSize();
 
 struct entry
@@ -606,20 +607,61 @@ void readSettings()
 		return;
 
 	char line[MAXLINE];
-	if (fgets(line, MAXLINE, f) != NULL)
+
+	while (fgets(line, MAXLINE, f) != NULL)
 	{
-		char size[2];
-		char *sub = strstr(line, "=");
+		char setting[MAXLINE];
+		char value[MAXLINE];
+		char *l = line;
+		char *s = setting;
+		char *v = value;
 
-		if (sub == NULL)
+		// find setting
+		while (*l && *l != '=')
 		{
-			fclose(f);
-			return;
+			*s = *l;
+			s++;
+			l++;
 		}
+		*s = '\0';
 
-		strcpy(size, sub + 1);
-		generationSize = atoi(size);
+		// find value
+		++l;
+		while (*l)
+		{
+			*v = *l;
+			l++;
+			v++;
+		}
+		*v = '\0';
+
+		if (strcmp(setting, "passwordsize") == 0)	generationSize = atoi(value);
+		if (strcmp(setting, "min_special") == 0)	minSpecial = atoi(value);
+		if (strcmp(setting, "max_special") == 0)	maxSpecial = atoi(value);
+		if (strcmp(setting, "min_numeric") == 0)	minNumeric = atoi(value);
+		if (strcmp(setting, "max_numeric") == 0)	maxNumeric = atoi(value);
+		if (strcmp(setting, "min_uppercase") == 0)	minUppercase = atoi(value);
+		if (strcmp(setting, "max_uppercase") == 0)	maxUppercase = atoi(value);
 	}
+	fclose(f);
+}
+
+void writeSettings()
+{
+	FILE *f = fopen(iniFile, "w");
+	if (f == NULL)
+	{
+		puts("Error saving entries!");
+		return;
+	}
+
+	fprintf(f, "passwordsize=%d\n", generationSize);
+	fprintf(f, "min_special=%d\n", minSpecial);
+	fprintf(f, "max_special=%d\n", maxSpecial);
+	fprintf(f, "min_numeric=%d\n", minNumeric);
+	fprintf(f, "max_numeric=%d\n", maxNumeric);
+	fprintf(f, "min_uppercase=%d\n", minUppercase);
+	fprintf(f, "max_uppercase=%d\n", maxUppercase);
 	fclose(f);
 }
 
@@ -654,14 +696,6 @@ void setPasswordSize()
 		return;
 	}
 
-	FILE *f = fopen(iniFile, "w");
-	if (f == NULL)
-	{
-		puts("Error saving entries!");
-		return;
-	}
-
-	fprintf(f, "passwordsize=%s", line);
-	fclose(f);
 	generationSize = atoi(line);
+	writeSettings();
 }
