@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO set password generation to use min/max settings
+//TODO set password generation to use min/max settings, max 0 means "dont care"
 //TODO encryption
 //TODO GUI
 
@@ -14,10 +14,10 @@
 #endif
 
 #define MAXTITLE 21
-#define MAXID 21
-#define MAXPW 21
 #define MAXMISC 51
 #define MAXLINE 80
+#define MAXID 21
+#define MAXPW 21
 #define MINPW 6
 #define MINCHAR 0
 #define MAXCHAR 6
@@ -794,19 +794,20 @@ void setMinSpecial()
 		if ((int)line[0] < 48 || (int)line[0] > 57)
 			return;
 
-	if (atoi(line) < MINCHAR)
+	int value = atoi(line);
+	if (value < MINCHAR || value > MAXCHAR)
 	{
-		printf("Minimum special characters is %d\n", MINCHAR);
+		printf("Range is %d to %d\n", MINCHAR, MAXCHAR);
 		return;
 	}
 
-	if (atoi(line) > MAXCHAR - 1)
+	if (value > maxSpecial)
 	{
-		printf("Maximum special characters is %d\n", MAXCHAR - 1);
+		printf("Value cannot exceed maximum special characters (%d)\n", maxSpecial);
 		return;
 	}
 
-	minSpecial = atoi(line);
+	minSpecial = value;
 	writeSettings();
 }
 
@@ -829,19 +830,20 @@ void setMaxSpecial()
 		if ((int)line[0] < 48 || (int)line[0] > 57)
 			return;
 
-	if (atoi(line) < MINCHAR)
+	int value = atoi(line);
+	if (value < MINCHAR || value > MAXCHAR)
 	{
-		printf("Minimum special characters is %d\n", MINCHAR);
+		printf("Range is %d to %d\n", MINCHAR, MAXCHAR);
 		return;
 	}
 
-	if (atoi(line) > MAXCHAR - 1)
+	if (value < minSpecial)
 	{
-		printf("Maximum special characters is %d\n", MAXCHAR - 1);
+		printf("Value cannot be lower than minimum special characters (%d)\n", minSpecial);
 		return;
 	}
 
-	maxSpecial = atoi(line);
+	maxSpecial = value;
 	writeSettings();
 }
 
@@ -864,19 +866,20 @@ void setMinNumeric()
 		if ((int)line[0] < 48 || (int)line[0] > 57)
 			return;
 
-	if (atoi(line) < MINCHAR)
+	int value = atoi(line);
+	if (value < MINCHAR || value > MAXCHAR)
 	{
-		printf("Minimum numeric characters is %d\n", MINCHAR);
+		printf("Range is %d to %d\n", MINCHAR, MAXCHAR);
 		return;
 	}
 
-	if (atoi(line) > MAXCHAR - 1)
+	if (value > maxNumeric)
 	{
-		printf("Maximum numeric characters is %d\n", MAXCHAR - 1);
+		printf("Value cannot exceed maximum numeric characters (%d)\n", maxNumeric);
 		return;
 	}
 
-	minNumeric = atoi(line);
+	minNumeric = value;
 	writeSettings();
 }
 
@@ -899,19 +902,20 @@ void setMaxNumeric()
 		if ((int)line[0] < 48 || (int)line[0] > 57)
 			return;
 
-	if (atoi(line) < MINCHAR)
+	int value = atoi(line);
+	if (value < MINCHAR || value > MAXCHAR)
 	{
-		printf("Minimum numeric characters is %d\n", MINCHAR);
+		printf("Range is %d to %d\n", MINCHAR, MAXCHAR);
 		return;
 	}
 
-	if (atoi(line) > MAXCHAR - 1)
+	if (value < maxNumeric)
 	{
-		printf("Maximum numeric characters is %d\n", MAXCHAR - 1);
+		printf("Value cannot be lower than minimum numeric characters (%d)\n", minNumeric);
 		return;
 	}
 
-	maxNumeric = atoi(line);
+	maxNumeric = value;
 	writeSettings();
 }
 
@@ -934,19 +938,20 @@ void setMinUppercase()
 		if ((int)line[0] < 48 || (int)line[0] > 57)
 			return;
 
-	if (atoi(line) < MINCHAR)
+	int value = atoi(line);
+	if (value < MINCHAR || value > MAXCHAR)
 	{
-		printf("Minimum uppercase characters is %d\n", MINCHAR);
+		printf("Range is %d to %d\n", MINCHAR, MAXCHAR);
 		return;
 	}
 
-	if (atoi(line) > MAXCHAR - 1)
+	if (value > maxUppercase)
 	{
-		printf("Maximum uppercase characters is %d\n", MAXCHAR - 1);
+		printf("Value cannot exceed maximum uppercase characters (%d)\n", maxUppercase);
 		return;
 	}
 
-	minUppercase = atoi(line);
+	minUppercase = value;
 	writeSettings();
 }
 
@@ -969,18 +974,19 @@ void setMaxUppercase()
 		if ((int)line[0] < 48 || (int)line[0] > 57)
 			return;
 
-	if (atoi(line) < MINCHAR)
+	int value = atoi(line);
+	if (value < MINCHAR || value > MAXCHAR)
 	{
-		printf("Minimum uppercase characters is %d\n", MINCHAR);
+		printf("Range is %d to %d\n", MINCHAR, MAXCHAR);
 		return;
 	}
 
-	if (atoi(line) > MAXCHAR - 1)
+	if (value < minUppercase)
 	{
-		printf("Maximum uppercase characters is %d\n", MAXCHAR - 1);
+		printf("Value cannot be lower than minimum uppercase characters (%d)\n", minUppercase);
 		return;
 	}
 
-	maxUppercase = atoi(line);
+	maxUppercase = value;
 	writeSettings();
 }
