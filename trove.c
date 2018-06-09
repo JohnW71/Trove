@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO add handling for min/max special, min/max numeric, min/max uppercase
+//TODO set password generation to use min/max settings
 //TODO encryption
 //TODO GUI
 
@@ -19,6 +19,8 @@
 #define MAXMISC 51
 #define MAXLINE 80
 #define MINPW 6
+#define MINCHAR 0
+#define MAXCHAR 6
 
 void list();
 void add();
@@ -33,7 +35,14 @@ void setDBpassword();
 void removeDBpassword();
 void readSettings();
 void writeSettings();
+void updateSettings();
 void setPasswordSize();
+void setMinSpecial();
+void setMaxSpecial();
+void setMinNumeric();
+void setMaxNumeric();
+void setMinUppercase();
+void setMaxUppercase();
 
 struct entry
 {
@@ -77,9 +86,7 @@ int main()
 #ifdef _WIN32
 		puts("6 - Copy to clipboard");
 #endif
-		puts("7 - Set DB password");
-		puts("8 - Remove DB password");
-		puts("9 - Set password size");
+		puts("7 - Change settings");
 		puts("0 - Quit");
 		printf("\n-> ");
 
@@ -118,13 +125,7 @@ int main()
 					clipboard();
 				break;
 			case 7:
-				setDBpassword();
-				break;
-			case 8:
-				removeDBpassword();
-				break;
-			case 9:
-				setPasswordSize();
+				updateSettings();
 				break;
 		}
 	}
@@ -674,6 +675,71 @@ void writeSettings()
 	fclose(f);
 }
 
+void updateSettings()
+{
+	int choice = -1;
+
+	while (choice != 0)
+	{
+		puts("\nChange Settings");
+		puts("---------------");
+		printf("1 - Set password generation size (%d)\n", generationSize);
+		puts("2 - Set database password");
+		puts("3 - Remove database password");
+		printf("4 - Set minimum special characters (%d)\n", minSpecial);
+		printf("5 - Set maximum special characters (%d)\n", maxSpecial);
+		printf("6 - Set minimum numeric characters (%d)\n", minNumeric);
+		printf("7 - Set maximum numeric characters (%d)\n", maxNumeric);
+		printf("8 - Set minimum uppercase characters (%d)\n", minUppercase);
+		printf("9 - Set maximum uppercase characters (%d)\n", maxUppercase);
+		puts("0 - Back");
+		printf("\n-> ");
+
+		char line[MAXLINE];
+		if (fgets(line, MAXLINE, stdin) == NULL)
+			continue;
+
+		if (line[1] != '\n' || (int)line[0] < 48 || (int)line[0] > 57)
+			continue;
+
+		printf("\n");
+		choice = (int)line[0] - 48;
+		switch (choice)
+		{
+			case 1:
+				setPasswordSize();
+				break;
+			case 2:
+				setDBpassword();
+				break;
+			case 3:
+				removeDBpassword();
+				break;
+			case 4:
+				setMinSpecial();
+				break;
+			case 5:
+				setMaxSpecial();
+				break;
+			case 6:
+				setMinNumeric();
+				break;
+			case 7:
+				setMaxNumeric();
+				break;
+			case 8:
+				setMinUppercase();
+				break;
+			case 9:
+				setMaxUppercase();
+				break;
+			case 0:
+				return;
+		}
+	}
+
+}
+
 void setPasswordSize()
 {
 	char line[MAXLINE];
@@ -706,5 +772,215 @@ void setPasswordSize()
 	}
 
 	generationSize = atoi(line);
+	writeSettings();
+}
+
+void setMinSpecial()
+{
+	char line[MAXLINE];
+
+	printf("Enter new size for minimum special characters, from %d to %d: ", MINCHAR, MAXCHAR - 1);
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	int i = -1;
+	while (line[++i] != '\0' && line[i] != '\n')
+		if ((int)line[0] < 48 || (int)line[0] > 57)
+			return;
+
+	if (atoi(line) < MINCHAR)
+	{
+		printf("Minimum special characters is %d\n", MINCHAR);
+		return;
+	}
+
+	if (atoi(line) > MAXCHAR - 1)
+	{
+		printf("Maximum special characters is %d\n", MAXCHAR - 1);
+		return;
+	}
+
+	minSpecial = atoi(line);
+	writeSettings();
+}
+
+void setMaxSpecial()
+{
+	char line[MAXLINE];
+
+	printf("Enter new size for maximum special characters, from %d to %d: ", MINCHAR, MAXCHAR - 1);
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	int i = -1;
+	while (line[++i] != '\0' && line[i] != '\n')
+		if ((int)line[0] < 48 || (int)line[0] > 57)
+			return;
+
+	if (atoi(line) < MINCHAR)
+	{
+		printf("Minimum special characters is %d\n", MINCHAR);
+		return;
+	}
+
+	if (atoi(line) > MAXCHAR - 1)
+	{
+		printf("Maximum special characters is %d\n", MAXCHAR - 1);
+		return;
+	}
+
+	maxSpecial = atoi(line);
+	writeSettings();
+}
+
+void setMinNumeric()
+{
+	char line[MAXLINE];
+
+	printf("Enter new size for minimum numeric characters, from %d to %d: ", MINCHAR, MAXCHAR - 1);
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	int i = -1;
+	while (line[++i] != '\0' && line[i] != '\n')
+		if ((int)line[0] < 48 || (int)line[0] > 57)
+			return;
+
+	if (atoi(line) < MINCHAR)
+	{
+		printf("Minimum numeric characters is %d\n", MINCHAR);
+		return;
+	}
+
+	if (atoi(line) > MAXCHAR - 1)
+	{
+		printf("Maximum numeric characters is %d\n", MAXCHAR - 1);
+		return;
+	}
+
+	minNumeric = atoi(line);
+	writeSettings();
+}
+
+void setMaxNumeric()
+{
+	char line[MAXLINE];
+
+	printf("Enter new size for maximum numeric characters, from %d to %d: ", MINCHAR, MAXCHAR - 1);
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	int i = -1;
+	while (line[++i] != '\0' && line[i] != '\n')
+		if ((int)line[0] < 48 || (int)line[0] > 57)
+			return;
+
+	if (atoi(line) < MINCHAR)
+	{
+		printf("Minimum numeric characters is %d\n", MINCHAR);
+		return;
+	}
+
+	if (atoi(line) > MAXCHAR - 1)
+	{
+		printf("Maximum numeric characters is %d\n", MAXCHAR - 1);
+		return;
+	}
+
+	maxNumeric = atoi(line);
+	writeSettings();
+}
+
+void setMinUppercase()
+{
+	char line[MAXLINE];
+
+	printf("Enter new size for minimum uppercase characters, from %d to %d: ", MINCHAR, MAXCHAR - 1);
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	int i = -1;
+	while (line[++i] != '\0' && line[i] != '\n')
+		if ((int)line[0] < 48 || (int)line[0] > 57)
+			return;
+
+	if (atoi(line) < MINCHAR)
+	{
+		printf("Minimum uppercase characters is %d\n", MINCHAR);
+		return;
+	}
+
+	if (atoi(line) > MAXCHAR - 1)
+	{
+		printf("Maximum uppercase characters is %d\n", MAXCHAR - 1);
+		return;
+	}
+
+	minUppercase = atoi(line);
+	writeSettings();
+}
+
+void setMaxUppercase()
+{
+	char line[MAXLINE];
+
+	printf("Enter new size for maximum uppercase characters, from %d to %d: ", MINCHAR, MAXCHAR - 1);
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	int i = -1;
+	while (line[++i] != '\0' && line[i] != '\n')
+		if ((int)line[0] < 48 || (int)line[0] > 57)
+			return;
+
+	if (atoi(line) < MINCHAR)
+	{
+		printf("Minimum uppercase characters is %d\n", MINCHAR);
+		return;
+	}
+
+	if (atoi(line) > MAXCHAR - 1)
+	{
+		printf("Maximum uppercase characters is %d\n", MAXCHAR - 1);
+		return;
+	}
+
+	maxUppercase = atoi(line);
 	writeSettings();
 }
