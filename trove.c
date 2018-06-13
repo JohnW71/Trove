@@ -3,43 +3,11 @@
 //TODO encryption
 //TODO GUI
 
-#include <stdio.h>
-#include <stdlib.h> // exit(), rand()
-#include <string.h> // strcmp(), strcpy()
-#include <time.h>   // srand()
-#include <ctype.h>	// isupper(), ispunct(), isdigit()
+#include "trove.h"
 
 #ifdef _WIN32
 	#include <windows.h>
 #endif
-
-#define MAXTITLE 21
-#define MAXMISC 51
-#define MAXLINE 80
-#define MAXID 21
-#define MAXPW 21
-#define MINPW 6
-#define MINCHAR 0
-#define MAXCHAR 6
-
-void list();
-void add();
-void find();
-void edit();
-void delete();
-void clipboard();
-void readEntries();
-void saveEntries();
-void generatePassword(char *buf);
-void setDBpassword();
-void removeDBpassword();
-void readSettings();
-void writeSettings();
-void updateSettings();
-void setPasswordSize();
-void setMinSpecial();
-void setMinNumeric();
-void setMinUppercase();
 
 struct entry
 {
@@ -70,7 +38,7 @@ int main()
 
 	while (choice != 0)
 	{
-		puts("\nTrove v0.4");
+		puts("\nTrove v0.5");
 		puts("----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -775,7 +743,7 @@ void setMinSpecial()
 {
 	char line[MAXLINE];
 
-	printf("Enter new size for minimum special characters, from %d to %d: ", MINCHAR, MAXCHAR);
+	printf("Enter new size for minimum special characters, from %d to %d: ", MINCHARS, MAXCHARS);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -791,9 +759,9 @@ void setMinSpecial()
 			return;
 
 	int value = atoi(line);
-	if (value < MINCHAR || value > MAXCHAR)
+	if (value < MINCHARS || value > MAXCHARS)
 	{
-		printf("Range is %d to %d\n", MINCHAR, MAXCHAR);
+		printf("Range is %d to %d\n", MINCHARS, MAXCHARS);
 		return;
 	}
 
@@ -805,7 +773,7 @@ void setMinNumeric()
 {
 	char line[MAXLINE];
 
-	printf("Enter new size for minimum numeric characters, from %d to %d: ", MINCHAR, MAXCHAR);
+	printf("Enter new size for minimum numeric characters, from %d to %d: ", MINCHARS, MAXCHARS);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -821,9 +789,9 @@ void setMinNumeric()
 			return;
 
 	int value = atoi(line);
-	if (value < MINCHAR || value > MAXCHAR)
+	if (value < MINCHARS || value > MAXCHARS)
 	{
-		printf("Range is %d to %d\n", MINCHAR, MAXCHAR);
+		printf("Range is %d to %d\n", MINCHARS, MAXCHARS);
 		return;
 	}
 
@@ -835,7 +803,7 @@ void setMinUppercase()
 {
 	char line[MAXLINE];
 
-	printf("Enter new size for minimum uppercase characters, from %d to %d: ", MINCHAR, MAXCHAR);
+	printf("Enter new size for minimum uppercase characters, from %d to %d: ", MINCHARS, MAXCHARS);
 	if (fgets(line, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -851,9 +819,9 @@ void setMinUppercase()
 			return;
 
 	int value = atoi(line);
-	if (value < MINCHAR || value > MAXCHAR)
+	if (value < MINCHARS || value > MAXCHARS)
 	{
-		printf("Range is %d to %d\n", MINCHAR, MAXCHAR);
+		printf("Range is %d to %d\n", MINCHARS, MAXCHARS);
 		return;
 	}
 
