@@ -10,8 +10,8 @@
 #define MAXCHARS 6
 
 #include <stdio.h>
-#include <stdlib.h>	// exit(), rand()
-#include <string.h>	// strcmp(), strcpy()
+#include <stdlib.h>	// exit(), rand(), malloc()
+#include <string.h>	// strcmp(), strcpy(), strlen()
 #include <time.h>	// time()
 #include <ctype.h>	// isupper(), ispunct(), isdigit()
 
@@ -33,4 +33,19 @@ void setPasswordSize();
 void setMinSpecial();
 void setMinNumeric();
 void setMinUppercase();
+void encrypt();
+
+typedef struct
+{
+	char title[MAXTITLE];
+	char id[MAXID];
+	char pw[MAXPW];
+	char misc[MAXMISC];
+} Entry;
+
+Entry *entries;
+
+int entryCount;
+char DBpassword[MAXPW];
+
 #endif

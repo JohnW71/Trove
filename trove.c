@@ -9,31 +9,24 @@
 	#include <windows.h>
 #endif
 
-struct entry
-{
-	char title[MAXTITLE];
-	char id[MAXID];
-	char pw[MAXPW];
-	char misc[MAXMISC];
-} *entries = NULL;
-
-int entryCount = 0;
 int generationSize = 12;
 int minSpecial = 0;
 int minNumeric = 0;
 int minUppercase = 0;
 
-char DBpassword[MAXPW];
 char heading[] = "    Title                ID                   Password             Misc";
 char iniFile[] = "trove.ini";
 char dbFile[] = "trove.db";
 
 int main()
 {
+	entryCount = 0;
+
 	readSettings();
 	readEntries();
+	encrypt();
 
-	int choice = -1;
+	int choice = 0; //TODO put this back! -1;
 	srand((unsigned int)time(NULL));
 
 	while (choice != 0)
