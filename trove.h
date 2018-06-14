@@ -8,6 +8,7 @@
 #define MINPW 6
 #define MINCHARS 0
 #define MAXCHARS 6
+#define MAXNAME 10
 
 #include <stdio.h>
 #include <stdlib.h>	// exit(), rand(), malloc()
@@ -25,7 +26,7 @@ void readEntries();
 void saveEntries();
 void generatePassword(char *);
 void setDBpassword();
-void removeDBpassword();
+// void removeDBpassword();
 void readSettings();
 void writeSettings();
 void updateSettings();
@@ -33,19 +34,28 @@ void setPasswordSize();
 void setMinSpecial();
 void setMinNumeric();
 void setMinUppercase();
-void encrypt();
+// void encrypt();
+// void write_default_file();
+void writeFile();
+void readFile();
+void encrypt_cbc(char *, char *);
+void decrypt_cbc(char *, char *);
+void addPadding(char *);
+void loadEncryptedEntries();
+// void listEncrypted();
+void updateBuffer();
 
-typedef struct
+struct Entry
 {
 	char title[MAXTITLE];
 	char id[MAXID];
 	char pw[MAXPW];
 	char misc[MAXMISC];
-} Entry;
-
-Entry *entries;
+} * entries; //, *ee;
 
 int entryCount;
+// int eeCount;
 char DBpassword[MAXPW];
+char dbFile[MAXNAME];
 
 #endif
