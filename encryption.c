@@ -1,81 +1,111 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+//TODO this breaks when data rows are not the same length
+//TODO is it a padding issue?
+
 #include "trove.h"
 #include "aes.h"
 
 #define IV_SIZE 16
 #define KEY_SIZE 32
 
-void write_default_file();
-void write_file();
-void read_file();
-void encrypt_cbc(char *, char *, char *);
-void decrypt_cbc(char *, char *, char *);
-void add_padding(char *);
-void load_encrypted_entries();
-
 char *buffer;
 char *paddedBuffer;
-int bufferSize;
-int paddedSize;
+int bufferSize = 0;
+int paddedSize = 0;
+uint8_t iv[IV_SIZE] = "498135354687683";
+uint8_t pw[KEY_SIZE] = "passwordpasswordpasswordpassword";
 
-void encrypt()
+void readEntries()
 {
-	uint8_t iv[IV_SIZE] = "4981353546876832";
-	uint8_t pw[KEY_SIZE] = "passwordpasswordpasswordpassword";
+	puts("readEntries()");
+	// char line[MAXLINE];
+	// char data[MAXLINE];
+	// char password[MAXLINE];
 
-	write_default_file();
+	// check for password
+	// if (fgets(line, MAXPW, f) != NULL)
+	// {
+		// // find and convert CRLF endings
+		// char *p = strrchr(line, '\r');
+		// if (p && p[1] == '\n' && p[2] == '\0') {
+		// 	p[0] = '\n';
+		// 	p[1] = '\0';
+		// }
 
-	read_file();
-	printf("\nDefault data (%zd):\n%s\n", strlen(buffer), buffer);
+		// if ((strcmp(line, ".\n") != 0) &&
+		// 	(strcmp(line, DBpassword) != 0)) // DB has a password
+		// {
+			// printf("Enter password: ");
 
-	add_padding(buffer);
-	printf("PaddedBuffer (%d):\n%s\n", paddedSize, paddedBuffer);
+			// if (fgets(DBpassword, MAXPW, stdin) == NULL)
+			// {
+			// 	puts("Null!");
+			// 	// fclose(f);
+			// 	exit(1);
+			// }
 
-	encrypt_cbc(paddedBuffer, pw, iv);
-	write_file();
-//////////////////////////
-	read_file();
-	decrypt_cbc(buffer, pw, iv);
+			// if (DBpassword[0] == '\n')
+			// {
+			// 	puts("Blank line entered!");
+			// 	// fclose(f);
+			// 	exit(1);
+			// }
+
+			// if (strcmp(password, line) != 0)
+			// {
+			// 	puts("Incorrect password entered!");
+			// 	fclose(f);
+			// 	exit(1);
+			// }
+
+			// strcpy(DBpassword, password);
+	// 	}
+	// }
+
+	// read encrypted data into buffer
+	readFile();
+
+	//TODO don't ask if password was already entered
+	if (bufferSize == 0)
+		printf("\nDatabase empty or missing!\nEnter new password: ");
+	else
+		printf("\nEnter password: ");
+
+	if (fgets(DBpassword, MAXPW, stdin) == NULL)
+	{
+		puts("Null!");
+		exit(1);
+	}
+	if (DBpassword[0] == '\n')
+	{
+		puts("Blank line entered!");
+		exit(1);
+	}
+
+	// printf("pw length: %zd\n", strlen(DBpassword));
+	DBpassword[strlen(DBpassword) - 1] = '\0';
+
+	if (bufferSize == 0)
+		return;
+
+	// decrypt buffer into buffer
+	decrypt_cbc(buffer, iv);
 	printf("Decrypted data (%zd):\n%s\n", strlen(buffer), buffer);
 
-	load_encrypted_entries();
+	// load data from buffer and split into entries
+	loadEncryptedEntries();
 }
 
-void write_default_file()
+void readFile()
 {
+	puts("readFile()");
+
 	FILE *f;
-	f = fopen("file.bin", "wb");
-
-	if (strlen(DBpassword) > 0)
-		fprintf(f, "%s", DBpassword);
-	else
-		fprintf(f, ".\n");
-
-	for (int i = 0; i < entryCount; ++i)
-		if (entries[i].title[0] != '\0') // skip deleted entries
-			fprintf(f, "%s,%s,%s,%s\n", entries[i].title,
-										entries[i].id,
-										entries[i].pw,
-										entries[i].misc);
-	fclose(f);
-}
-
-void write_file()
-{
-	FILE *f;
-	f = fopen("file.bin", "wb");
-	fwrite(paddedBuffer, paddedSize, 1, f);
-	fclose(f);
-}
-
-void read_file()
-{
-	FILE *f;
-	f = fopen("file.bin", "rb");
+	f = fopen(dbFile, "rb");
 	if (f == NULL)
 	{
-		puts("File error");
+		puts("File open error/database not found");
 		return;
 	}
 
@@ -101,11 +131,115 @@ void read_file()
 	}
 
 	buffer[fileSize] = '\0';
+printf("bufferSize:%d\n", bufferSize);
 	fclose(f);
 }
 
-void add_padding(char *text)
+//TODO handle failure or wrong password here
+void decrypt_cbc(char *text, char *init)
 {
+	puts("decrypt_cbc()");
+printf("pw: %s\ninit: %s\n", DBpassword, init);
+	struct AES_ctx ctx;
+	AES_init_ctx_iv(&ctx, pw, init);
+	AES_CBC_decrypt_buffer(&ctx, text, bufferSize);
+}
+
+//TODO does this need to get the password any more?
+void loadEncryptedEntries()
+{
+	puts("loadEncryptedEntries()");
+
+	// int firstRow = 1;
+	// char *password;
+	char *tokens;
+
+	tokens = strtok(buffer, ",\n");
+
+	puts("Loaded tokens:");
+
+	while(tokens != NULL)
+	{
+		// if (firstRow)
+		// {
+		// 	password = tokens;
+		// 	printf("Password: %s", password);
+		// 	tokens = strtok(NULL, ",\n");
+		// 	firstRow = 0;
+		// }
+
+		entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
+
+		strcpy(entries[entryCount].title, tokens);
+		printf("\ntitle: %s, ", tokens);
+		tokens = strtok(NULL, ",\n");
+
+		strcpy(entries[entryCount].id, tokens);
+		printf("id: %s, ", tokens);
+		tokens = strtok(NULL, ",\n");
+
+		strcpy(entries[entryCount].pw, tokens);
+		printf("pw: %s, ", tokens);
+		tokens = strtok(NULL, ",\n");
+
+		strcpy(entries[entryCount].misc, tokens);
+		printf("misc: %s, ", tokens);
+		tokens = strtok(NULL, ",\n");
+
+		++entryCount;
+	}
+
+	printf("\nentryCount: %d\n", entryCount);
+}
+
+void saveEntries()
+{
+	puts("saveEntries()");
+
+	// replace buffer with current entries list
+	updateBuffer();
+
+	// add padding to buffer into paddedBuffer
+	addPadding(buffer);
+	printf("PaddedBuffer (%d):\n%s\n", paddedSize, paddedBuffer);
+
+	// encrypt paddedBuffer
+	encrypt_cbc(paddedBuffer, iv);
+
+	// save paddedBuffer to dbFile
+	writeFile();
+}
+
+void updateBuffer()
+{
+	puts("updateBuffer()");
+
+	int maxRowSize = MAXTITLE + MAXID + MAXPW + MAXMISC;
+	buffer = NULL;
+	buffer = (char *)malloc(entryCount * maxRowSize);
+	char *row = (char *)malloc(sizeof(char) * maxRowSize);
+
+	// if (strlen(DBpassword) > 0)
+		// strcpy(buffer, DBpassword);
+	// else
+	// 	strcpy(buffer, ".\n");
+
+	for (int i = 0; i < entryCount; ++i)
+	{
+		snprintf(row, maxRowSize, "%s,%s,%s,%s\n", entries[i].title,
+													entries[i].id,
+													entries[i].pw,
+													entries[i].misc);
+		strcat(buffer, row);
+	}
+
+	printf("\nNew buffer (%zd):\n%s\n", strlen(buffer), buffer);
+}
+
+void addPadding(char *text)
+{
+	puts("addPadding()");
+
 	int currentSize = (int)strlen(text);
 	paddedSize = currentSize + (16 - (currentSize % 16));
 
@@ -117,61 +251,105 @@ void add_padding(char *text)
 		paddedBuffer[i] = '\0';
 }
 
-void encrypt_cbc(char *text, char *pw, char *init)
+//TODO handle failure here
+void encrypt_cbc(char *text, char *init)
 {
+	puts("encrypt_cbc()");
+printf("pw: %s\ninit: %s\n", DBpassword, init);
+
 	struct AES_ctx ctx;
 	AES_init_ctx_iv(&ctx, pw, init);
 	AES_CBC_encrypt_buffer(&ctx, text, paddedSize);
 }
 
-void decrypt_cbc(char *text, char *pw, char *init)
+void writeFile()
 {
-	struct AES_ctx ctx;
-	AES_init_ctx_iv(&ctx, pw, init);
-	AES_CBC_decrypt_buffer(&ctx, text, bufferSize);
+	puts("writeFile()");
+
+	FILE *f;
+	f = fopen(dbFile, "wb");
+	fwrite(paddedBuffer, paddedSize, 1, f);
+	fclose(f);
 }
 
-void load_encrypted_entries()
-{
-	Entry *ee = NULL;
-	int eeCount = 0;
-	int firstRow = 1;
-	char *password;
-	char *tokens;
+// void encrypt()
+// {
+// 	uint8_t iv[IV_SIZE] = "4981353546876832";
+// 	uint8_t pw[KEY_SIZE] = "passwordpasswordpasswordpassword";
 
-	tokens = strtok(buffer, ",\n");
+//////////////////////////
+// create encrypted data for testing
 
-	puts("Loaded tokens:");
+	// write_default_file();
 
-	while(tokens != NULL)
-	{
-		if (firstRow)
-		{
-			password = tokens;
-			printf("Password: %s", password);
-			tokens = strtok(NULL, ",\n");
-			firstRow = 0;
-		}
+	// read_file();
+	// printf("\nDefault data (%zd):\n%s\n", strlen(buffer), buffer);
 
-		++eeCount;
-		ee = realloc(ee, (eeCount + 1) * sizeof(*ee));
+	// add_padding(buffer);
+	// printf("PaddedBuffer (%d):\n%s\n", paddedSize, paddedBuffer);
 
-		strcpy(ee[eeCount].title, tokens);
-		printf("\ntitle: %s, ", tokens);
-		tokens = strtok(NULL, ",\n");
+	// encrypt_cbc(paddedBuffer, pw, iv);
+	// write_file();
 
-		strcpy(ee[eeCount].id, tokens);
-		printf("id: %s, ", tokens);
-		tokens = strtok(NULL, ",\n");
+//////////////////////////
+// load data as if from program start
 
-		strcpy(ee[eeCount].pw, tokens);
-		printf("pw: %s, ", tokens);
-		tokens = strtok(NULL, ",\n");
+	// // read encrypted data into buffer
+	// read_file();
 
-		strcpy(ee[eeCount].misc, tokens);
-		printf("misc: %s, ", tokens);
-		tokens = strtok(NULL, ",\n");
-	}
+	// // decrypt buffer into buffer
+	// decrypt_cbc(buffer, pw, iv);
+	// printf("Decrypted data (%zd):\n%s\n", strlen(buffer), buffer);
 
-	printf("\neeCount: %d\n", eeCount);
-}
+	// // load data from buffer and split into entries
+	// load_encrypted_entries();
+
+	// // display full entries list
+	// list_encrypted();
+
+//////////////////////////
+// save data to encrypted db
+
+	// // replace buffer with current entries list
+	// update_buffer();
+
+	// // add padding to buffer into paddedBuffer
+	// add_padding(buffer);
+	// printf("PaddedBuffer (%d):\n%s\n", paddedSize, paddedBuffer);
+
+	// // encrypt paddedBuffer
+	// encrypt_cbc(paddedBuffer, pw, iv);
+
+	// // save paddedBuffer to file.db
+	// write_file();
+// }
+
+// void write_default_file()
+// {
+// 	FILE *f;
+// 	f = fopen("file.bin", "wb");
+
+// 	if (strlen(DBpassword) > 0)
+// 		fprintf(f, "%s", DBpassword);
+// 	else
+// 		fprintf(f, ".\n");
+
+// 	for (int i = 0; i < entryCount; ++i)
+// 		if (entries[i].title[0] != '\0') // skip deleted entries
+// 			fprintf(f, "%s,%s,%s,%s\n", entries[i].title,
+// 										entries[i].id,
+// 										entries[i].pw,
+// 										entries[i].misc);
+// 	fclose(f);
+// }
+
+// void list_encrypted()
+// {
+// 	puts("\nList encrypted entries loaded in:");
+// 	puts("\n    Title                ID                   Password             Misc");
+// 	for (int i = 0; i < eeCount; ++i)
+// 		printf("%2d: %-*s%-*s%-*s%s\n", i + 1,	MAXTITLE, ee[i].title,
+// 												MAXID, ee[i].id,
+// 												MAXPW, ee[i].pw,
+// 												ee[i].misc);
+// }
