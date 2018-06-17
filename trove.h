@@ -17,6 +17,7 @@
 #include <ctype.h>	// isupper(), ispunct(), isdigit()
 #include <stdint.h>	// uint8_t
 
+void fake_add();
 void list();
 void add();
 void find();
@@ -52,7 +53,7 @@ struct Entry
 	char id[MAXID];
 	char pw[MAXPW];
 	char misc[MAXMISC];
-} * entries;
+} *entries;
 
 int entryCount;
 uint8_t DBpassword[32];

@@ -1,6 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO deleting not working
 //TODO need to check for password and what happens if its wrong?
 //TODO encryption
 //TODO GUI
@@ -62,7 +61,7 @@ int main()
 					list();
 				break;
 			case 2:
-				add();
+				fake_add();
 				break;
 			case 3:
 				if (entryCount > 0)
@@ -821,4 +820,25 @@ void setMinUppercase()
 
 	minUppercase = value;
 	writeSettings();
+}
+
+void fake_add()
+{
+	char title[20];
+	char id[20];
+	char pw[20];
+	char misc[20];
+
+	sprintf(title, "title%d", entryCount+1);
+	sprintf(id, "id%d", entryCount+1);
+	sprintf(pw, "pw%d", entryCount+1);
+	sprintf(misc, "misc%d", entryCount+1);
+
+	entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
+	strcpy(entries[entryCount].title, title);
+	strcpy(entries[entryCount].id, id);
+	strcpy(entries[entryCount].pw, pw);
+	strcpy(entries[entryCount].misc, misc);
+	++entryCount;
+	saveEntries();
 }
