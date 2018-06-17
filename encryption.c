@@ -13,17 +13,15 @@ uint8_t iv[IV_SIZE] = "498135354687683";
 
 void readEntries()
 {
-	puts("readEntries()");
-
 	// read encrypted data into buffer
 	readFile();
 
 	if (strlen(DBpassword) == 0)
 	{
 		if (bufferSize == 0)
-			printf("\nDatabase empty or missing!\nEnter new password: ");
+			printf("\nDatabase is missing!\n\nEnter new password: ");
 		else
-			printf("\nEnter password: ");
+			printf("\nEnter database password: ");
 
 		if (fgets(DBpassword, MAXPW, stdin) == NULL)
 		{
@@ -32,7 +30,7 @@ void readEntries()
 		}
 		if (DBpassword[0] == '\n')
 		{
-			puts("Blank line entered!");
+			puts("Blank password entered!");
 			exit(1);
 		}
 
@@ -51,15 +49,10 @@ void readEntries()
 
 void readFile()
 {
-	puts("readFile()");
-
 	FILE *f;
 	f = fopen(dbFile, "rb");
 	if (f == NULL)
-	{
-		puts("File open error/database not found");
 		return;
-	}
 
 	fseek(f, 0, SEEK_END);
 	long fileSize = ftell(f);
@@ -72,14 +65,14 @@ void readFile()
 
 	if (buffer == NULL)
 	{
-		puts("Memory error");
+		puts("Memory allocation error for buffer");
 		return;
 	}
 
 	size_t result = fread(buffer, 1, fileSize, f);
 	if (result != fileSize)
 	{
-		puts("Reading error");
+		puts("Error reading database into buffer");
 		return;
 	}
 
@@ -89,8 +82,6 @@ void readFile()
 
 void decrypt_cbc(char *text, char *init)
 {
-	puts("decrypt_cbc()");
-
 	struct AES_ctx ctx;
 	AES_init_ctx_iv(&ctx, DBpassword, init);
 	AES_CBC_decrypt_buffer(&ctx, text, bufferSize);
@@ -98,8 +89,6 @@ void decrypt_cbc(char *text, char *init)
 
 void loadEncryptedEntries()
 {
-	puts("loadEncryptedEntries()");
-
 	entryCount = 0;
 	entries = NULL;
 	char *tokens;
@@ -110,7 +99,7 @@ void loadEncryptedEntries()
 	header = tokens;
 	if (strcmp(header, "Trove") != 0)
 	{
-		puts("\nWrong password!");
+		puts("\nWrong password...");
 		exit(1);
 	}
 
@@ -120,37 +109,28 @@ void loadEncryptedEntries()
 		entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
 
 		strcpy(entries[entryCount].title, tokens);
-		// printf("\ntitle: %s, ", tokens);
 		tokens = strtok(NULL, ",\n");
 
 		strcpy(entries[entryCount].id, tokens);
-		// printf("id: %s, ", tokens);
 		tokens = strtok(NULL, ",\n");
 
 		strcpy(entries[entryCount].pw, tokens);
-		// printf("pw: %s, ", tokens);
 		tokens = strtok(NULL, ",\n");
 
 		strcpy(entries[entryCount].misc, tokens);
-		// printf("misc: %s ", tokens);
 		tokens = strtok(NULL, ",\n");
 
 		++entryCount;
 	}
-
-	// printf("\nentryCount: %d\n", entryCount);
 }
 
 void saveEntries()
 {
-	puts("saveEntries()");
-
 	// replace buffer with current entries list
 	updateBuffer();
 
 	// add padding to buffer into paddedBuffer
 	addPadding(buffer);
-	// printf("PaddedBuffer (%d):\n%s\n", paddedSize, paddedBuffer);
 
 	// encrypt paddedBuffer
 	encrypt_cbc(paddedBuffer, iv);
@@ -161,8 +141,6 @@ void saveEntries()
 
 void updateBuffer()
 {
-	puts("updateBuffer()");
-
 	int maxRowSize = MAXTITLE + MAXID + MAXPW + MAXMISC;
 	buffer = NULL;
 	buffer = (char *)malloc(entryCount * maxRowSize);
@@ -183,14 +161,10 @@ void updateBuffer()
 			strcat(buffer, row);
 		}
 	}
-
-	// printf("\nNew buffer (%zd):\n%s\n", strlen(buffer), buffer);
 }
 
 void addPadding(char *text)
 {
-	puts("addPadding()");
-
 	int currentSize = (int)strlen(text);
 	paddedSize = currentSize + (16 - (currentSize % 16));
 
@@ -205,8 +179,6 @@ void addPadding(char *text)
 
 void encrypt_cbc(char *text, char *init)
 {
-	puts("encrypt_cbc()");
-
 	struct AES_ctx ctx;
 	AES_init_ctx_iv(&ctx, DBpassword, init);
 	AES_CBC_encrypt_buffer(&ctx, text, paddedSize);
@@ -214,8 +186,6 @@ void encrypt_cbc(char *text, char *init)
 
 void writeFile()
 {
-	puts("writeFile()");
-
 	FILE *f;
 	f = fopen(dbFile, "wb");
 	fwrite(paddedBuffer, paddedSize, 1, f);
