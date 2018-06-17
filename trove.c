@@ -1,7 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO need to check for password and what happens if its wrong?
-//TODO encryption
 //TODO GUI
 
 #include "trove.h"
@@ -61,7 +59,7 @@ int main()
 					list();
 				break;
 			case 2:
-				fake_add();
+				add();
 				break;
 			case 3:
 				if (entryCount > 0)
@@ -402,124 +400,6 @@ void clipboard()
 #endif
 }
 
-// void readEntries()
-// {
-// 	FILE *f = fopen(dbFile, "r");
-// 	if (f == NULL)
-// 		return;
-
-// 	char line[MAXLINE];
-// 	char data[MAXLINE];
-// 	char password[MAXLINE];
-// 	entryCount = 0;
-// 	entries = NULL;
-
-// 	// check for password
-// 	if (fgets(line, MAXPW, f) != NULL)
-// 	{
-// 		// find and convert CRLF endings
-// 		char *p = strrchr(line, '\r');
-// 		if (p && p[1] == '\n' && p[2] == '\0') {
-// 			p[0] = '\n';
-// 			p[1] = '\0';
-// 		}
-
-// 		if ((strcmp(line, ".\n") != 0) &&
-// 			(strcmp(line, DBpassword) != 0)) // DB has a password
-// 		{
-// 			printf("Enter password: ");
-
-// 			if (fgets(password, MAXPW, stdin) == NULL)
-// 			{
-// 				puts("Null!");
-// 				fclose(f);
-// 				exit(1);
-// 			}
-
-// 			if (password[0] == '\n')
-// 			{
-// 				puts("Blank line entered!");
-// 				fclose(f);
-// 				exit(1);
-// 			}
-
-// 			if (strcmp(password, line) != 0)
-// 			{
-// 				puts("Incorrect password entered!");
-// 				fclose(f);
-// 				exit(1);
-// 			}
-
-// 			strcpy(DBpassword, line);
-// 		}
-// 	}
-
-// 	while (!feof(f))
-// 	{
-// 		if (fgets(line, MAXLINE, f) != NULL)
-// 		{
-// 			entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
-// 			int field = 0;
-// 			int line_ctr = 0;
-// 			int data_ctr = 0;
-
-// 			while (line[line_ctr] != '\0')
-// 			{
-// 				if (line[line_ctr] == ',' || line[line_ctr] == '\n')
-// 				{
-// 					++line_ctr;
-// 					data[data_ctr] = '\0';
-// 					data_ctr = 0;
-
-// 					switch (field)
-// 					{
-// 					case 0:
-// 						strcpy(entries[entryCount].title, data);
-// 						break;
-// 					case 1:
-// 						strcpy(entries[entryCount].id, data);
-// 						break;
-// 					case 2:
-// 						strcpy(entries[entryCount].pw, data);
-// 						break;
-// 					case 3:
-// 						strcpy(entries[entryCount].misc, data);
-// 						break;
-// 					}
-// 					++field;
-// 					continue;
-// 				}
-// 				data[data_ctr++] = line[line_ctr++];
-// 			}
-// 			++entryCount;
-// 		}
-// 	}
-// 	fclose(f);
-// }
-
-// void saveEntries()
-// {
-// 	FILE *f = fopen(dbFile, "w");
-// 	if (f == NULL)
-// 	{
-// 		puts("Error saving entries!");
-// 		exit(1);
-// 	}
-
-// 	if (strlen(DBpassword) > 0)
-// 		fprintf(f, "%s", DBpassword);
-// 	else
-// 		fprintf(f, ".\n");
-
-// 	for (int i = 0; i < entryCount; ++i)
-// 		if (entries[i].title[0] != '\0') // skip deleted entries
-// 			fprintf(f, "%s,%s,%s,%s\n", entries[i].title,
-// 					entries[i].id,
-// 					entries[i].pw,
-// 					entries[i].misc);
-// 	fclose(f);
-// }
-
 // random chars from 33 to 126, not 44 (commas)
 void generatePassword(char *buf)
 {
@@ -573,14 +453,6 @@ void setDBpassword()
 	saveEntries();
 	readEntries();
 }
-
-// void removeDBpassword()
-// {
-// 	strcpy(DBpassword, ".\n");
-// 	saveEntries();
-// 	readEntries();
-// 	puts("Password removed");
-// }
 
 void readSettings()
 {
@@ -653,11 +525,10 @@ void updateSettings()
 		puts("\nChange Settings");
 		puts("---------------");
 		printf("1 - Set password generation size (%d)\n", generationSize);
-		puts("2 - Set database password");
-		// puts("3 - Remove database password");
-		printf("4 - Set minimum special characters (%d)\n", minSpecial);
-		printf("5 - Set minimum numeric characters (%d)\n", minNumeric);
-		printf("6 - Set minimum uppercase characters (%d)\n", minUppercase);
+		puts("2 - Change database password");
+		printf("3 - Set minimum special characters (%d)\n", minSpecial);
+		printf("4 - Set minimum numeric characters (%d)\n", minNumeric);
+		printf("5 - Set minimum uppercase characters (%d)\n", minUppercase);
 		puts("0 - Back");
 		printf("\n-> ");
 
@@ -678,16 +549,13 @@ void updateSettings()
 			case 2:
 				setDBpassword();
 				break;
-			// case 3:
-			// 	removeDBpassword();
-			// 	break;
-			case 4:
+			case 3:
 				setMinSpecial();
 				break;
-			case 5:
+			case 4:
 				setMinNumeric();
 				break;
-			case 6:
+			case 5:
 				setMinUppercase();
 				break;
 			case 0:
@@ -822,23 +690,23 @@ void setMinUppercase()
 	writeSettings();
 }
 
-void fake_add()
-{
-	char title[20];
-	char id[20];
-	char pw[20];
-	char misc[20];
+// void fake_add()
+// {
+// 	char title[20];
+// 	char id[20];
+// 	char pw[20];
+// 	char misc[20];
 
-	sprintf(title, "title%d", entryCount+1);
-	sprintf(id, "id%d", entryCount+1);
-	sprintf(pw, "pw%d", entryCount+1);
-	sprintf(misc, "misc%d", entryCount+1);
+// 	sprintf(title, "title%d", entryCount+1);
+// 	sprintf(id, "id%d", entryCount+1);
+// 	sprintf(pw, "pw%d", entryCount+1);
+// 	sprintf(misc, "misc%d", entryCount+1);
 
-	entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
-	strcpy(entries[entryCount].title, title);
-	strcpy(entries[entryCount].id, id);
-	strcpy(entries[entryCount].pw, pw);
-	strcpy(entries[entryCount].misc, misc);
-	++entryCount;
-	saveEntries();
-}
+// 	entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
+// 	strcpy(entries[entryCount].title, title);
+// 	strcpy(entries[entryCount].id, id);
+// 	strcpy(entries[entryCount].pw, pw);
+// 	strcpy(entries[entryCount].misc, misc);
+// 	++entryCount;
+// 	saveEntries();
+// }
