@@ -14,6 +14,7 @@ uint8_t iv[IV_SIZE] = "498135354687683";
 void readEntries()
 {
 	puts("readEntries()");
+
 	// read encrypted data into buffer
 	readFile();
 
@@ -43,7 +44,6 @@ void readEntries()
 
 	// decrypt buffer into buffer
 	decrypt_cbc(buffer, iv);
-	printf("Decrypted data (%zd):\n%s\n", strlen(buffer), buffer);
 
 	// load data from buffer and split into entries
 	loadEncryptedEntries();
@@ -84,15 +84,13 @@ void readFile()
 	}
 
 	buffer[fileSize] = '\0';
-printf("bufferSize:%d\n", bufferSize);
 	fclose(f);
 }
 
-//TODO handle failure or wrong password here
 void decrypt_cbc(char *text, char *init)
 {
 	puts("decrypt_cbc()");
-printf("pw: %s\ninit: %s\n", DBpassword, init);
+
 	struct AES_ctx ctx;
 	AES_init_ctx_iv(&ctx, DBpassword, init);
 	AES_CBC_decrypt_buffer(&ctx, text, bufferSize);
@@ -107,32 +105,40 @@ void loadEncryptedEntries()
 	char *tokens;
 	tokens = strtok(buffer, ",\n");
 
-	puts("Loaded tokens:");
+	// test for header "Trove" to confirm password was valid
+	char *header;
+	header = tokens;
+	if (strcmp(header, "Trove") != 0)
+	{
+		puts("\nWrong password!");
+		exit(1);
+	}
 
+	tokens = strtok(NULL, ",\n");
 	while(tokens != NULL)
 	{
 		entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
 
 		strcpy(entries[entryCount].title, tokens);
-		printf("\ntitle: %s, ", tokens);
+		// printf("\ntitle: %s, ", tokens);
 		tokens = strtok(NULL, ",\n");
 
 		strcpy(entries[entryCount].id, tokens);
-		printf("id: %s, ", tokens);
+		// printf("id: %s, ", tokens);
 		tokens = strtok(NULL, ",\n");
 
 		strcpy(entries[entryCount].pw, tokens);
-		printf("pw: %s, ", tokens);
+		// printf("pw: %s, ", tokens);
 		tokens = strtok(NULL, ",\n");
 
 		strcpy(entries[entryCount].misc, tokens);
-		printf("misc: %s, ", tokens);
+		// printf("misc: %s ", tokens);
 		tokens = strtok(NULL, ",\n");
 
 		++entryCount;
 	}
 
-	printf("\nentryCount: %d\n", entryCount);
+	// printf("\nentryCount: %d\n", entryCount);
 }
 
 void saveEntries()
@@ -144,7 +150,7 @@ void saveEntries()
 
 	// add padding to buffer into paddedBuffer
 	addPadding(buffer);
-	printf("PaddedBuffer (%d):\n%s\n", paddedSize, paddedBuffer);
+	// printf("PaddedBuffer (%d):\n%s\n", paddedSize, paddedBuffer);
 
 	// encrypt paddedBuffer
 	encrypt_cbc(paddedBuffer, iv);
@@ -164,6 +170,8 @@ void updateBuffer()
 	char *row = (char *)malloc(sizeof(char) * maxRowSize);
 	row[0] = 0;
 
+	strcat(buffer, "Trove\n");
+
 	for (int i = 0; i < entryCount; ++i)
 	{
 		if (entries[i].title[0] != '\0')
@@ -176,7 +184,7 @@ void updateBuffer()
 		}
 	}
 
-	printf("\nNew buffer (%zd):\n%s\n", strlen(buffer), buffer);
+	// printf("\nNew buffer (%zd):\n%s\n", strlen(buffer), buffer);
 }
 
 void addPadding(char *text)
@@ -195,11 +203,9 @@ void addPadding(char *text)
 		paddedBuffer[i] = '\0';
 }
 
-//TODO handle failure here
 void encrypt_cbc(char *text, char *init)
 {
 	puts("encrypt_cbc()");
-// printf("pw: %s\ninit: %s\n", DBpassword, init);
 
 	struct AES_ctx ctx;
 	AES_init_ctx_iv(&ctx, DBpassword, init);

@@ -9,6 +9,7 @@
 #define MINCHARS 0
 #define MAXCHARS 6
 #define MAXNAME 10
+#define KEYSIZE 32
 
 #include <stdio.h>
 #include <stdlib.h>	// exit(), rand(), malloc()
@@ -17,7 +18,6 @@
 #include <ctype.h>	// isupper(), ispunct(), isdigit()
 #include <stdint.h>	// uint8_t
 
-void fake_add();
 void list();
 void add();
 void find();
@@ -28,7 +28,6 @@ void readEntries();
 void saveEntries();
 void generatePassword(char *);
 void setDBpassword();
-// void removeDBpassword();
 void readSettings();
 void writeSettings();
 void updateSettings();
@@ -36,15 +35,12 @@ void setPasswordSize();
 void setMinSpecial();
 void setMinNumeric();
 void setMinUppercase();
-// void encrypt();
-// void write_default_file();
 void writeFile();
 void readFile();
 void encrypt_cbc(char *, char *);
 void decrypt_cbc(char *, char *);
 void addPadding(char *);
 void loadEncryptedEntries();
-// void listEncrypted();
 void updateBuffer();
 
 struct Entry
@@ -56,7 +52,7 @@ struct Entry
 } *entries;
 
 int entryCount;
-uint8_t DBpassword[32];
+uint8_t DBpassword[KEYSIZE];
 char dbFile[MAXNAME];
 
 #endif
