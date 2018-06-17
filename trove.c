@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+//TODO deleting not working
 //TODO need to check for password and what happens if its wrong?
 //TODO encryption
 //TODO GUI
@@ -17,7 +18,6 @@ int minUppercase = 0;
 
 char heading[] = "    Title                ID                   Password             Misc";
 char iniFile[] = "trove.ini";
-// char dbFile[] = "trove.db";
 
 int main()
 {
@@ -26,7 +26,6 @@ int main()
 
 	readSettings();
 	readEntries();
-	// encrypt();
 
 	int choice = -1;
 	srand((unsigned int)time(NULL));
