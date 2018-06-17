@@ -15,6 +15,7 @@
 #include <string.h>	// strcmp(), strcpy(), strlen()
 #include <time.h>	// time()
 #include <ctype.h>	// isupper(), ispunct(), isdigit()
+#include <stdint.h>	// uint8_t
 
 void list();
 void add();
@@ -51,11 +52,10 @@ struct Entry
 	char id[MAXID];
 	char pw[MAXPW];
 	char misc[MAXMISC];
-} * entries; //, *ee;
+} * entries;
 
 int entryCount;
-// int eeCount;
-char DBpassword[MAXPW];
+uint8_t DBpassword[32];
 char dbFile[MAXNAME];
 
 #endif
