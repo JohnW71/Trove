@@ -689,24 +689,3 @@ void setMinUppercase()
 	minUppercase = value;
 	writeSettings();
 }
-
-// void fake_add()
-// {
-// 	char title[20];
-// 	char id[20];
-// 	char pw[20];
-// 	char misc[20];
-
-// 	sprintf(title, "title%d", entryCount+1);
-// 	sprintf(id, "id%d", entryCount+1);
-// 	sprintf(pw, "pw%d", entryCount+1);
-// 	sprintf(misc, "misc%d", entryCount+1);
-
-// 	entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
-// 	strcpy(entries[entryCount].title, title);
-// 	strcpy(entries[entryCount].id, id);
-// 	strcpy(entries[entryCount].pw, pw);
-// 	strcpy(entries[entryCount].misc, misc);
-// 	++entryCount;
-// 	saveEntries();
-// }
