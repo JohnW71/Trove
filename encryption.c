@@ -4,7 +4,6 @@
 #include "aes.h"
 
 #define IV_SIZE 16
-// #define KEY_SIZE 32
 
 char *buffer;
 char *paddedBuffer;
@@ -19,23 +18,25 @@ void readEntries()
 	readFile();
 
 	if (strlen(DBpassword) == 0)
+	{
 		if (bufferSize == 0)
 			printf("\nDatabase empty or missing!\nEnter new password: ");
 		else
 			printf("\nEnter password: ");
 
-	if (fgets(DBpassword, MAXPW, stdin) == NULL)
-	{
-		puts("Null!");
-		exit(1);
-	}
-	if (DBpassword[0] == '\n')
-	{
-		puts("Blank line entered!");
-		exit(1);
-	}
+		if (fgets(DBpassword, MAXPW, stdin) == NULL)
+		{
+			puts("Null!");
+			exit(1);
+		}
+		if (DBpassword[0] == '\n')
+		{
+			puts("Blank line entered!");
+			exit(1);
+		}
 
-	DBpassword[strlen(DBpassword) - 1] = '\0';
+		DBpassword[strlen(DBpassword) - 1] = '\0';
+	}
 
 	if (bufferSize == 0)
 		return;
@@ -97,11 +98,12 @@ printf("pw: %s\ninit: %s\n", DBpassword, init);
 	AES_CBC_decrypt_buffer(&ctx, text, bufferSize);
 }
 
-//TODO does this need to get the password any more?
 void loadEncryptedEntries()
 {
 	puts("loadEncryptedEntries()");
 
+	entryCount = 0;
+	entries = NULL;
 	char *tokens;
 	tokens = strtok(buffer, ",\n");
 
@@ -164,11 +166,14 @@ void updateBuffer()
 
 	for (int i = 0; i < entryCount; ++i)
 	{
-		snprintf(row, maxRowSize, "%s,%s,%s,%s\n", entries[i].title,
-													entries[i].id,
-													entries[i].pw,
-													entries[i].misc);
-		strcat(buffer, row);
+		if (entries[i].title[0] != '\0')
+		{
+			snprintf(row, maxRowSize, "%s,%s,%s,%s\n", entries[i].title,
+														entries[i].id,
+														entries[i].pw,
+														entries[i].misc);
+			strcat(buffer, row);
+		}
 	}
 
 	printf("\nNew buffer (%zd):\n%s\n", strlen(buffer), buffer);
