@@ -23,18 +23,11 @@ void readEntries()
 		else
 			printf("\nEnter database password: ");
 
-		if (fgets(DBpassword, MAXPW, stdin) == NULL)
-		{
-			puts("Null!");
-			exit(1);
-		}
-		if (DBpassword[0] == '\n')
-		{
-			puts("Blank password entered!");
-			exit(1);
-		}
-
-		DBpassword[strlen(DBpassword) - 1] = '\0';
+		#ifdef _WIN32
+			getPasswordWindows();
+		#else
+			getPasswordLinux();
+		#endif
 	}
 
 	if (bufferSize == 0)
@@ -99,9 +92,10 @@ void loadEncryptedEntries()
 	header = tokens;
 	if (strcmp(header, "Trove") != 0)
 	{
-		puts("\nWrong password...");
+		puts("\nWrong password...\n");
 		exit(1);
 	}
+	printf("\n");
 
 	tokens = strtok(NULL, ",\n");
 	while(tokens != NULL)
