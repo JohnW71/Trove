@@ -6,6 +6,9 @@
 
 #ifdef _WIN32
 	#include <windows.h>
+	#include <conio.h>
+#else
+	#include <termios.h>
 #endif
 
 int generationSize = 12;
@@ -29,7 +32,7 @@ int main()
 
 	while (choice != 0)
 	{
-		puts("\nTrove v0.6");
+		puts("\nTrove v0.7");
 		puts("----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -689,3 +692,74 @@ void setMinUppercase()
 	minUppercase = value;
 	writeSettings();
 }
+
+#ifdef _WIN32
+void getPasswordWindows()
+{
+	char c;
+	int i = -1;
+
+	do
+	{
+		++i;
+		c = _getch();
+
+		if (c != '\r')
+		{
+			printf("*");
+			DBpassword[i] = c;
+		}
+	}
+	while (c != '\r' && i < MAXPW);
+
+	DBpassword[i] = '\0';
+}
+#else
+void getPasswordLinux()
+{
+	struct termios termCurrent;
+	struct termios termNew;
+	char c;
+	int i = -1;
+
+	// store current terminal settings
+	if (tcgetattr(fileno(stdin), &termCurrent) != 0)
+	{
+		puts("Failed storing terminal attributes");
+		exit(1);
+	}
+
+	// modify new terminal attributes
+	termNew = termCurrent;
+	termNew.c_lflag &= ~ICANON;
+	termNew.c_lflag &= ~ECHO;
+
+	// set new terminal attributes
+	if (tcsetattr(fileno(stdin), TCSAFLUSH, &termNew) != 0)
+	{
+		puts("Failed setting terminal attributes");
+		exit(1);
+	}
+
+	// get password
+	do
+	{
+		++i;
+		c = getchar();
+
+		if (c != '\n')
+		{
+			printf("*");
+			DBpassword[i] = c;
+		}
+	}
+	while (c != '\n' && i < MAXPW);
+
+	// revert terminal attributes
+	if (tcsetattr(fileno(stdin), TCSAFLUSH, &termCurrent) != 0)
+	{
+		puts("Failed resetting terminal attributes");
+		exit(1);
+	}
+}
+#endif

@@ -42,6 +42,11 @@ void decrypt_cbc(char *, char *);
 void addPadding(char *);
 void loadEncryptedEntries();
 void updateBuffer();
+#ifdef _WIN32
+void getPasswordWindows();
+#else
+void getPasswordLinux();
+#endif
 
 struct Entry
 {
