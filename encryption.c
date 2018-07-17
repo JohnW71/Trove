@@ -10,28 +10,28 @@ char *paddedBuffer;
 int bufferSize = 0;
 int paddedSize = 0;
 uint8_t iv[IV_SIZE] = "498135354687683";
+bool noDatabase = false;
 
 void readEntries()
 {
-	// read encrypted data into buffer
+	// read encrypted data into buffer, if DB exists
 	readFile();
 
-	if (strlen(DBpassword) == 0)
+	if (noDatabase)
+		printf("\nNo database found...\n\nEnter new password: ");
+	else
+		printf("\nEnter database password: ");
+
+	getPassword();
+#ifdef _WIN32
+	puts("");
+#endif
+
+	if (noDatabase)
 	{
-		if (bufferSize == 0)
-			printf("\nDatabase is missing!\n\nEnter new password: ");
-		else
-			printf("\nEnter database password: ");
-
-		#ifdef _WIN32
-			getPasswordWindows();
-		#else
-			getPasswordLinux();
-		#endif
+		saveEntries();
+		readFile();
 	}
-
-	if (bufferSize == 0)
-		return;
 
 	// decrypt buffer into buffer
 	decrypt_cbc(buffer, iv);
@@ -45,7 +45,10 @@ void readFile()
 	FILE *f;
 	f = fopen(dbFile, "rb");
 	if (f == NULL)
+	{
+		noDatabase = true;
 		return;
+	}
 
 	fseek(f, 0, SEEK_END);
 	long fileSize = ftell(f);
@@ -92,10 +95,12 @@ void loadEncryptedEntries()
 	header = tokens;
 	if (strcmp(header, "Trove") != 0)
 	{
-		puts("\nWrong password...\n");
+		puts("\nWrong password...");
+#ifndef _WIN32
+		puts("");
+#endif
 		exit(1);
 	}
-	printf("\n");
 
 	tokens = strtok(NULL, ",\n");
 	while(tokens != NULL)
