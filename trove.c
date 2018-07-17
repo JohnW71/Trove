@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+//TODO test on Windows & Linux before checking in
+//TODO entering/changing password should be validated
 //TODO GUI
 
 #include "trove.h"
@@ -32,7 +34,7 @@ int main()
 
 	while (choice != 0)
 	{
-		puts("\nTrove v0.7");
+		puts("\nTrove v0.8");
 		puts("----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -53,8 +55,10 @@ int main()
 		if (line[1] != '\n' || (int)line[0] < 48 || (int)line[0] > 57)
 			continue;
 
-		printf("\n");
 		choice = (int)line[0] - 48;
+		if (choice != 0)
+			puts("");
+
 		switch (choice)
 		{
 			case 1:
@@ -74,7 +78,7 @@ int main()
 				break;
 			case 5:
 				if (entryCount > 0)
-					delete();
+					delEntry();
 				break;
 			case 6:
 				if (entryCount > 0)
@@ -85,6 +89,10 @@ int main()
 				break;
 		}
 	}
+
+#ifndef _WIN32
+	puts("");
+#endif
 	return 0;
 }
 
@@ -92,10 +100,11 @@ void list()
 {
 	puts(heading);
 	for (int i = 0; i < entryCount; ++i)
-		printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
-			   MAXID, entries[i].id,
-			   MAXPW, entries[i].pw,
-			   entries[i].misc);
+		if (entries[i].title[0] != '\0')
+			printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
+													MAXID, entries[i].id,
+													MAXPW, entries[i].pw,
+													entries[i].misc);
 }
 
 void add()
@@ -331,7 +340,7 @@ password of %d chars)\n: ", MAXPW - 1, generationSize);
 	saveEntries();
 }
 
-void delete()
+void delEntry()
 {
 	char line[MAXLINE];
 	printf("Enter # to delete: ");
@@ -355,7 +364,6 @@ void delete()
 
 	entries[choice - 1].title[0] = '\0';
 	saveEntries();
-	readEntries();
 }
 
 void clipboard()
@@ -403,7 +411,7 @@ void clipboard()
 #endif
 }
 
-// random chars from 33 to 126, not 44 (commas)
+// random chars from 33 to 126, except 44 (commas)
 void generatePassword(char *buf)
 {
 	int rn;
@@ -438,23 +446,6 @@ void generatePassword(char *buf)
 	} while (specialCount < minSpecial ||
 			numericCount < minNumeric ||
 			uppercaseCount < minUppercase);
-}
-
-void setDBpassword()
-{
-	printf("Enter password up to %d chars: ", MAXPW - 1);
-
-	if (fgets(DBpassword, MAXPW, stdin) == NULL)
-	{
-		puts("No line");
-		return;
-	}
-
-	if (DBpassword[0] == '\n')
-		return;
-
-	saveEntries();
-	readEntries();
 }
 
 void readSettings()
@@ -525,10 +516,10 @@ void updateSettings()
 
 	while (choice != 0)
 	{
-		puts("\nChange Settings");
+		puts("Change Settings");
 		puts("---------------");
-		printf("1 - Set password generation size (%d)\n", generationSize);
-		puts("2 - Change database password");
+		printf("1 - Change database password\n");
+		printf("2 - Set password generation size (%d)\n", generationSize);
 		printf("3 - Set minimum special characters (%d)\n", minSpecial);
 		printf("4 - Set minimum numeric characters (%d)\n", minNumeric);
 		printf("5 - Set minimum uppercase characters (%d)\n", minUppercase);
@@ -542,15 +533,17 @@ void updateSettings()
 		if (line[1] != '\n' || (int)line[0] < 48 || (int)line[0] > 57)
 			continue;
 
-		printf("\n");
 		choice = (int)line[0] - 48;
+		if (choice != 0)
+			puts("");
+
 		switch (choice)
 		{
 			case 1:
-				setPasswordSize();
+				setDBpassword();
 				break;
 			case 2:
-				setDBpassword();
+				setPasswordSize();
 				break;
 			case 3:
 				setMinSpecial();
@@ -564,8 +557,9 @@ void updateSettings()
 			case 0:
 				return;
 		}
-	}
 
+		puts("");
+	}
 }
 
 void setPasswordSize()
@@ -693,9 +687,31 @@ void setMinUppercase()
 	writeSettings();
 }
 
+void setDBpassword()
+{
+	printf("Enter new password up to %d chars, press enter for blank: ", KEYSIZE);
+	getPassword();
+	saveEntries();
+#ifdef _WIN32
+	puts("");
+#endif
+}
+
+void getPassword()
+{
+#ifdef _WIN32
+	getPasswordWindows();
+#else
+	getPasswordLinux();
+#endif
+}
+
 #ifdef _WIN32
 void getPasswordWindows()
 {
+	for (int i = 0; i < KEYSIZE; ++i)
+		DBpassword[i] = '\0';
+
 	char c;
 	int i = -1;
 
@@ -710,7 +726,7 @@ void getPasswordWindows()
 			DBpassword[i] = c;
 		}
 	}
-	while (c != '\r' && i < MAXPW);
+	while (c != '\r' && i < KEYSIZE);
 
 	DBpassword[i] = '\0';
 }
@@ -719,8 +735,6 @@ void getPasswordLinux()
 {
 	struct termios termCurrent;
 	struct termios termNew;
-	char c;
-	int i = -1;
 
 	// store current terminal settings
 	if (tcgetattr(fileno(stdin), &termCurrent) != 0)
@@ -741,7 +755,12 @@ void getPasswordLinux()
 		exit(1);
 	}
 
-	// get password
+	for (int i = 0; i < KEYSIZE; ++i)
+		DBpassword[i] = '\0';
+
+	char c;
+	int i = -1;
+
 	do
 	{
 		++i;
@@ -753,7 +772,9 @@ void getPasswordLinux()
 			DBpassword[i] = c;
 		}
 	}
-	while (c != '\n' && i < MAXPW);
+	while (c != '\n' && i < KEYSIZE);
+
+	DBpassword[i] = '\0';
 
 	// revert terminal attributes
 	if (tcsetattr(fileno(stdin), TCSAFLUSH, &termCurrent) != 0)
@@ -761,5 +782,6 @@ void getPasswordLinux()
 		puts("Failed resetting terminal attributes");
 		exit(1);
 	}
+	puts("");
 }
 #endif

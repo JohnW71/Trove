@@ -17,12 +17,13 @@
 #include <time.h>	// time()
 #include <ctype.h>	// isupper(), ispunct(), isdigit()
 #include <stdint.h>	// uint8_t
+#include <stdbool.h>
 
 void list();
 void add();
 void find();
 void edit();
-void delete();
+void delEntry();
 void clipboard();
 void readEntries();
 void saveEntries();
@@ -42,6 +43,7 @@ void decrypt_cbc(char *, char *);
 void addPadding(char *);
 void loadEncryptedEntries();
 void updateBuffer();
+void getPassword();
 #ifdef _WIN32
 void getPasswordWindows();
 #else
