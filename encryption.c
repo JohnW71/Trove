@@ -1,16 +1,19 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define IV_SIZE 16
 
 #include "trove.h"
 #include "aes.h"
 
-#define IV_SIZE 16
+extern int entryCount;
+extern uint8_t DBpassword[];
 
-char *buffer;
-char *paddedBuffer;
-int bufferSize = 0;
-int paddedSize = 0;
-uint8_t iv[IV_SIZE] = "498135354687683";
-bool noDatabase = false;
+static char dbFile[MAXNAME] = "trove.db";
+static char *buffer;
+static char *paddedBuffer;
+static int bufferSize = 0;
+static int paddedSize = 0;
+static uint8_t iv[IV_SIZE] = "498135354687683";
+static bool noDatabase = false;
 
 void readEntries()
 {
@@ -65,7 +68,7 @@ void readFile()
 		return;
 	}
 
-	size_t result = fread(buffer, 1, fileSize, f);
+	long result = fread(buffer, 1, fileSize, f);
 	if (result != fileSize)
 	{
 		puts("Error reading database into buffer");
@@ -76,7 +79,7 @@ void readFile()
 	fclose(f);
 }
 
-void decrypt_cbc(char *text, char *init)
+void decrypt_cbc(uint8_t *text, uint8_t *init)
 {
 	struct AES_ctx ctx;
 	AES_init_ctx_iv(&ctx, DBpassword, init);
@@ -176,7 +179,7 @@ void addPadding(char *text)
 		paddedBuffer[i] = '\0';
 }
 
-void encrypt_cbc(char *text, char *init)
+void encrypt_cbc(uint8_t *text, uint8_t *init)
 {
 	struct AES_ctx ctx;
 	AES_init_ctx_iv(&ctx, DBpassword, init);

@@ -1,6 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO test on Windows & Linux before checking in
 //TODO entering/changing password should be validated
 //TODO GUI
 
@@ -13,19 +12,18 @@
 	#include <termios.h>
 #endif
 
-int generationSize = 12;
-int minSpecial = 0;
-int minNumeric = 0;
-int minUppercase = 0;
+int entryCount = 0;
+uint8_t DBpassword[KEYSIZE];
 
-char heading[] = "    Title                ID                   Password             Misc";
-char iniFile[] = "trove.ini";
+static int generationSize = 12;
+static int minSpecial = 0;
+static int minNumeric = 0;
+static int minUppercase = 0;
+static char heading[] = "    Title                ID                   Password             Misc";
+static char iniFile[] = "trove.ini";
 
 int main()
 {
-	entryCount = 0;
-	strcpy(dbFile, "trove.db");
-
 	readSettings();
 	readEntries();
 

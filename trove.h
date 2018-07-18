@@ -1,5 +1,3 @@
-#ifndef TROVE_H
-#define TROVE_H
 #define MAXTITLE 21
 #define MAXMISC 51
 #define MAXLINE 80
@@ -38,8 +36,8 @@ void setMinNumeric();
 void setMinUppercase();
 void writeFile();
 void readFile();
-void encrypt_cbc(char *, char *);
-void decrypt_cbc(char *, char *);
+void encrypt_cbc(uint8_t *, uint8_t *);
+void decrypt_cbc(uint8_t *, uint8_t *);
 void addPadding(char *);
 void loadEncryptedEntries();
 void updateBuffer();
@@ -57,9 +55,3 @@ struct Entry
 	char pw[MAXPW];
 	char misc[MAXMISC];
 } *entries;
-
-int entryCount;
-uint8_t DBpassword[KEYSIZE];
-char dbFile[MAXNAME];
-
-#endif
