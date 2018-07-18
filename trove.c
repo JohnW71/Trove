@@ -1,6 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO entering/changing password should be validated
 //TODO GUI
 
 #include "trove.h"
@@ -32,7 +31,7 @@ int main()
 
 	while (choice != 0)
 	{
-		puts("\nTrove v0.8");
+		puts("\nTrove v0.9");
 		puts("----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -685,30 +684,50 @@ void setMinUppercase()
 	writeSettings();
 }
 
-void setDBpassword()
+bool setDBpassword()
 {
+	uint8_t verifyPassword1[KEYSIZE];
+	uint8_t verifyPassword2[KEYSIZE];
+
 	printf("Enter new password up to %d chars, press enter for blank: ", KEYSIZE);
-	getPassword();
+	getPassword(verifyPassword1);
+	printf("Enter same password again to confirm: ");
+	getPassword(verifyPassword2);
+
+	if (strcmp(verifyPassword1, verifyPassword2) != 0)
+	{
+		puts("\nPasswords do not match!");
+		return false;
+	}
+	puts("\nPassword set");
+
+	for (int i = 0; i < KEYSIZE; ++i)
+		DBpassword[i] = '\0';
+
+	strcpy(DBpassword, verifyPassword1);
 	saveEntries();
+
 #ifdef _WIN32
 	puts("");
 #endif
+
+	return true;
 }
 
-void getPassword()
+void getPassword(uint8_t *password)
 {
 #ifdef _WIN32
-	getPasswordWindows();
+	getPasswordWindows(password);
 #else
-	getPasswordLinux();
+	getPasswordLinux(password);
 #endif
 }
 
 #ifdef _WIN32
-void getPasswordWindows()
+void getPasswordWindows(uint8_t *password)
 {
-	for (int i = 0; i < KEYSIZE; ++i)
-		DBpassword[i] = '\0';
+	// for (int i = 0; i < KEYSIZE; ++i)
+	// 	password[i] = '\0';
 
 	char c;
 	int i = -1;
@@ -721,15 +740,15 @@ void getPasswordWindows()
 		if (c != '\r')
 		{
 			printf("*");
-			DBpassword[i] = c;
+			password[i] = c;
 		}
 	}
 	while (c != '\r' && i < KEYSIZE);
 
-	DBpassword[i] = '\0';
+	password[i] = '\0';
 }
 #else
-void getPasswordLinux()
+void getPasswordLinux(uint8_t *password)
 {
 	struct termios termCurrent;
 	struct termios termNew;
@@ -754,7 +773,7 @@ void getPasswordLinux()
 	}
 
 	for (int i = 0; i < KEYSIZE; ++i)
-		DBpassword[i] = '\0';
+		password[i] = '\0';
 
 	char c;
 	int i = -1;
@@ -767,12 +786,12 @@ void getPasswordLinux()
 		if (c != '\n')
 		{
 			printf("*");
-			DBpassword[i] = c;
+			password[i] = c;
 		}
 	}
 	while (c != '\n' && i < KEYSIZE);
 
-	DBpassword[i] = '\0';
+	password[i] = '\0';
 
 	// revert terminal attributes
 	if (tcsetattr(fileno(stdin), TCSAFLUSH, &termCurrent) != 0)

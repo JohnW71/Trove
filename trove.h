@@ -26,7 +26,7 @@ void clipboard();
 void readEntries();
 void saveEntries();
 void generatePassword(char *);
-void setDBpassword();
+bool setDBpassword();
 void readSettings();
 void writeSettings();
 void updateSettings();
@@ -41,11 +41,11 @@ void decrypt_cbc(uint8_t *, uint8_t *);
 void addPadding(char *);
 void loadEncryptedEntries();
 void updateBuffer();
-void getPassword();
+void getPassword(uint8_t *);
 #ifdef _WIN32
-void getPasswordWindows();
+void getPasswordWindows(uint8_t *);
 #else
-void getPasswordLinux();
+void getPasswordLinux(uint8_t *);
 #endif
 
 struct Entry

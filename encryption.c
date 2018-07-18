@@ -21,20 +21,27 @@ void readEntries()
 	readFile();
 
 	if (noDatabase)
-		printf("\nNo database found...\n\nEnter new password: ");
-	else
-		printf("\nEnter database password: ");
+	{
+		puts("\nNo database found...\n");
 
-	getPassword();
+		if (!setDBpassword())
+		{
+			puts("");
+			exit(1);
+		}
+	}
+	else
+	{
+		printf("\nEnter database password: ");
+		getPassword(DBpassword);
+	}
+
 #ifdef _WIN32
 	puts("");
 #endif
 
 	if (noDatabase)
-	{
-		saveEntries();
 		readFile();
-	}
 
 	// decrypt buffer into buffer
 	decrypt_cbc(buffer, iv);
@@ -169,7 +176,6 @@ void addPadding(char *text)
 {
 	int currentSize = (int)strlen(text);
 	paddedSize = currentSize + (16 - (currentSize % 16));
-
 	paddedBuffer = NULL;
 	paddedBuffer = (char *)malloc(sizeof(char) * paddedSize);
 	paddedBuffer[0] = 0;
