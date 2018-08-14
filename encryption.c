@@ -82,7 +82,6 @@ void readFile()
 		return;
 	}
 
-	buffer[fileSize] = '\0';
 	fclose(f);
 }
 
@@ -128,6 +127,8 @@ void loadEncryptedEntries()
 
 		++entryCount;
 	}
+
+	free(buffer);
 }
 
 void saveEntries()
@@ -167,6 +168,8 @@ void updateBuffer()
 			strcat(buffer, row);
 		}
 	}
+
+	free(row);
 }
 
 void addPadding(char *text)
@@ -195,4 +198,6 @@ void writeFile()
 	f = fopen(dbFile, "wb");
 	fwrite(paddedBuffer, paddedSize, 1, f);
 	fclose(f);
+	free(paddedBuffer);
+	free(buffer);
 }
