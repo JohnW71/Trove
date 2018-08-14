@@ -119,13 +119,10 @@ void loadEncryptedEntries()
 
 		strcpy(entries[entryCount].title, tokens);
 		tokens = strtok(NULL, ",\n");
-
 		strcpy(entries[entryCount].id, tokens);
 		tokens = strtok(NULL, ",\n");
-
 		strcpy(entries[entryCount].pw, tokens);
 		tokens = strtok(NULL, ",\n");
-
 		strcpy(entries[entryCount].misc, tokens);
 		tokens = strtok(NULL, ",\n");
 
