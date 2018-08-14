@@ -31,7 +31,7 @@ int main()
 
 	while (choice != 0)
 	{
-		puts("\nTrove v0.9");
+		puts("\nTrove v1.0");
 		puts("----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -175,8 +175,12 @@ password of %d chars)\n: ", MAXPW - 1, generationSize);
 
 	i = -1;
 	while (misc[++i] != '\0')
-		if (misc[i] == '\n' || i == MAXMISC - 1)
+	{
+		if (misc[i] == '\n')
+			misc[i] = ' ';
+		if (i == MAXMISC - 1)
 			misc[i] = '\0';
+	}
 
 	entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
 	strcpy(entries[entryCount].title, title);
