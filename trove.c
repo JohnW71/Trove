@@ -87,6 +87,8 @@ int main()
 		}
 	}
 
+	free(entries);
+
 #ifndef _WIN32
 	puts("");
 #endif
