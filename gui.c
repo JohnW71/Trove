@@ -1,24 +1,45 @@
-#include <windows.h>
-#include <commctrl.h>
+#define _CRT_SECURE_NO_WARNINGS
 
-#define ID_ADD 1
-#define ID_EDIT 2
-#define ID_DELETE 3
-#define ID_SETTINGS 4
-#define ID_QUIT 5
-#define ID_TEXT 6
-#define ID_FIND 7
-#define ID_LIST 8
+#include <windows.h>
+#include <stdbool.h>
+
+#define ID_MAIN_ADD 1
+#define ID_MAIN_EDIT 2
+#define ID_MAIN_DELETE 3
+#define ID_MAIN_SETTINGS 4
+#define ID_MAIN_QUIT 5
+#define ID_MAIN_TEXTBOX 6
+#define ID_MAIN_FIND 7
+#define ID_MAIN_LISTBOX 8
+
+#define ID_EDIT_TITLE_LABEL 10
+#define ID_EDIT_TITLE 11
+#define ID_EDIT_ID_LABEL 12
+#define ID_EDIT_ID 13
+#define ID_EDIT_PW_LABEL 14
+#define ID_EDIT_PW 15
+#define ID_EDIT_MISC_LABEL 16
+#define ID_EDIT_MISC 17
+#define ID_EDIT_CANCEL 18
+#define ID_EDIT_OK 19
 
 #define MAXTITLE 21
 #define MAXID 21
 #define MAXPW 21
 #define MAXMISC 51
-// #define MAXLINE 80
-// #define MINPW 6
+#define MAXLINE 110
 
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+// #define MINPW 6
+// #define MINCHARS 0
+// #define MAXCHARS 6
+// #define MAXNAME 10
+// #define KEYSIZE 32
+
 void centerWindow(HWND);
+void editEntry(HINSTANCE, int);
+
+LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK editWndProc(HWND, UINT, WPARAM, LPARAM);
 
 typedef struct entry
 {
@@ -33,122 +54,177 @@ Entries entries[] = {
 	{ L"Title2", L"ID2", L"PW2", L"Misc2"},
 	{ L"Title3", L"ID3", L"PW3", L"Misc3"},
 	{ L"Title4", L"ID4", L"PW4", L"Misc4"},
+	{ L"Title5", L"ID5", L"PW5", L"Misc5"},
+	{ L"Title6", L"ID6", L"PW6", L"Misc6"},
 };
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-					PWSTR pCmdLine, int nCmdShow)
+bool running = true;
+bool editing = false;
+bool editClassRegistered = false;
+char selectedTitle[MAXTITLE];
+char selectedId[MAXID];
+char selectedPw[MAXPW];
+char selectedMisc[MAXMISC];
+
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nShowCmd)
 {
 	MSG msg;
-	WNDCLASSW wc = {0};
+	WNDCLASSEX wc = {0};
 
-	wc.style = CS_HREDRAW | CS_VREDRAW;
-	wc.lpszClassName = L"Trove";
-	wc.hInstance = hInstance;
-	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
-	wc.lpfnWndProc = WndProc;
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	RegisterClassW(&wc);
+	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hInstance = hInstance;
+	wc.lpfnWndProc = mainWndProc;
+	wc.lpszClassName = "Trove";
+	wc.lpszMenuName = NULL;
+	wc.style = CS_HREDRAW | CS_VREDRAW;
 
-	CreateWindowW(wc.lpszClassName, L"Trove",
-				WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
-					0, 0, 390, 600, NULL, NULL, hInstance, NULL);
-
-	while (GetMessage(&msg, NULL, 0, 0))
+	if (!RegisterClassEx(&wc))
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		MessageBox(NULL, "Window registration failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return 0;
+	}
+
+	HWND hwnd = CreateWindowEx(WS_EX_LEFT,
+						wc.lpszClassName,
+						"Trove",
+						WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
+						CW_USEDEFAULT, CW_USEDEFAULT, 390, 600,
+						NULL, NULL,	hInstance, NULL);
+
+	if (!hwnd)
+	{
+		MessageBox(NULL, "Window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return 0;
+	}
+
+	ShowWindow(hwnd, nShowCmd);
+
+	while (running)
+	{
+		if (GetMessage(&msg, NULL, 0, 0))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		if (editing)
+		{
+			editEntry(hInstance, nShowCmd);
+			editing = false;
+		}
 	}
 
 	return (int)msg.wParam;
 }
 
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND wAdd, wEdit, wDelete, wSettings, wText, wFind, wQuit, wList;
+	static HWND bAdd, bEdit, bDelete, bSettings, tFind, bFind, bCancel, lbList, tTitle;
 
 	switch (msg)
 	{
 		case WM_CREATE:
 			centerWindow(hwnd);
 
-			wAdd = CreateWindowW(L"Button", L"Add",
-						  WS_VISIBLE | WS_CHILD,
-						  10, 10, 80, 25, hwnd, (HMENU)ID_ADD, NULL, NULL);
-			wEdit = CreateWindowW(L"Button", L"Edit",
-						  WS_VISIBLE | WS_CHILD | WS_DISABLED,
-						  100, 10, 80, 25, hwnd, (HMENU)ID_EDIT, NULL, NULL);
-			wDelete = CreateWindowW(L"Button", L"Delete",
-						  WS_VISIBLE | WS_CHILD | WS_DISABLED,
-						  190, 10, 80, 25, hwnd, (HMENU)ID_DELETE, NULL, NULL);
-			wSettings = CreateWindowW(L"Button", L"Settings",
-						  WS_VISIBLE | WS_CHILD,
-						  280, 10, 80, 25, hwnd, (HMENU)ID_SETTINGS, NULL, NULL);
+			// first row
+			bAdd = CreateWindowEx(WS_EX_LEFT, "Button", "Add",
+						WS_VISIBLE | WS_CHILD,
+						10, 10, 80, 25, hwnd, (HMENU)ID_MAIN_ADD, NULL, NULL);
+			bEdit = CreateWindowEx(WS_EX_LEFT, "Button", "Edit",
+						WS_VISIBLE | WS_CHILD | WS_DISABLED,
+						100, 10, 80, 25, hwnd, (HMENU)ID_MAIN_EDIT, NULL, NULL);
+			bDelete = CreateWindowEx(WS_EX_LEFT, "Button", "Delete",
+						WS_VISIBLE | WS_CHILD | WS_DISABLED,
+						190, 10, 80, 25, hwnd, (HMENU)ID_MAIN_DELETE, NULL, NULL);
+			bSettings = CreateWindowEx(WS_EX_LEFT, "Button", "Settings",
+						WS_VISIBLE | WS_CHILD,
+						280, 10, 80, 25, hwnd, (HMENU)ID_MAIN_SETTINGS, NULL, NULL);
 
-			wText = CreateWindowW(L"Edit", NULL,
-						  WS_CHILD | WS_VISIBLE | WS_BORDER,
-						  10, 45, 190, 25, hwnd, (HMENU)ID_TEXT, NULL, NULL);
-			wFind = CreateWindowW(L"Button", L"Find",
-						  WS_VISIBLE | WS_CHILD | WS_DISABLED,
-						  205, 45, 40, 25, hwnd, (HMENU)ID_FIND, NULL, NULL);
-			wQuit = CreateWindowW(L"Button", L"Quit",
-						  WS_VISIBLE | WS_CHILD,
-						  280, 45, 80, 25, hwnd, (HMENU)ID_QUIT, NULL, NULL);
+			// second row
+			tFind = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
+						WS_VISIBLE | WS_CHILD | WS_BORDER,
+						10, 45, 190, 25, hwnd, (HMENU)ID_MAIN_TEXTBOX, NULL, NULL);
+			bFind = CreateWindowEx(WS_EX_LEFT, "Button", "Find",
+						WS_VISIBLE | WS_CHILD | WS_DISABLED,
+						205, 45, 40, 25, hwnd, (HMENU)ID_MAIN_FIND, NULL, NULL);
+			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Quit",
+						WS_VISIBLE | WS_CHILD,
+						280, 45, 80, 25, hwnd, (HMENU)ID_MAIN_QUIT, NULL, NULL);
 
-			wList = CreateWindowW(WC_LISTBOXW, NULL, WS_CHILD | WS_VISIBLE | LBS_NOTIFY,
-						  10, 80, 350, 475, hwnd, (HMENU)ID_LIST, NULL, NULL);
+			// listbox
+			lbList = CreateWindowEx(WS_EX_LEFT, "ListBox", NULL,
+						WS_VISIBLE | WS_CHILD | LBS_NOTIFY,
+						10, 80, 350, 475, hwnd, (HMENU)ID_MAIN_LISTBOX, NULL, NULL);
 
+			// add entries to listbox
 			for (int i = 0; i < ARRAYSIZE(entries); ++i)
 			{
-				SendMessageW(wList, LB_ADDSTRING, 0, (LPARAM)entries[i].title);
+				wchar_t row[MAXLINE];
+				wcscpy(row, entries[i].title);
+				wcscat(row, L", ");
+				wcscat(row, entries[i].id);
+				wcscat(row, L", ");
+				wcscat(row, entries[i].pw);
+				wcscat(row, L", ");
+				wcscat(row, entries[i].misc);
+				SendMessageW(lbList, LB_ADDSTRING, 0, (LPARAM)row);
 			}
 			break;
 		case WM_COMMAND:
-			if (LOWORD(wParam) == ID_ADD)
+			if (LOWORD(wParam) == ID_MAIN_ADD)
 			{
 				// add();
 			}
 
-			if (LOWORD(wParam) == ID_EDIT)
+			if (LOWORD(wParam) == ID_MAIN_EDIT)
 			{
-				// edit();
+				editing = true;
 			}
 
-			if (LOWORD(wParam) == ID_DELETE)
+			if (LOWORD(wParam) == ID_MAIN_DELETE)
 			{
 				// delete();
 			}
 
-			if (LOWORD(wParam) == ID_SETTINGS)
+			if (LOWORD(wParam) == ID_MAIN_SETTINGS)
 			{
 				// settings();
 			}
 
-			if (LOWORD(wParam) == ID_FIND)
+			if (LOWORD(wParam) == ID_MAIN_FIND)
 			{
 				// find();
 			}
 
-			if (LOWORD(wParam) == ID_QUIT)
+			if (LOWORD(wParam) == ID_MAIN_QUIT)
 			{
 				PostQuitMessage(0);
+				running = false;
 			}
 
-			if (LOWORD(wParam) == ID_LIST)
+			if (LOWORD(wParam) == ID_MAIN_LISTBOX)
 			{
+				// a row was selected
 				if (HIWORD(wParam) == LBN_SELCHANGE)
 				{
-					EnableWindow(wEdit, TRUE);
-					EnableWindow(wDelete, TRUE);
+					//TODO get row info
+					EnableWindow(bEdit, TRUE);
+					EnableWindow(bDelete, TRUE);
 				}
 			}
 			break;
 		case WM_DESTROY:
 			PostQuitMessage(0);
+			running = false;
 			break;
 	}
-
-	return DefWindowProcW(hwnd, msg, wParam, lParam);
+	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 void centerWindow(HWND hwnd)
@@ -162,5 +238,118 @@ void centerWindow(HWND hwnd)
 	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
 	SetWindowPos(hwnd, HWND_TOP, (screenWidth - windowWidth) / 2,
-				(screenHeight - windowHeight) / 2, 0, 0, SWP_NOSIZE);
+					(screenHeight - windowHeight) / 2, 0, 0, SWP_NOSIZE);
+}
+
+void editEntry(HINSTANCE hInstance, int nShowCmd)
+{
+	static WNDCLASSEX wc = {0};
+
+	if (!editClassRegistered)
+	{
+		wc.cbSize = sizeof(WNDCLASSEX);
+		wc.cbClsExtra = 0;
+		wc.cbWndExtra = 0;
+		wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
+		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wc.hIcon = NULL;
+		wc.hIconSm = NULL;
+		wc.hInstance = hInstance;
+		wc.lpfnWndProc = editWndProc;
+		wc.lpszClassName = "TroveEdit";
+		wc.lpszMenuName = NULL;
+		wc.style = CS_HREDRAW | CS_VREDRAW;
+
+		if (!RegisterClassEx(&wc))
+		{
+			MessageBox(NULL, "Edit window registration failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+			return;
+		}
+		else
+			editClassRegistered = true;
+	}
+
+	HWND hwnd = CreateWindowEx(WS_EX_LEFT,
+								wc.lpszClassName,
+								"Edit",
+								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
+								CW_USEDEFAULT, CW_USEDEFAULT,
+								400, 300,
+								NULL, NULL,
+								hInstance, NULL);
+
+	if (!hwnd)
+	{
+		MessageBox(NULL, "Edit window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	ShowWindow(hwnd, nShowCmd);
+}
+
+LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	static HWND bOK, bCancel, lTitle, tTitle, lId, tId, lPw, tPw, lMisc, tMisc;
+
+	switch (msg)
+	{
+		case WM_CREATE:
+			centerWindow(hwnd);
+
+			lTitle = CreateWindowEx(WS_EX_LEFT, "Static", "Title",
+							WS_VISIBLE | WS_CHILD,
+							10, 10, 80, 25, hwnd, (HMENU)ID_EDIT_TITLE_LABEL, NULL, NULL);
+			tTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							90, 10, 150, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
+
+			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
+							WS_VISIBLE | WS_CHILD,
+							10, 45, 80, 25, hwnd, (HMENU)ID_EDIT_ID_LABEL, NULL, NULL);
+			tId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							90, 45, 150, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
+
+			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
+							WS_VISIBLE | WS_CHILD,
+							10, 80, 80, 25, hwnd, (HMENU)ID_EDIT_PW_LABEL, NULL, NULL);
+			tPw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							90, 80, 150, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
+
+			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
+							WS_VISIBLE | WS_CHILD,
+							10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
+			tMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							90, 115, 150, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
+
+			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
+							WS_VISIBLE | WS_CHILD,
+							300, 10, 80, 25, hwnd, (HMENU)ID_EDIT_OK, NULL, NULL);
+			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
+							WS_VISIBLE | WS_CHILD,
+							300, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
+
+			SetWindowText(tTitle, selectedTitle);
+			SetWindowText(tId, selectedId);
+			SetWindowText(tPw, selectedPw);
+			SetWindowText(tMisc, selectedMisc);
+			break;
+		case WM_COMMAND:
+			if (LOWORD(wParam) == ID_EDIT_OK)
+			{
+				//TODO update record
+				DestroyWindow(hwnd);
+			}
+			if (LOWORD(wParam) == ID_EDIT_CANCEL)
+			{
+				DestroyWindow(hwnd);
+			}
+			break;
+		case WM_DESTROY:
+			DestroyWindow(hwnd);
+			break;
+	}
+	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
