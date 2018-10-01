@@ -39,10 +39,14 @@ void centerWindow(HWND);
 void updateListbox();
 void addEntry();
 void editEntry();
+void deleteEntry();
+void findEntry();
+void settings();
 
 LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK addWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK editWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK settingsWndProc(HWND, UINT, WPARAM, LPARAM);
 
 typedef struct entry
 {
@@ -64,6 +68,7 @@ Entries entries[] = {
 static bool running = true;
 static bool addClassRegistered = false;
 static bool editClassRegistered = false;
+static bool settingsClassRegistered = false;
 static int entryCount = 0;
 static int showCmd;
 static LRESULT selectedRow = LB_ERR;
@@ -180,7 +185,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			if (LOWORD(wParam) == ID_MAIN_DELETE)
 			{
-				// delete();
+				deleteEntry();
 				updateListbox();
 			}
 
@@ -193,6 +198,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_MAIN_FIND)
 			{
 				// find();
+				// iIndex = SendMessage (hwndList, LB_SELECTSTRING, iIndex, (LPARAM) szSearchString);
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_QUIT)
@@ -367,7 +373,13 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_EDIT_OK)
 			{
-				//TODO update record
+				// add record
+				// entries = realloc(entries, (entryCount+1) * sizeof *entries);
+				// GetWindowText(tTitle, entries[entryCount].title, MAXTITLE);
+				// GetWindowText(tId, entries[entryCount].id, MAXID);
+				// GetWindowText(tPw, entries[entryCount].pw, MAXPW);
+				// GetWindowText(tMisc, entries[entryCount].misc, MAXMISC);
+				// ++entryCount;
 				DestroyWindow(hwnd);
 			}
 			if (LOWORD(wParam) == ID_EDIT_CANCEL)
@@ -498,4 +510,12 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			break;
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+//TODO if this is all there is, move back to mainWndProc
+void deleteEntry()
+{
+	// SendMessage (hwndList, LB_DELETESTRING, iIndex, i);
+	if (selectedRow != LB_ERR)
+		entries[selectedRow].title[0] = '\0';
 }
