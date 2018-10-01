@@ -1,7 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO GUI
-
 #include "trove.h"
 
 #ifdef _WIN32
@@ -732,9 +730,6 @@ void getPassword(uint8_t *password)
 #ifdef _WIN32
 void getPasswordWindows(uint8_t *password)
 {
-	// for (int i = 0; i < KEYSIZE; ++i)
-	// 	password[i] = '\0';
-
 	char c;
 	int i = -1;
 
