@@ -36,9 +36,11 @@
 // #define KEYSIZE 32
 
 void centerWindow(HWND);
+void addEntry();
 void editEntry();
 
 LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK addWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK editWndProc(HWND, UINT, WPARAM, LPARAM);
 
 typedef struct entry
@@ -58,14 +60,13 @@ Entries entries[] = {
 	{ L"Title6", L"ID6", L"PW6", L"Misc6"},
 };
 
-bool running = true;
-bool editClassRegistered = false;
-char selectedTitle[MAXTITLE];
-char selectedId[MAXID];
-char selectedPw[MAXPW];
-char selectedMisc[MAXMISC];
-HINSTANCE instance;
-int showCmd;
+static bool running = true;
+static bool addClassRegistered = false;
+static bool editClassRegistered = false;
+static int entryCount = 0;
+static LRESULT selectedRow = LB_ERR;
+static HINSTANCE instance;
+static int showCmd;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					PWSTR pCmdLine, int nShowCmd)
@@ -116,12 +117,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-
-		// if (editing)
-		// {
-		// 	editEntry(hInstance, nShowCmd);
-		// 	editing = false;
-		// }
 	}
 
 	return (int)msg.wParam;
@@ -183,7 +178,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_MAIN_ADD)
 			{
-				// add();
+				addEntry();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_EDIT)
@@ -217,9 +212,14 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				// a row was selected
 				if (HIWORD(wParam) == LBN_SELCHANGE)
 				{
-					//TODO get row info
-					EnableWindow(bEdit, TRUE);
-					EnableWindow(bDelete, TRUE);
+					// get row index
+					selectedRow = SendMessage(lbList, LB_GETCURSEL, 0, 0);
+
+					if (selectedRow != LB_ERR)
+					{
+						EnableWindow(bEdit, TRUE);
+						EnableWindow(bDelete, TRUE);
+					}
 				}
 			}
 			break;
@@ -245,26 +245,136 @@ void centerWindow(HWND hwnd)
 					(screenHeight - windowHeight) / 2, 0, 0, SWP_NOSIZE);
 }
 
+void addEntry()
+{
+	static WNDCLASSEX wcAdd = {0};
+
+	if (!addClassRegistered)
+	{
+		wcAdd.cbSize = sizeof(WNDCLASSEX);
+		wcAdd.cbClsExtra = 0;
+		wcAdd.cbWndExtra = 0;
+		wcAdd.hbrBackground = (HBRUSH)COLOR_WINDOW;
+		wcAdd.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wcAdd.hIcon = NULL;
+		wcAdd.hIconSm = NULL;
+		wcAdd.hInstance = instance;
+		wcAdd.lpfnWndProc = addWndProc;
+		wcAdd.lpszClassName = "TroveAdd";
+		wcAdd.lpszMenuName = NULL;
+		wcAdd.style = CS_HREDRAW | CS_VREDRAW;
+
+		if (!RegisterClassEx(&wcAdd))
+		{
+			MessageBox(NULL, "Add window registration failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+			return;
+		}
+		else
+			addClassRegistered = true;
+	}
+
+	HWND hwnd = CreateWindowEx(WS_EX_LEFT,
+								wcAdd.lpszClassName,
+								"Add",
+								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
+								CW_USEDEFAULT, CW_USEDEFAULT,
+								375, 200,
+								NULL, NULL,
+								instance, NULL);
+
+	if (!hwnd)
+	{
+		MessageBox(NULL, "Add window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	ShowWindow(hwnd, showCmd);
+}
+
+LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	static HWND bOK, bCancel, lTitle, tTitle, lId, tId, lPw, tPw, lMisc, tMisc;
+
+	switch (msg)
+	{
+		case WM_CREATE:
+			centerWindow(hwnd);
+
+			lTitle = CreateWindowEx(WS_EX_LEFT, "Static", "Title",
+							WS_VISIBLE | WS_CHILD,
+							10, 10, 80, 25, hwnd, (HMENU)ID_EDIT_TITLE_LABEL, NULL, NULL);
+			tTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							90, 10, 150, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
+
+			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
+							WS_VISIBLE | WS_CHILD,
+							10, 45, 80, 25, hwnd, (HMENU)ID_EDIT_ID_LABEL, NULL, NULL);
+			tId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							90, 45, 150, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
+
+			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
+							WS_VISIBLE | WS_CHILD,
+							10, 80, 80, 25, hwnd, (HMENU)ID_EDIT_PW_LABEL, NULL, NULL);
+			tPw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							90, 80, 150, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
+
+			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
+							WS_VISIBLE | WS_CHILD,
+							10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
+			tMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							90, 115, 150, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
+
+			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
+							WS_VISIBLE | WS_CHILD,
+							270, 10, 80, 25, hwnd, (HMENU)ID_EDIT_OK, NULL, NULL);
+			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
+							WS_VISIBLE | WS_CHILD,
+							270, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
+
+			SetFocus(tTitle);
+			break;
+		case WM_COMMAND:
+			if (LOWORD(wParam) == ID_EDIT_OK)
+			{
+				//TODO update record
+				DestroyWindow(hwnd);
+			}
+			if (LOWORD(wParam) == ID_EDIT_CANCEL)
+			{
+				DestroyWindow(hwnd);
+			}
+			break;
+		case WM_DESTROY:
+			DestroyWindow(hwnd);
+			break;
+	}
+	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
 void editEntry()
 {
-	static WNDCLASSEX wc = {0};
+	static WNDCLASSEX wcEdit = {0};
 
 	if (!editClassRegistered)
 	{
-		wc.cbSize = sizeof(WNDCLASSEX);
-		wc.cbClsExtra = 0;
-		wc.cbWndExtra = 0;
-		wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
-		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wc.hIcon = NULL;
-		wc.hIconSm = NULL;
-		wc.hInstance = instance;
-		wc.lpfnWndProc = editWndProc;
-		wc.lpszClassName = "TroveEdit";
-		wc.lpszMenuName = NULL;
-		wc.style = CS_HREDRAW | CS_VREDRAW;
+		wcEdit.cbSize = sizeof(WNDCLASSEX);
+		wcEdit.cbClsExtra = 0;
+		wcEdit.cbWndExtra = 0;
+		wcEdit.hbrBackground = (HBRUSH)COLOR_WINDOW;
+		wcEdit.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wcEdit.hIcon = NULL;
+		wcEdit.hIconSm = NULL;
+		wcEdit.hInstance = instance;
+		wcEdit.lpfnWndProc = editWndProc;
+		wcEdit.lpszClassName = "TroveEdit";
+		wcEdit.lpszMenuName = NULL;
+		wcEdit.style = CS_HREDRAW | CS_VREDRAW;
 
-		if (!RegisterClassEx(&wc))
+		if (!RegisterClassEx(&wcEdit))
 		{
 			MessageBox(NULL, "Edit window registration failed", "Error", MB_ICONEXCLAMATION | MB_OK);
 			return;
@@ -274,7 +384,7 @@ void editEntry()
 	}
 
 	HWND hwnd = CreateWindowEx(WS_EX_LEFT,
-								wc.lpszClassName,
+								wcEdit.lpszClassName,
 								"Edit",
 								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
 								CW_USEDEFAULT, CW_USEDEFAULT,
@@ -335,15 +445,20 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							WS_VISIBLE | WS_CHILD,
 							270, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
 
-			SetWindowText(tTitle, selectedTitle);
-			SetWindowText(tId, selectedId);
-			SetWindowText(tPw, selectedPw);
-			SetWindowText(tMisc, selectedMisc);
+			SetWindowText(tTitle, entries[selectedRow].title);
+			SetWindowText(tId, entries[selectedRow].id);
+			SetWindowText(tPw, entries[selectedRow].pw);
+			SetWindowText(tMisc, entries[selectedRow].misc);
+			SetFocus(bCancel);
 			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_EDIT_OK)
 			{
-				//TODO update record
+				// update record
+				GetWindowText(tTitle, entries[selectedRow].title, MAXTITLE);
+				GetWindowText(tId, entries[selectedRow].id, MAXID);
+				GetWindowText(tPw, entries[selectedRow].pw, MAXPW);
+				GetWindowText(tMisc, entries[selectedRow].misc, MAXMISC);
 				DestroyWindow(hwnd);
 			}
 			if (LOWORD(wParam) == ID_EDIT_CANCEL)
