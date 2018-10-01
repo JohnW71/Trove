@@ -1,5 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+//TODO fix sorting, listbox does not match saved order
+//TODO allow tabbing on Add window
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <windows.h>
@@ -58,17 +61,6 @@ struct Entry
 	wchar_t pw[MAXPW];
 	wchar_t misc[MAXMISC];
 } *entries;
-
-// Entries entries[] = NULL;
-
-// Entries entries[] = {
-// 	{ L"Title1", L"ID1", L"PW1", L"Misc1"},
-// 	{ L"Title2", L"ID2", L"PW2", L"Misc2"},
-// 	{ L"Title3", L"ID3", L"PW3", L"Misc3"},
-// 	{ L"Title4", L"ID4", L"PW4", L"Misc4"},
-// 	{ L"Title5", L"ID5", L"PW5", L"Misc5"},
-// 	{ L"Title6", L"ID6", L"PW6", L"Misc6"},
-// };
 
 static char tempFile[] = "temp.db";
 static bool running = true;
@@ -183,25 +175,21 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_MAIN_ADD)
 			{
 				addEntry();
-				updateListbox();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_EDIT)
 			{
 				editEntry();
-				updateListbox();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_DELETE)
 			{
 				deleteEntry();
-				updateListbox();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_SETTINGS)
 			{
 				// settings();
-				updateListbox();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_FIND)
@@ -259,9 +247,11 @@ void updateListbox()
 	SendMessage(lbList, LB_RESETCONTENT, 0, 0);
 
 	// add entries to listbox
-	for (int i = 0; i < ARRAYSIZE(entries); ++i)
+	for (int i = 0; i < entryCount; ++i)
 	{
-		//TODO skip deleted entries
+		// skip deleted entries
+		if (entries[i].title[0] == '\0')
+			continue;
 
 		wchar_t row[MAXLINE];
 		wcscpy(row, entries[i].title);
@@ -390,6 +380,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				GetWindowTextW(tMisc, entries[entryCount].misc, MAXMISC);
 				++entryCount;
 				DestroyWindow(hwnd);
+				updateListbox();
 			}
 			if (LOWORD(wParam) == ID_EDIT_CANCEL)
 			{
@@ -508,6 +499,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				GetWindowTextW(tPw, entries[selectedRow].pw, MAXPW);
 				GetWindowTextW(tMisc, entries[selectedRow].misc, MAXMISC);
 				DestroyWindow(hwnd);
+				updateListbox();
 			}
 			if (LOWORD(wParam) == ID_EDIT_CANCEL)
 			{
@@ -524,9 +516,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 //TODO if this is all there is, move back to mainWndProc
 void deleteEntry()
 {
-	// SendMessage (hwndList, LB_DELETESTRING, iIndex, i);
 	if (selectedRow != LB_ERR)
 		entries[selectedRow].title[0] = '\0';
+	updateListbox();
 }
 
 //FIX temporary text file
