@@ -1,7 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <windows.h>
+#include <stdio.h>
 #include <stdbool.h>
+#include <windows.h>
 
 #define ID_MAIN_ADD 1
 #define ID_MAIN_EDIT 2
@@ -35,6 +36,8 @@
 // #define MAXNAME 10
 // #define KEYSIZE 32
 
+void loadEntries();
+void saveEntries();
 void centerWindow(HWND);
 void updateListbox();
 void addEntry();
@@ -48,23 +51,26 @@ LRESULT CALLBACK addWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK editWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK settingsWndProc(HWND, UINT, WPARAM, LPARAM);
 
-typedef struct entry
+struct Entry
 {
 	wchar_t title[MAXTITLE];
 	wchar_t id[MAXID];
 	wchar_t pw[MAXPW];
 	wchar_t misc[MAXMISC];
-} Entries;
+} *entries;
 
-Entries entries[] = {
-	{ L"Title1", L"ID1", L"PW1", L"Misc1"},
-	{ L"Title2", L"ID2", L"PW2", L"Misc2"},
-	{ L"Title3", L"ID3", L"PW3", L"Misc3"},
-	{ L"Title4", L"ID4", L"PW4", L"Misc4"},
-	{ L"Title5", L"ID5", L"PW5", L"Misc5"},
-	{ L"Title6", L"ID6", L"PW6", L"Misc6"},
-};
+// Entries entries[] = NULL;
 
+// Entries entries[] = {
+// 	{ L"Title1", L"ID1", L"PW1", L"Misc1"},
+// 	{ L"Title2", L"ID2", L"PW2", L"Misc2"},
+// 	{ L"Title3", L"ID3", L"PW3", L"Misc3"},
+// 	{ L"Title4", L"ID4", L"PW4", L"Misc4"},
+// 	{ L"Title5", L"ID5", L"PW5", L"Misc5"},
+// 	{ L"Title6", L"ID6", L"PW6", L"Misc6"},
+// };
+
+static char tempFile[] = "temp.db";
 static bool running = true;
 static bool addClassRegistered = false;
 static bool editClassRegistered = false;
@@ -78,6 +84,8 @@ static HWND lbList, bEdit, bDelete;
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					PWSTR pCmdLine, int nShowCmd)
 {
+	loadEntries();
+
 	instance = hInstance;
 	showCmd = nShowCmd;
 	MSG msg;
@@ -126,6 +134,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		}
 	}
 
+	saveEntries();
 	return (int)msg.wParam;
 }
 
@@ -374,12 +383,12 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_EDIT_OK)
 			{
 				// add record
-				// entries = realloc(entries, (entryCount+1) * sizeof *entries);
-				// GetWindowText(tTitle, entries[entryCount].title, MAXTITLE);
-				// GetWindowText(tId, entries[entryCount].id, MAXID);
-				// GetWindowText(tPw, entries[entryCount].pw, MAXPW);
-				// GetWindowText(tMisc, entries[entryCount].misc, MAXMISC);
-				// ++entryCount;
+				entries = realloc(entries, (entryCount+1) * sizeof(*entries));
+				GetWindowTextW(tTitle, entries[entryCount].title, MAXTITLE);
+				GetWindowTextW(tId, entries[entryCount].id, MAXID);
+				GetWindowTextW(tPw, entries[entryCount].pw, MAXPW);
+				GetWindowTextW(tMisc, entries[entryCount].misc, MAXMISC);
+				++entryCount;
 				DestroyWindow(hwnd);
 			}
 			if (LOWORD(wParam) == ID_EDIT_CANCEL)
@@ -518,4 +527,78 @@ void deleteEntry()
 	// SendMessage (hwndList, LB_DELETESTRING, iIndex, i);
 	if (selectedRow != LB_ERR)
 		entries[selectedRow].title[0] = '\0';
+}
+
+//FIX temporary text file
+void loadEntries()
+{
+	FILE *f = fopen(tempFile, "r");
+	if (f == NULL)
+	{
+		return;
+	}
+
+	char line[MAXLINE];
+	wchar_t data[MAXLINE];
+	entryCount = 0;
+	entries = NULL;
+
+	while (!feof(f))
+	{
+		if (fgets(line, MAXLINE, f) != NULL)
+		{
+			entries = realloc(entries, (entryCount+1) * sizeof(*entries));
+			int field = 0;
+			int line_ctr = 0;
+			int data_ctr = 0;
+
+			while (line[line_ctr] != '\0')
+			{
+				if (line[line_ctr] == ',' || line[line_ctr] == '\n')
+				{
+					++line_ctr;
+					data[data_ctr] = '\0';
+					data_ctr = 0;
+
+					switch (field)
+					{
+						case 0:
+							wcscpy(entries[entryCount].title, data);
+							break;
+						case 1:
+							wcscpy(entries[entryCount].id, data);
+							break;
+						case 2:
+							wcscpy(entries[entryCount].pw, data);
+							break;
+						case 3:
+							wcscpy(entries[entryCount].misc, data);
+							break;
+					}
+					++field;
+					continue;
+				}
+				data[data_ctr++] = line[line_ctr++];
+			}
+			++entryCount;
+		}
+	}
+	fclose(f);
+}
+
+//FIX temporary text file
+void saveEntries()
+{
+	FILE *f = fopen(tempFile, "w");
+	if (f == NULL)
+	{
+		puts("Error saving entries!");
+		return;
+	}
+
+	for (int i = 0; i < entryCount; ++i)
+		if (entries[i].title[0] != '\0')
+			fprintf(f, "%ls,%ls,%ls,%ls\n", entries[i].title, entries[i].id, entries[i].pw, entries[i].misc);
+
+	fclose(f);
 }
