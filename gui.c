@@ -36,6 +36,7 @@
 // #define KEYSIZE 32
 
 void centerWindow(HWND);
+void updateListbox();
 void addEntry();
 void editEntry();
 
@@ -64,9 +65,10 @@ static bool running = true;
 static bool addClassRegistered = false;
 static bool editClassRegistered = false;
 static int entryCount = 0;
+static int showCmd;
 static LRESULT selectedRow = LB_ERR;
 static HINSTANCE instance;
-static int showCmd;
+static HWND lbList, bEdit, bDelete;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					PWSTR pCmdLine, int nShowCmd)
@@ -124,7 +126,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bAdd, bEdit, bDelete, bSettings, tFind, bFind, bCancel, lbList, tTitle;
+	static HWND bAdd, bSettings, tFind, bFind, bCancel, tTitle;
 
 	switch (msg)
 	{
@@ -158,42 +160,34 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			// listbox
 			lbList = CreateWindowEx(WS_EX_LEFT, "ListBox", NULL,
-						WS_VISIBLE | WS_CHILD | LBS_NOTIFY,
+						WS_VISIBLE | WS_CHILD | LBS_STANDARD,
 						10, 80, 350, 475, hwnd, (HMENU)ID_MAIN_LISTBOX, NULL, NULL);
 
-			// add entries to listbox
-			for (int i = 0; i < ARRAYSIZE(entries); ++i)
-			{
-				wchar_t row[MAXLINE];
-				wcscpy(row, entries[i].title);
-				wcscat(row, L", ");
-				wcscat(row, entries[i].id);
-				wcscat(row, L", ");
-				wcscat(row, entries[i].pw);
-				wcscat(row, L", ");
-				wcscat(row, entries[i].misc);
-				SendMessageW(lbList, LB_ADDSTRING, 0, (LPARAM)row);
-			}
+			updateListbox();
 			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_MAIN_ADD)
 			{
 				addEntry();
+				updateListbox();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_EDIT)
 			{
 				editEntry();
+				updateListbox();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_DELETE)
 			{
 				// delete();
+				updateListbox();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_SETTINGS)
 			{
 				// settings();
+				updateListbox();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_FIND)
@@ -243,6 +237,39 @@ void centerWindow(HWND hwnd)
 
 	SetWindowPos(hwnd, HWND_TOP, (screenWidth - windowWidth) / 2,
 					(screenHeight - windowHeight) / 2, 0, 0, SWP_NOSIZE);
+}
+
+void updateListbox()
+{
+	SendMessage(lbList, LB_RESETCONTENT, 0, 0);
+
+	// add entries to listbox
+	for (int i = 0; i < ARRAYSIZE(entries); ++i)
+	{
+		//TODO skip deleted entries
+
+		wchar_t row[MAXLINE];
+		wcscpy(row, entries[i].title);
+		wcscat(row, L", ");
+		wcscat(row, entries[i].id);
+		wcscat(row, L", ");
+		wcscat(row, entries[i].pw);
+		wcscat(row, L", ");
+		wcscat(row, entries[i].misc);
+
+		SendMessageW(lbList, LB_ADDSTRING, i, (LPARAM)row);
+		// if (!SendMessageW(lbList, LB_ADDSTRING, 0, (LPARAM)row))
+		// {
+		// 	MessageBox(NULL, "Listbox population failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+		// 	return;
+		// }
+	}
+
+	// deselect all entries
+	SendMessage(lbList, LB_SETCURSEL, -1, 0);
+	EnableWindow(bEdit, FALSE);
+	EnableWindow(bDelete, FALSE);
+	selectedRow = LB_ERR;
 }
 
 void addEntry()
@@ -445,20 +472,20 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							WS_VISIBLE | WS_CHILD,
 							270, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
 
-			SetWindowText(tTitle, entries[selectedRow].title);
-			SetWindowText(tId, entries[selectedRow].id);
-			SetWindowText(tPw, entries[selectedRow].pw);
-			SetWindowText(tMisc, entries[selectedRow].misc);
+			SetWindowTextW(tTitle, entries[selectedRow].title);
+			SetWindowTextW(tId, entries[selectedRow].id);
+			SetWindowTextW(tPw, entries[selectedRow].pw);
+			SetWindowTextW(tMisc, entries[selectedRow].misc);
 			SetFocus(bCancel);
 			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_EDIT_OK)
 			{
 				// update record
-				GetWindowText(tTitle, entries[selectedRow].title, MAXTITLE);
-				GetWindowText(tId, entries[selectedRow].id, MAXID);
-				GetWindowText(tPw, entries[selectedRow].pw, MAXPW);
-				GetWindowText(tMisc, entries[selectedRow].misc, MAXMISC);
+				GetWindowTextW(tTitle, entries[selectedRow].title, MAXTITLE);
+				GetWindowTextW(tId, entries[selectedRow].id, MAXID);
+				GetWindowTextW(tPw, entries[selectedRow].pw, MAXPW);
+				GetWindowTextW(tMisc, entries[selectedRow].misc, MAXMISC);
 				DestroyWindow(hwnd);
 			}
 			if (LOWORD(wParam) == ID_EDIT_CANCEL)
