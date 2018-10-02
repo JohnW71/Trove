@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+//TODO changing keygen, entering wrong password ok, entering correct password segfault
+
 #include "trove.h"
 
 #ifdef _WIN32
@@ -9,6 +11,7 @@
 	#include <termios.h>
 #endif
 
+int iv[IV_SIZE];
 int entryCount = 0;
 uint8_t DBpassword[KEYSIZE];
 
@@ -29,7 +32,7 @@ int main()
 
 	while (choice != 0)
 	{
-		puts("\nTrove v1.0");
+		puts("\nTrove v1.1");
 		puts("----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -485,9 +488,10 @@ void readSettings()
 			l++;
 			v++;
 		}
-		*v = '\0';
+		*(v-1) = '\0';
 
 		if (strcmp(setting, "password_size") == 0)	generationSize = atoi(value);
+		if (strcmp(setting, "keygen") == 0)			strcpy((char *)iv, value);
 		if (strcmp(setting, "min_special") == 0)	minSpecial = atoi(value);
 		if (strcmp(setting, "min_numeric") == 0)	minNumeric = atoi(value);
 		if (strcmp(setting, "min_uppercase") == 0)	minUppercase = atoi(value);
@@ -505,6 +509,7 @@ void writeSettings()
 	}
 
 	fprintf(f, "password_size=%d\n", generationSize);
+	fprintf(f, "keygen=%s\n", (char *)iv);
 	fprintf(f, "min_special=%d\n", minSpecial);
 	fprintf(f, "min_numeric=%d\n", minNumeric);
 	fprintf(f, "min_uppercase=%d\n", minUppercase);
@@ -524,7 +529,8 @@ void updateSettings()
 		printf("3 - Set minimum special characters (%d)\n", minSpecial);
 		printf("4 - Set minimum numeric characters (%d)\n", minNumeric);
 		printf("5 - Set minimum uppercase characters (%d)\n", minUppercase);
-		puts("0 - Back");
+		printf("6 - Set new random keygen ID (%s)\n", (char *)iv);
+		printf("0 - Back\n");
 		printf("\n-> ");
 
 		char line[MAXLINE];
@@ -554,6 +560,9 @@ void updateSettings()
 				break;
 			case 5:
 				setMinUppercase();
+				break;
+			case 6:
+				setNewKeygen();
 				break;
 			case 0:
 				return;
@@ -686,6 +695,12 @@ void setMinUppercase()
 
 	minUppercase = value;
 	writeSettings();
+}
+
+void setNewKeygen()
+{
+	// 16 bytes 0-F
+	printf("Changing this ID will invalidate any existing databases!\n");
 }
 
 bool setDBpassword()
