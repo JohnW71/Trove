@@ -14,7 +14,7 @@ static int bufferSize = 0;
 static int paddedSize = 0;
 static bool noDatabase = false;
 
-void readEntries()
+void readEntries(void)
 {
 	// read encrypted data into buffer, if DB exists
 	readFile();
@@ -49,7 +49,7 @@ void readEntries()
 	loadEncryptedEntries();
 }
 
-void readFile()
+void readFile(void)
 {
 	FILE *f;
 	f = fopen(dbFile, "rb");
@@ -74,7 +74,7 @@ void readFile()
 		return;
 	}
 
-	long result = fread(buffer, 1, fileSize, f);
+	long result = (long)fread(buffer, 1, fileSize, f);
 	if (result != fileSize)
 	{
 		puts("Error reading database into buffer");
@@ -91,7 +91,7 @@ void decrypt_cbc(uint8_t *text, uint8_t *init)
 	AES_CBC_decrypt_buffer(&ctx, text, bufferSize);
 }
 
-void loadEncryptedEntries()
+void loadEncryptedEntries(void)
 {
 	entryCount = 0;
 	entries = NULL;
@@ -130,7 +130,7 @@ void loadEncryptedEntries()
 	free(buffer);
 }
 
-void saveEntries()
+void saveEntries(void)
 {
 	// replace buffer with current entries list
 	updateBuffer();
@@ -145,7 +145,7 @@ void saveEntries()
 	writeFile();
 }
 
-void updateBuffer()
+void updateBuffer(void)
 {
 	int maxRowSize = MAXTITLE + MAXID + MAXPW + MAXMISC;
 	buffer = NULL;
@@ -191,7 +191,7 @@ void encrypt_cbc(uint8_t *text, uint8_t *init)
 	AES_CBC_encrypt_buffer(&ctx, text, paddedSize);
 }
 
-void writeFile()
+void writeFile(void)
 {
 	FILE *f;
 	f = fopen(dbFile, "wb");

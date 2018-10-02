@@ -1,7 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//TODO changing keygen, entering wrong password ok, entering correct password segfault
-
 #include "trove.h"
 
 #ifdef _WIN32
@@ -11,8 +9,8 @@
 	#include <termios.h>
 #endif
 
-int iv[IV_SIZE];
 int entryCount = 0;
+uint8_t iv[IV_SIZE];
 uint8_t DBpassword[KEYSIZE];
 
 static int generationSize = 12;
@@ -22,7 +20,7 @@ static int minUppercase = 0;
 static char heading[] = "    Title                ID                   Password             Misc";
 static char iniFile[] = "trove.ini";
 
-int main()
+int main(void)
 {
 	readSettings();
 	readEntries();
@@ -96,7 +94,7 @@ int main()
 	return 0;
 }
 
-void list()
+void list(void)
 {
 	puts(heading);
 	for (int i = 0; i < entryCount; ++i)
@@ -107,7 +105,7 @@ void list()
 													entries[i].misc);
 }
 
-void add()
+void add(void)
 {
 	char title[MAXLINE];
 	char password[MAXLINE];
@@ -129,7 +127,7 @@ void add()
 		if (title[i] == '\n' || i == MAXTITLE - 1)
 			title[i] = '\0';
 
-	for (int i = 0; i < entryCount; ++i)
+	for (i = 0; i < entryCount; ++i)
 		if (strcmp(entries[i].title, title) == 0)
 		{
 			puts("Title is already in use");
@@ -194,7 +192,7 @@ password of %d chars)\n: ", MAXPW - 1, generationSize);
 	saveEntries();
 }
 
-void find()
+void find(void)
 {
 	char title[MAXTITLE];
 	printf("Enter title to find: ");
@@ -214,7 +212,7 @@ void find()
 		if (title[i] == '\n')
 			title[i] = '\0';
 
-	for (int i = 0; i < entryCount; ++i)
+	for (i = 0; i < entryCount; ++i)
 		if (strcmp(entries[i].title, title) == 0)
 		{
 			printf("\n%s\n", heading);
@@ -229,7 +227,7 @@ void find()
 	puts("Not found");
 }
 
-void edit()
+void edit(void)
 {
 	char line[MAXLINE];
 	char title[MAXLINE];
@@ -344,7 +342,7 @@ password of %d chars)\n: ", MAXPW - 1, generationSize);
 	saveEntries();
 }
 
-void delEntry()
+void delEntry(void)
 {
 	char line[MAXLINE];
 	printf("Enter # to delete: ");
@@ -370,7 +368,7 @@ void delEntry()
 	saveEntries();
 }
 
-void clipboard()
+void clipboard(void)
 {
 #ifdef _WIN32
 	char line[MAXLINE];
@@ -452,7 +450,18 @@ void generatePassword(char *buf)
 			uppercaseCount < minUppercase);
 }
 
-void readSettings()
+// generate 16 random hex chars
+void generateKeygen(char *buf)
+{
+	int rn;
+	for (int i = 0; i < 16; ++i)
+	{
+		rn = rand() % 16;
+		sprintf(buf + i, "%X", rn);
+	}
+}
+
+void readSettings(void)
 {
 	FILE *f = fopen(iniFile, "r");
 	if (f == NULL)
@@ -471,6 +480,12 @@ void readSettings()
 		char *s = setting;
 		char *v = value;
 
+		for (int i = 0; i < MAXLINE; ++i)
+		{
+			setting[i] = '\0';
+			value[i] = '\0';
+		}
+
 		// find setting
 		while (*l && *l != '=')
 		{
@@ -488,10 +503,10 @@ void readSettings()
 			l++;
 			v++;
 		}
-		*(v-1) = '\0';
+		*v = '\0';
 
 		if (strcmp(setting, "password_size") == 0)	generationSize = atoi(value);
-		if (strcmp(setting, "keygen") == 0)			strcpy((char *)iv, value);
+		if (strcmp(setting, "keygen") == 0)			strncpy((char *)iv, value, 16);
 		if (strcmp(setting, "min_special") == 0)	minSpecial = atoi(value);
 		if (strcmp(setting, "min_numeric") == 0)	minNumeric = atoi(value);
 		if (strcmp(setting, "min_uppercase") == 0)	minUppercase = atoi(value);
@@ -499,7 +514,7 @@ void readSettings()
 	fclose(f);
 }
 
-void writeSettings()
+void writeSettings(void)
 {
 	FILE *f = fopen(iniFile, "w");
 	if (f == NULL)
@@ -516,7 +531,7 @@ void writeSettings()
 	fclose(f);
 }
 
-void updateSettings()
+void updateSettings(void)
 {
 	int choice = -1;
 
@@ -572,7 +587,7 @@ void updateSettings()
 	}
 }
 
-void setPasswordSize()
+void setPasswordSize(void)
 {
 	char line[MAXLINE];
 
@@ -607,7 +622,7 @@ void setPasswordSize()
 	writeSettings();
 }
 
-void setMinSpecial()
+void setMinSpecial(void)
 {
 	char line[MAXLINE];
 
@@ -637,7 +652,7 @@ void setMinSpecial()
 	writeSettings();
 }
 
-void setMinNumeric()
+void setMinNumeric(void)
 {
 	char line[MAXLINE];
 
@@ -667,7 +682,7 @@ void setMinNumeric()
 	writeSettings();
 }
 
-void setMinUppercase()
+void setMinUppercase(void)
 {
 	char line[MAXLINE];
 
@@ -697,20 +712,24 @@ void setMinUppercase()
 	writeSettings();
 }
 
-void setNewKeygen()
+void setNewKeygen(void)
 {
 	// 16 bytes 0-F
 	printf("Changing this ID will invalidate any existing databases!\n");
+
+	char test[IV_SIZE];
+	generateKeygen(test);
+	printf("Keygen = %s\n", test);
 }
 
-bool setDBpassword()
+bool setDBpassword(void)
 {
 	uint8_t verifyPassword1[KEYSIZE];
 	uint8_t verifyPassword2[KEYSIZE];
 
 	printf("Enter new password up to %d chars, press enter for blank: ", KEYSIZE);
 	getPassword(verifyPassword1);
-	printf("Enter same password again to confirm: ");
+	printf("\nEnter same password again to confirm: ");
 	getPassword(verifyPassword2);
 
 	if (strcmp(verifyPassword1, verifyPassword2) != 0)
@@ -718,7 +737,7 @@ bool setDBpassword()
 		puts("\nPasswords do not match!");
 		return false;
 	}
-	puts("\nPassword set");
+	puts("\n\nPassword set");
 
 	for (int i = 0; i < KEYSIZE; ++i)
 		DBpassword[i] = '\0';
@@ -751,7 +770,7 @@ void getPasswordWindows(uint8_t *password)
 	do
 	{
 		++i;
-		c = _getch();
+		c = (char)_getch();
 
 		if (c != '\r')
 		{
