@@ -121,8 +121,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	{
 		if (GetMessage(&msg, NULL, 0, 0))
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			if (!IsDialogMessage(hWnd, &msg))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
 	}
 
@@ -141,27 +144,27 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			// first row
 			bAdd = CreateWindowEx(WS_EX_LEFT, "Button", "Add",
-						WS_VISIBLE | WS_CHILD,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 						10, 10, 80, 25, hwnd, (HMENU)ID_MAIN_ADD, NULL, NULL);
 			bEdit = CreateWindowEx(WS_EX_LEFT, "Button", "Edit",
-						WS_VISIBLE | WS_CHILD | WS_DISABLED,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						100, 10, 80, 25, hwnd, (HMENU)ID_MAIN_EDIT, NULL, NULL);
 			bDelete = CreateWindowEx(WS_EX_LEFT, "Button", "Delete",
-						WS_VISIBLE | WS_CHILD | WS_DISABLED,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						190, 10, 80, 25, hwnd, (HMENU)ID_MAIN_DELETE, NULL, NULL);
 			bSettings = CreateWindowEx(WS_EX_LEFT, "Button", "Settings",
-						WS_VISIBLE | WS_CHILD,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 						280, 10, 80, 25, hwnd, (HMENU)ID_MAIN_SETTINGS, NULL, NULL);
 
 			// second row
 			tFind = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
-						WS_VISIBLE | WS_CHILD | WS_BORDER,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER,
 						10, 45, 190, 25, hwnd, (HMENU)ID_MAIN_TEXTBOX, NULL, NULL);
 			bFind = CreateWindowEx(WS_EX_LEFT, "Button", "Find",
-						WS_VISIBLE | WS_CHILD | WS_DISABLED,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						205, 45, 40, 25, hwnd, (HMENU)ID_MAIN_FIND, NULL, NULL);
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Quit",
-						WS_VISIBLE | WS_CHILD,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 						280, 45, 80, 25, hwnd, (HMENU)ID_MAIN_QUIT, NULL, NULL);
 
 			// listbox
@@ -320,6 +323,15 @@ void addEntry()
 		return;
 	}
 
+	while (GetMessage(&msg, NULL, 0, 0))
+	{
+		if (!IsDialogMessage(hWnd, &msg))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+
 	ShowWindow(hwnd, showCmd);
 }
 
@@ -336,35 +348,35 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							WS_VISIBLE | WS_CHILD,
 							10, 10, 80, 25, hwnd, (HMENU)ID_EDIT_TITLE_LABEL, NULL, NULL);
 			tTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
-							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 10, 150, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
 							WS_VISIBLE | WS_CHILD,
 							10, 45, 80, 25, hwnd, (HMENU)ID_EDIT_ID_LABEL, NULL, NULL);
 			tId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
-							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 45, 150, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
 							WS_VISIBLE | WS_CHILD,
 							10, 80, 80, 25, hwnd, (HMENU)ID_EDIT_PW_LABEL, NULL, NULL);
 			tPw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
-							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 80, 150, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
 							WS_VISIBLE | WS_CHILD,
 							10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
 			tMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
-							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 115, 150, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
-							WS_VISIBLE | WS_CHILD,
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							270, 10, 80, 25, hwnd, (HMENU)ID_EDIT_OK, NULL, NULL);
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
-							WS_VISIBLE | WS_CHILD,
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							270, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
 
 			SetFocus(tTitle);
@@ -437,6 +449,15 @@ void editEntry()
 		return;
 	}
 
+	while (GetMessage(&msg, NULL, 0, 0))
+	{
+		if (!IsDialogMessage(hWnd, &msg))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+
 	ShowWindow(hwnd, showCmd);
 }
 
@@ -453,35 +474,35 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							WS_VISIBLE | WS_CHILD,
 							10, 10, 80, 25, hwnd, (HMENU)ID_EDIT_TITLE_LABEL, NULL, NULL);
 			tTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
-							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 10, 150, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
 							WS_VISIBLE | WS_CHILD,
 							10, 45, 80, 25, hwnd, (HMENU)ID_EDIT_ID_LABEL, NULL, NULL);
 			tId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
-							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 45, 150, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
 							WS_VISIBLE | WS_CHILD,
 							10, 80, 80, 25, hwnd, (HMENU)ID_EDIT_PW_LABEL, NULL, NULL);
 			tPw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
-							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 80, 150, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
 							WS_VISIBLE | WS_CHILD,
 							10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
 			tMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
-							WS_VISIBLE | WS_CHILD | WS_BORDER,
+							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 115, 150, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
-							WS_VISIBLE | WS_CHILD,
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							270, 10, 80, 25, hwnd, (HMENU)ID_EDIT_OK, NULL, NULL);
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
-							WS_VISIBLE | WS_CHILD,
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							270, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
 
 			SetWindowTextW(tTitle, entries[selectedRow].title);
