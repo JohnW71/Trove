@@ -34,15 +34,15 @@
 // #define MAXNAME 10
 // #define KEYSIZE 32
 
-void loadEntries();
-void saveEntries();
+void loadEntries(void);
+void saveEntries(void);
 void centerWindow(HWND);
-void updateListbox();
-void addEntry();
-void editEntry();
-void deleteEntry();
-void findEntry();
-void settings();
+void updateListbox(void);
+void addEntry(void);
+void editEntry(void);
+void deleteEntry(void);
+void findEntry(void);
+void settings(void);
 
 LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK addWndProc(HWND, UINT, WPARAM, LPARAM);
