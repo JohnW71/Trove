@@ -2,8 +2,9 @@
 
 #include "gui.h"
 
-//TODO test if message loop should be While or IF
+//TODO Add then Quit ignores first click
 //TODO fix sorting, listbox does not match saved order
+//TODO delete removes wrong entry
 //TODO Add/Edit should have a "Generate password" icon
 //TODO implement Find
 //TODO design Settings
@@ -67,9 +68,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	while (running)
 	{
-		if (GetMessage(&msg, NULL, 0, 0))
+		while (GetMessage(&msg, NULL, 0, 0))
 		{
-			if (!IsDialogMessage(hWnd, &msg))
+			if (!IsDialogMessage(hwnd, &msg))
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
@@ -230,6 +231,7 @@ void updateListbox()
 
 void addEntry()
 {
+	MSG msg;
 	static WNDCLASSEX wcAdd = {0};
 
 	if (!addClassRegistered)
@@ -273,7 +275,7 @@ void addEntry()
 
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
-		if (!IsDialogMessage(hWnd, &msg))
+		if (!IsDialogMessage(hwnd, &msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -356,6 +358,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void editEntry()
 {
+	MSG msg;
 	static WNDCLASSEX wcEdit = {0};
 
 	if (!editClassRegistered)
@@ -399,7 +402,7 @@ void editEntry()
 
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
-		if (!IsDialogMessage(hWnd, &msg))
+		if (!IsDialogMessage(hwnd, &msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
