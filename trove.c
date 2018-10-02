@@ -714,12 +714,27 @@ void setMinUppercase(void)
 
 void setNewKeygen(void)
 {
-	// 16 bytes 0-F
-	printf("Changing this ID will invalidate any existing databases!\n");
+	char line[MAXLINE];
 
-	char test[IV_SIZE];
-	generateKeygen(test);
-	printf("Keygen = %s\n", test);
+	printf("Keygen can be changed here only, do not edit it in the INI file!\n\n");
+	printf("Are you sure? Enter \"YES\" to confirm: ");
+
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	if (strcmp(line, "YES\n") == 0)
+	{
+		generateKeygen(iv);
+		writeSettings();
+		saveEntries();
+		puts("Keygen updated & database saved");
+	}
 }
 
 bool setDBpassword(void)
