@@ -17,30 +17,30 @@
 #include <stdint.h>	// uint8_t
 #include <stdbool.h>
 
-void list();
-void add();
-void find();
-void edit();
-void delEntry();
-void clipboard();
-void readEntries();
-void saveEntries();
+void list(void);
+void add(void);
+void find(void);
+void edit(void);
+void delEntry(void);
+void clipboard(void);
+void readEntries(void);
+void saveEntries(void);
 void generatePassword(char *);
-bool setDBpassword();
-void readSettings();
-void writeSettings();
-void updateSettings();
-void setPasswordSize();
-void setMinSpecial();
-void setMinNumeric();
-void setMinUppercase();
-void writeFile();
-void readFile();
+bool setDBpassword(void);
+void readSettings(void);
+void writeSettings(void);
+void updateSettings(void);
+void setPasswordSize(void);
+void setMinSpecial(void);
+void setMinNumeric(void);
+void setMinUppercase(void);
+void writeFile(void);
+void readFile(void);
 void encrypt_cbc(uint8_t *, uint8_t *);
 void decrypt_cbc(uint8_t *, uint8_t *);
 void addPadding(char *);
-void loadEncryptedEntries();
-void updateBuffer();
+void loadEncryptedEntries(void);
+void updateBuffer(void);
 void getPassword(uint8_t *);
 #ifdef _WIN32
 void getPasswordWindows(uint8_t *);
