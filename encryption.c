@@ -1,18 +1,17 @@
 #define _CRT_SECURE_NO_WARNINGS
-#define IV_SIZE 16
 
 #include "trove.h"
 #include "aes.h"
 
 extern int entryCount;
 extern uint8_t DBpassword[];
+extern uint8_t iv[IV_SIZE];
 
 static char dbFile[MAXNAME] = "trove.db";
 static char *buffer;
 static char *paddedBuffer;
 static int bufferSize = 0;
 static int paddedSize = 0;
-static uint8_t iv[IV_SIZE] = "498135354687683";
 static bool noDatabase = false;
 
 void readEntries()

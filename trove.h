@@ -8,6 +8,7 @@
 #define MAXCHARS 6
 #define MAXNAME 10
 #define KEYSIZE 32
+#define IV_SIZE 16
 
 #include <stdio.h>
 #include <stdlib.h>	// exit(), rand(), malloc()
@@ -34,6 +35,7 @@ void setPasswordSize(void);
 void setMinSpecial(void);
 void setMinNumeric(void);
 void setMinUppercase(void);
+void setNewKeygen(void);
 void writeFile(void);
 void readFile(void);
 void encrypt_cbc(uint8_t *, uint8_t *);
