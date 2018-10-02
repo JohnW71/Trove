@@ -8,7 +8,7 @@
 #define MAXCHARS 6
 #define MAXNAME 10
 #define KEYSIZE 32
-#define IV_SIZE 16
+#define IV_SIZE 17
 
 #include <stdio.h>
 #include <stdlib.h>	// exit(), rand(), malloc()
@@ -27,6 +27,7 @@ void clipboard(void);
 void readEntries(void);
 void saveEntries(void);
 void generatePassword(char *);
+void generateKeygen(char *);
 bool setDBpassword(void);
 void readSettings(void);
 void writeSettings(void);
