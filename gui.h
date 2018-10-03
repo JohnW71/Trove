@@ -43,6 +43,9 @@ void editEntry(void);
 void deleteEntry(void);
 void findEntry(void);
 void settings(void);
+void splitRow(char[], struct Entry *);
+void outw(wchar_t *);
+void outs(char *);
 
 LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK addWndProc(HWND, UINT, WPARAM, LPARAM);

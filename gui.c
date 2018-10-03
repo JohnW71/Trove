@@ -2,9 +2,9 @@
 
 #include "gui.h"
 
-//TODO Add then Quit ignores first click
-//TODO fix sorting, listbox does not match saved order
-//TODO delete removes wrong entry
+//TODO delete should confirm
+//TODO pad fields into columns
+//TODO Quit sometimes takes multiple attempts
 //TODO Add/Edit should have a "Generate password" icon
 //TODO implement Find
 //TODO design Settings
@@ -13,24 +13,25 @@
 
 static char tempFile[] = "temp.db";
 static bool running = true;
-static bool addClassRegistered = false;
-static bool editClassRegistered = false;
-static bool settingsClassRegistered = false;
 static int entryCount = 0;
 static int showCmd;
-static LRESULT selectedRow = LB_ERR;
+static LRESULT selectedRow;
 static HINSTANCE instance;
 static HWND lbList, bEdit, bDelete;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					PWSTR pCmdLine, int nShowCmd)
 {
-	loadEntries();
-
 	instance = hInstance;
 	showCmd = nShowCmd;
 	MSG msg;
 	WNDCLASSEX wc = {0};
+
+	// reset log file
+	FILE *lf = fopen("log.txt", "w");
+	if (lf == NULL)
+		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
+	fclose(lf);
 
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.cbClsExtra = 0;
@@ -78,7 +79,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		}
 	}
 
-	saveEntries();
 	return (int)msg.wParam;
 }
 
@@ -121,6 +121,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						WS_VISIBLE | WS_CHILD | LBS_STANDARD,
 						10, 80, 350, 475, hwnd, (HMENU)ID_MAIN_LISTBOX, NULL, NULL);
 
+			loadEntries();
 			updateListbox();
 			break;
 		case WM_COMMAND:
@@ -147,11 +148,12 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_MAIN_FIND)
 			{
 				// find();
-				// iIndex = SendMessage (hwndList, LB_SELECTSTRING, iIndex, (LPARAM) szSearchString);
+				// iIndex = SendMessage(hwndList, LB_SELECTSTRING, iIndex, (LPARAM) szSearchString);
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_QUIT)
 			{
+				saveEntries();
 				PostQuitMessage(0);
 				running = false;
 			}
@@ -170,9 +172,20 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						EnableWindow(bDelete, TRUE);
 					}
 				}
+
+				// a row was double-clicked
+				if (HIWORD(wParam) == LBN_DBLCLK)
+				{
+					// get row index
+					selectedRow = SendMessage(lbList, LB_GETCURSEL, 0, 0);
+
+					if (selectedRow != LB_ERR)
+						editEntry();
+				}
 			}
 			break;
 		case WM_DESTROY:
+			saveEntries();
 			PostQuitMessage(0);
 			running = false;
 			break;
@@ -196,32 +209,6 @@ void centerWindow(HWND hwnd)
 
 void updateListbox()
 {
-	SendMessage(lbList, LB_RESETCONTENT, 0, 0);
-
-	// add entries to listbox
-	for (int i = 0; i < entryCount; ++i)
-	{
-		// skip deleted entries
-		if (entries[i].title[0] == '\0')
-			continue;
-
-		wchar_t row[MAXLINE];
-		wcscpy(row, entries[i].title);
-		wcscat(row, L", ");
-		wcscat(row, entries[i].id);
-		wcscat(row, L", ");
-		wcscat(row, entries[i].pw);
-		wcscat(row, L", ");
-		wcscat(row, entries[i].misc);
-
-		SendMessageW(lbList, LB_ADDSTRING, i, (LPARAM)row);
-		// if (!SendMessageW(lbList, LB_ADDSTRING, 0, (LPARAM)row))
-		// {
-		// 	MessageBox(NULL, "Listbox population failed", "Error", MB_ICONEXCLAMATION | MB_OK);
-		// 	return;
-		// }
-	}
-
 	// deselect all entries
 	SendMessage(lbList, LB_SETCURSEL, -1, 0);
 	EnableWindow(bEdit, FALSE);
@@ -233,6 +220,7 @@ void addEntry()
 {
 	MSG msg;
 	static WNDCLASSEX wcAdd = {0};
+	static bool addClassRegistered = false;
 
 	if (!addClassRegistered)
 	{
@@ -334,13 +322,52 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_EDIT_OK)
 			{
-				// add record
-				entries = realloc(entries, (entryCount+1) * sizeof(*entries));
-				GetWindowTextW(tTitle, entries[entryCount].title, MAXTITLE);
-				GetWindowTextW(tId, entries[entryCount].id, MAXID);
-				GetWindowTextW(tPw, entries[entryCount].pw, MAXPW);
-				GetWindowTextW(tMisc, entries[entryCount].misc, MAXMISC);
-				++entryCount;
+				// get fields from edit boxes
+				wchar_t title[MAXTITLE];
+				wchar_t id[MAXID];
+				wchar_t pw[MAXPW];
+				wchar_t misc[MAXMISC];
+				GetWindowTextW(tTitle, title, MAXTITLE);
+				GetWindowTextW(tId, id, MAXID);
+				GetWindowTextW(tPw, pw, MAXPW);
+				GetWindowTextW(tMisc, misc, MAXMISC);
+
+				// test that title field is not empty
+				if (wcslen(title) == 0)
+				{
+					SetFocus(tTitle);
+					return DefWindowProc(hwnd, msg, wParam, lParam);
+				}
+
+				// test for pre-existing title
+				int rowCount = (int)SendMessage(lbList, LB_GETCOUNT, 0, 0);
+				for (int i = 0; i < rowCount; ++i)
+				{
+					// get title from each row
+					char line[MAXLINE];
+					SendMessage(lbList, LB_GETTEXT, i, (LPARAM)line);
+					struct Entry entry;
+					splitRow(line, &entry);
+
+					if (wcscmp(title, entry.title) == 0)
+					{
+						MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
+						SetFocus(tTitle);
+						return DefWindowProc(hwnd, msg, wParam, lParam);
+					}
+				}
+
+				// join fields and send to listbox
+				wchar_t row[MAXLINE];
+				wcscpy(row, title);
+				wcscat(row, L",");
+				wcscat(row, id);
+				wcscat(row, L",");
+				wcscat(row, pw);
+				wcscat(row, L",");
+				wcscat(row, misc);
+				SendMessageW(lbList, LB_ADDSTRING, 0, (LPARAM)row);
+
 				DestroyWindow(hwnd);
 				updateListbox();
 			}
@@ -360,6 +387,7 @@ void editEntry()
 {
 	MSG msg;
 	static WNDCLASSEX wcEdit = {0};
+	static bool editClassRegistered = false;
 
 	if (!editClassRegistered)
 	{
@@ -456,20 +484,72 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							270, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
 
-			SetWindowTextW(tTitle, entries[selectedRow].title);
-			SetWindowTextW(tId, entries[selectedRow].id);
-			SetWindowTextW(tPw, entries[selectedRow].pw);
-			SetWindowTextW(tMisc, entries[selectedRow].misc);
+			// get selected row
+			char line[MAXLINE];
+			SendMessage(lbList, LB_GETTEXT, selectedRow, (LPARAM)line);
+
+			// split line into fields
+			struct Entry entry;
+			splitRow(line, &entry);
+
+			// populate fields
+			SetWindowTextW(tTitle, entry.title);
+			SetWindowTextW(tId, entry.id);
+			SetWindowTextW(tPw, entry.pw);
+			SetWindowTextW(tMisc, entry.misc);
+
 			SetFocus(bCancel);
 			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_EDIT_OK)
 			{
-				// update record
-				GetWindowTextW(tTitle, entries[selectedRow].title, MAXTITLE);
-				GetWindowTextW(tId, entries[selectedRow].id, MAXID);
-				GetWindowTextW(tPw, entries[selectedRow].pw, MAXPW);
-				GetWindowTextW(tMisc, entries[selectedRow].misc, MAXMISC);
+				// get fields from edit boxes
+				wchar_t title[MAXTITLE];
+				wchar_t id[MAXID];
+				wchar_t pw[MAXPW];
+				wchar_t misc[MAXMISC];
+				GetWindowTextW(tTitle, title, MAXTITLE);
+				GetWindowTextW(tId, id, MAXID);
+				GetWindowTextW(tPw, pw, MAXPW);
+				GetWindowTextW(tMisc, misc, MAXMISC);
+
+				// test that title field is not empty
+				if (wcslen(title) == 0)
+				{
+					SetFocus(tTitle);
+					return DefWindowProc(hwnd, msg, wParam, lParam);
+				}
+
+				// test for pre-existing title
+				int rowCount = (int)SendMessage(lbList, LB_GETCOUNT, 0, 0);
+				for (int i = 0; i < rowCount; ++i)
+				{
+					// get title from each row
+					char line[MAXLINE];
+					SendMessage(lbList, LB_GETTEXT, i, (LPARAM)line);
+					struct Entry entry;
+					splitRow(line, &entry);
+
+					if (wcscmp(title, entry.title) == 0)
+					{
+						MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
+						SetFocus(tTitle);
+						return DefWindowProc(hwnd, msg, wParam, lParam);
+					}
+				}
+
+				// join fields and send to listbox
+				wchar_t row[MAXLINE];
+				wcscpy(row, title);
+				wcscat(row, L",");
+				wcscat(row, id);
+				wcscat(row, L",");
+				wcscat(row, pw);
+				wcscat(row, L",");
+				wcscat(row, misc);
+				SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
+				SendMessageW(lbList, LB_ADDSTRING, 0, (LPARAM)row);
+
 				DestroyWindow(hwnd);
 				updateListbox();
 			}
@@ -487,19 +567,18 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void deleteEntry()
 {
+	//TODO confirm first
 	if (selectedRow != LB_ERR)
-		entries[selectedRow].title[0] = '\0';
+		SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
 	updateListbox();
 }
 
-//FIX temporary text file
+//TODO replace with encrypted database
 void loadEntries()
 {
 	FILE *f = fopen(tempFile, "r");
 	if (f == NULL)
-	{
 		return;
-	}
 
 	char line[MAXLINE];
 	wchar_t data[MAXLINE];
@@ -547,9 +626,31 @@ void loadEntries()
 		}
 	}
 	fclose(f);
+
+	SendMessage(lbList, LB_RESETCONTENT, 0, 0);
+
+	// add entries to listbox
+	for (int i = 0; i < entryCount; ++i)
+	{
+		wchar_t row[MAXLINE];
+		wcscpy(row, entries[i].title);
+		wcscat(row, L",");
+		wcscat(row, entries[i].id);
+		wcscat(row, L",");
+		wcscat(row, entries[i].pw);
+		wcscat(row, L",");
+		wcscat(row, entries[i].misc);
+
+		SendMessageW(lbList, LB_ADDSTRING, i, (LPARAM)row);
+		// if (!SendMessageW(lbList, LB_ADDSTRING, 0, (LPARAM)row))
+		// {
+		// 	MessageBox(NULL, "Listbox population failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+		// 	return;
+		// }
+	}
 }
 
-//FIX temporary text file
+//TODO replace with encrypted database
 void saveEntries()
 {
 	FILE *f = fopen(tempFile, "w");
@@ -559,9 +660,79 @@ void saveEntries()
 		return;
 	}
 
-	for (int i = 0; i < entryCount; ++i)
-		if (entries[i].title[0] != '\0')
-			fprintf(f, "%ls,%ls,%ls,%ls\n", entries[i].title, entries[i].id, entries[i].pw, entries[i].misc);
+	int rowCount = (int)SendMessage(lbList, LB_GETCOUNT, 0, 0);
+
+	for (int i = 0; i < rowCount; ++i)
+	{
+		char line[MAXLINE];
+		SendMessage(lbList, LB_GETTEXT, i, (LPARAM)line);
+		struct Entry entry;
+		splitRow(line, &entry);
+		fprintf(f, "%ls,%ls,%ls,%ls\n", entry.title, entry.id, entry.pw, entry.misc);
+	}
 
 	fclose(f);
+}
+
+void splitRow(char line[], struct Entry *entry)
+{
+	wchar_t data[MAXLINE];
+	int line_ctr = 0;
+	int data_ctr = 0;
+
+	// title
+	while (line[line_ctr] != ',')
+		data[data_ctr++] = line[line_ctr++];
+	data[data_ctr] = '\0';
+	data_ctr = 0;
+	++line_ctr;
+	wcscpy(entry->title, data);
+
+	// id
+	while (line[line_ctr] != ',')
+		data[data_ctr++] = line[line_ctr++];
+	data[data_ctr] = '\0';
+	data_ctr = 0;
+	++line_ctr;
+	wcscpy(entry->id, data);
+
+	// pw
+	while (line[line_ctr] != ',')
+		data[data_ctr++] = line[line_ctr++];
+	data[data_ctr] = '\0';
+	data_ctr = 0;
+	++line_ctr;
+	wcscpy(entry->pw, data);
+
+	// misc
+	while (line[line_ctr] != '\0')
+		data[data_ctr++] = line[line_ctr++];
+	data[data_ctr] = '\0';
+	wcscpy(entry->misc, data);
+}
+
+void outw(wchar_t *s)
+{
+	FILE *lf = fopen("log.txt", "a");
+	if (lf == NULL)
+	{
+		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	fprintf(lf, "%ls\n", s);
+	fclose(lf);
+}
+
+void outs(char *s)
+{
+	FILE *lf = fopen("log.txt", "a");
+	if (lf == NULL)
+	{
+		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	fprintf(lf, "%s\n", s);
+	fclose(lf);
 }
