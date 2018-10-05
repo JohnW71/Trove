@@ -2,7 +2,6 @@
 
 #include "gui.h"
 
-//TODO delete should confirm
 //TODO pad fields into columns
 //TODO Quit sometimes takes multiple attempts
 //TODO Add/Edit should have a "Generate password" icon
@@ -567,10 +566,14 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void deleteEntry()
 {
-	//TODO confirm first
 	if (selectedRow != LB_ERR)
-		SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
-	updateListbox();
+	{
+		if (MessageBox(NULL, "Are you sure you want to delete this entry?", "Confirm delete", MB_YESNO | MB_ICONWARNING) == IDYES)
+		{
+			SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
+			updateListbox();
+		}
+	}
 }
 
 //TODO replace with encrypted database
