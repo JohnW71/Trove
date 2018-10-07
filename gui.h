@@ -26,7 +26,7 @@
 #define MAXID 21
 #define MAXPW 21
 #define MAXMISC 51
-#define MAXLINE 110
+#define MAXLINE 120
 
 // #define MINPW 6
 // #define MINCHARS 0
@@ -36,6 +36,7 @@
 
 void loadEntries(void);
 void saveEntries(void);
+void sortEntries(void);
 void centerWindow(HWND);
 void updateListbox(void);
 void addEntry(void);
@@ -43,7 +44,7 @@ void editEntry(void);
 void deleteEntry(void);
 void findEntry(void);
 void settings(void);
-void splitRow(char[], struct Entry *);
+// void splitRow(char[], struct Entry *);
 void outw(wchar_t *);
 void outs(char *);
 
