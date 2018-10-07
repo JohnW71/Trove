@@ -21,6 +21,7 @@
 #define ID_EDIT_MISC 17
 #define ID_EDIT_CANCEL 18
 #define ID_EDIT_OK 19
+#define ID_EDIT_GENERATE 20
 
 #define MAXTITLE 21
 #define MAXID 21
@@ -44,7 +45,7 @@ void editEntry(void);
 void deleteEntry(void);
 void findEntry(void);
 void settings(void);
-// void splitRow(char[], struct Entry *);
+void generatePassword(wchar_t *);
 void outw(wchar_t *);
 void outs(char *);
 
