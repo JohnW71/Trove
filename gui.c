@@ -3,15 +3,19 @@
 #include "gui.h"
 
 //TODO Quit sometimes takes multiple attempts
-//TODO Add/Edit should have a "Generate password" icon
+//TODO CtrlA does not work in editboxes
 //TODO implement Find
-//TODO implement Settings
 //TODO implement encryption
+//TODO implement Settings
 
 static char tempFile[] = "temp.db";
 static bool running = true;
 static int entryCount = 0;
 static int showCmd;
+static int generationSize = 20;	//TODO load from settings
+static int minSpecial = 4;		//TODO load from settings
+static int minNumeric = 4;		//TODO load from settings
+static int minUppercase = 4;	//TODO load from settings
 static LRESULT selectedRow;
 static HINSTANCE instance;
 static HWND lbList, bEdit, bDelete;
@@ -273,7 +277,7 @@ void addEntry(void)
 
 LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bCancel, lTitle, tTitle, lId, tId, lPw, tPw, lMisc, tMisc;
+	static HWND bOK, bCancel, bGenerate, lTitle, tTitle, lId, tId, lPw, tPw, lMisc, tMisc;
 
 	switch (msg)
 	{
@@ -314,6 +318,9 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							280, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
+			bGenerate = CreateWindowEx(WS_EX_LEFT, "Button", "Generate password",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							280, 80, 160, 25, hwnd, (HMENU)ID_EDIT_GENERATE, NULL, NULL);
 
 			SetFocus(tTitle);
 			break;
@@ -363,6 +370,12 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_EDIT_CANCEL)
 			{
 				DestroyWindow(hwnd);
+			}
+			if (LOWORD(wParam) == ID_EDIT_GENERATE)
+			{
+				wchar_t password[MAXPW];
+				generatePassword(password);
+				SetWindowTextW(tPw, password);
 			}
 			break;
 		case WM_DESTROY:
@@ -431,7 +444,7 @@ void editEntry(void)
 
 LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bCancel, lTitle, tTitle, lId, tId, lPw, tPw, lMisc, tMisc;
+	static HWND bOK, bCancel, bGenerate, lTitle, tTitle, lId, tId, lPw, tPw, lMisc, tMisc;
 
 	switch (msg)
 	{
@@ -472,6 +485,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							280, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
+			bGenerate = CreateWindowEx(WS_EX_LEFT, "Button", "Generate password",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							280, 80, 160, 25, hwnd, (HMENU)ID_EDIT_GENERATE, NULL, NULL);
 
 			// get selected row
 			wchar_t title[MAXLINE];
@@ -537,6 +553,12 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_EDIT_CANCEL)
 			{
 				DestroyWindow(hwnd);
+			}
+			if (LOWORD(wParam) == ID_EDIT_GENERATE)
+			{
+				wchar_t password[MAXPW];
+				generatePassword(password);
+				SetWindowTextW(tPw, password);
 			}
 			break;
 		case WM_DESTROY:
@@ -673,6 +695,42 @@ void sortEntries(void)
 			}
 		}
 	} while (changed);
+}
+
+// random chars from 33 to 126, except 44 (commas)
+void generatePassword(wchar_t *buf)
+{
+	int specialCount;
+	int numericCount;
+	int uppercaseCount;
+
+	do
+	{
+		specialCount = 0;
+		numericCount = 0;
+		uppercaseCount = 0;
+
+		for (int i = 0; i < generationSize; ++i)
+		{
+			int rn = rand() % 127;
+			if (rn < 33 || rn == 44)
+			{
+				--i;
+				continue;
+			}
+			buf[i] = (char)rn;
+
+			if (ispunct((char)rn))
+				++specialCount;
+			if (isdigit((char)rn))
+				++numericCount;
+			if (isupper((char)rn))
+				++uppercaseCount;
+		}
+		buf[generationSize] = '\0';
+	} while (specialCount < minSpecial ||
+			numericCount < minNumeric ||
+			uppercaseCount < minUppercase);
 }
 
 void outw(wchar_t *s)
