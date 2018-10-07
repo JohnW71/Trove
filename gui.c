@@ -2,7 +2,6 @@
 
 #include "gui.h"
 
-//TODO extend editboxes to fit 20/50 chars
 //TODO Quit sometimes takes multiple attempts
 //TODO Add/Edit should have a "Generate password" icon
 //TODO implement Find
@@ -250,7 +249,7 @@ void addEntry(void)
 								"Add",
 								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
 								CW_USEDEFAULT, CW_USEDEFAULT,
-								375, 200,
+								530, 200,
 								NULL, NULL,
 								instance, NULL);
 
@@ -286,35 +285,35 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							10, 10, 80, 25, hwnd, (HMENU)ID_EDIT_TITLE_LABEL, NULL, NULL);
 			tTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-							90, 10, 150, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
+							90, 10, 170, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
 							WS_VISIBLE | WS_CHILD,
 							10, 45, 80, 25, hwnd, (HMENU)ID_EDIT_ID_LABEL, NULL, NULL);
 			tId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-							90, 45, 150, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
+							90, 45, 170, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
 							WS_VISIBLE | WS_CHILD,
 							10, 80, 80, 25, hwnd, (HMENU)ID_EDIT_PW_LABEL, NULL, NULL);
 			tPw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-							90, 80, 150, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
+							90, 80, 170, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
 							WS_VISIBLE | WS_CHILD,
 							10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
 			tMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-							90, 115, 150, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
+							90, 115, 410, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-							270, 10, 80, 25, hwnd, (HMENU)ID_EDIT_OK, NULL, NULL);
+							280, 10, 80, 25, hwnd, (HMENU)ID_EDIT_OK, NULL, NULL);
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-							270, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
+							280, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
 
 			SetFocus(tTitle);
 			break;
@@ -348,33 +347,6 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						return DefWindowProc(hwnd, msg, wParam, lParam);
 					}
 				}
-
-				// int rowCount = (int)SendMessage(lbList, LB_GETCOUNT, 0, 0);
-				// for (int i = 0; i < rowCount; ++i)
-				// {
-				// 	// get title from each row
-				// 	char line[MAXLINE];
-				// 	SendMessage(lbList, LB_GETTEXT, i, (LPARAM)line);
-				// 	struct Entry entry;
-				// 	splitRow(line, &entry);
-
-				// 	if (wcscmp(title, line) == 0)
-				// 	{
-				// 		MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
-				// 		SetFocus(tTitle);
-				// 		return DefWindowProc(hwnd, msg, wParam, lParam);
-				// 	}
-				// }
-
-				// join fields and send to listbox
-				// wchar_t row[MAXLINE];
-				// wcscpy(row, title);
-				// wcscat(row, L",");
-				// wcscat(row, id);
-				// wcscat(row, L",");
-				// wcscat(row, pw);
-				// wcscat(row, L",");
-				// wcscat(row, misc);
 
 				// add to listbox & entries
 				SendMessageW(lbList, LB_ADDSTRING, 0, (LPARAM)title);
@@ -435,7 +407,7 @@ void editEntry(void)
 								"Edit",
 								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
 								CW_USEDEFAULT, CW_USEDEFAULT,
-								375, 200,
+								530, 200,
 								NULL, NULL,
 								instance, NULL);
 
@@ -471,43 +443,39 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							10, 10, 80, 25, hwnd, (HMENU)ID_EDIT_TITLE_LABEL, NULL, NULL);
 			tTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-							90, 10, 150, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
+							90, 10, 170, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
 							WS_VISIBLE | WS_CHILD,
 							10, 45, 80, 25, hwnd, (HMENU)ID_EDIT_ID_LABEL, NULL, NULL);
 			tId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-							90, 45, 150, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
+							90, 45, 170, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
 							WS_VISIBLE | WS_CHILD,
 							10, 80, 80, 25, hwnd, (HMENU)ID_EDIT_PW_LABEL, NULL, NULL);
 			tPw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-							90, 80, 150, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
+							90, 80, 170, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
 							WS_VISIBLE | WS_CHILD,
 							10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
 			tMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-							90, 115, 150, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
+							90, 115, 410, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-							270, 10, 80, 25, hwnd, (HMENU)ID_EDIT_OK, NULL, NULL);
+							280, 10, 80, 25, hwnd, (HMENU)ID_EDIT_OK, NULL, NULL);
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-							270, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
+							280, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
 
 			// get selected row
 			wchar_t title[MAXLINE];
 			SendMessageW(lbList, LB_GETTEXT, selectedRow, (LPARAM)title);
-
-			// split line into fields
-			// struct Entry entry;
-			// splitRow(line, &entry);
 
 			// populate fields
 			for (int i = 0; i < entryCount; ++i)
@@ -554,33 +522,6 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						return DefWindowProc(hwnd, msg, wParam, lParam);
 					}
 				}
-
-				// int rowCount = (int)SendMessage(lbList, LB_GETCOUNT, 0, 0);
-				// for (int i = 0; i < rowCount; ++i)
-				// {
-				// 	// get title from each row
-				// 	char line[MAXLINE];
-				// 	SendMessage(lbList, LB_GETTEXT, i, (LPARAM)line);
-				// 	struct Entry entry;
-				// 	splitRow(line, &entry);
-
-				// 	if (wcscmp(title, entry.title) == 0)
-				// 	{
-				// 		MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
-				// 		SetFocus(tTitle);
-				// 		return DefWindowProc(hwnd, msg, wParam, lParam);
-				// 	}
-				// }
-
-				// join fields and send to listbox
-				// wchar_t row[MAXLINE];
-				// wcscpy(row, title);
-				// wcscat(row, L",");
-				// wcscat(row, id);
-				// wcscat(row, L",");
-				// wcscat(row, pw);
-				// wcscat(row, L",");
-				// wcscat(row, misc);
 
 				// replace entry in listbox & entries
 				SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
@@ -679,12 +620,6 @@ void loadEntries(void)
 	{
 		wchar_t row[MAXLINE];
 		wcscpy(row, entries[i].title);
-		// wcscat(row, L",");
-		// wcscat(row, entries[i].id);
-		// wcscat(row, L",");
-		// wcscat(row, entries[i].pw);
-		// wcscat(row, L",");
-		// wcscat(row, entries[i].misc);
 		SendMessageW(lbList, LB_ADDSTRING, i, (LPARAM)row);
 	}
 }
@@ -698,17 +633,6 @@ void saveEntries(void)
 		puts("Error saving entries!");
 		return;
 	}
-
-	// int rowCount = (int)SendMessage(lbList, LB_GETCOUNT, 0, 0);
-
-	// for (int i = 0; i < rowCount; ++i)
-	// {
-		// char line[MAXLINE];
-		// SendMessage(lbList, LB_GETTEXT, i, (LPARAM)line);
-		// struct Entry entry;
-		// splitRow(line, &entry);
-		// fprintf(f, "%ls,%ls,%ls,%ls\n", entry.title, entry.id, entry.pw, entry.misc);
-	// }
 
 	for (int i = 0; i < entryCount; ++i)
 		if (entries[i].title[0] != '\0')
@@ -750,43 +674,6 @@ void sortEntries(void)
 		}
 	} while (changed);
 }
-
-// void splitRow(char line[], struct Entry *entry)
-// {
-// 	wchar_t data[MAXLINE];
-// 	int line_ctr = 0;
-// 	int data_ctr = 0;
-
-// 	// title
-// 	while (line[line_ctr] != ',')
-// 		data[data_ctr++] = line[line_ctr++];
-// 	data[data_ctr] = '\0';
-// 	data_ctr = 0;
-// 	++line_ctr;
-// 	wcscpy(entry->title, data);
-
-// 	// id
-// 	while (line[line_ctr] != ',')
-// 		data[data_ctr++] = line[line_ctr++];
-// 	data[data_ctr] = '\0';
-// 	data_ctr = 0;
-// 	++line_ctr;
-// 	wcscpy(entry->id, data);
-
-// 	// pw
-// 	while (line[line_ctr] != ',')
-// 		data[data_ctr++] = line[line_ctr++];
-// 	data[data_ctr] = '\0';
-// 	data_ctr = 0;
-// 	++line_ctr;
-// 	wcscpy(entry->pw, data);
-
-// 	// misc
-// 	while (line[line_ctr] != '\0')
-// 		data[data_ctr++] = line[line_ctr++];
-// 	data[data_ctr] = '\0';
-// 	wcscpy(entry->misc, data);
-// }
 
 void outw(wchar_t *s)
 {
