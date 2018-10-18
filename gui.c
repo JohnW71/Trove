@@ -2,11 +2,10 @@
 
 #include "gui.h"
 
-//TODO Quit sometimes takes multiple attempts
 //TODO CtrlA does not work in editboxes
 //TODO implement Find
-//TODO implement encryption
 //TODO implement Settings
+//TODO implement encryption
 
 static char tempFile[] = "temp.db";
 static bool running = true;
@@ -19,6 +18,8 @@ static int minUppercase = 4;	//TODO load from settings
 static LRESULT selectedRow;
 static HINSTANCE instance;
 static HWND lbList, bEdit, bDelete;
+static HWND addHwnd;
+static HWND editHwnd;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					PWSTR pCmdLine, int nShowCmd)
@@ -72,7 +73,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	{
 		while (GetMessage(&msg, NULL, 0, 0))
 		{
-			if (!IsDialogMessage(hwnd, &msg))
+			if (!IsDialogMessage(hwnd, &msg) &&
+				!IsDialogMessage(editHwnd, &msg) &&
+				!IsDialogMessage(addHwnd, &msg))
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
@@ -220,7 +223,6 @@ void updateListbox(void)
 
 void addEntry(void)
 {
-	MSG msg;
 	static WNDCLASSEX wcAdd = {0};
 	static bool addClassRegistered = false;
 
@@ -248,7 +250,7 @@ void addEntry(void)
 			addClassRegistered = true;
 	}
 
-	HWND hwnd = CreateWindowEx(WS_EX_LEFT,
+	addHwnd = CreateWindowEx(WS_EX_LEFT,
 								wcAdd.lpszClassName,
 								"Add",
 								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
@@ -257,22 +259,13 @@ void addEntry(void)
 								NULL, NULL,
 								instance, NULL);
 
-	if (!hwnd)
+	if (!addHwnd)
 	{
 		MessageBox(NULL, "Add window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
 
-	while (GetMessage(&msg, NULL, 0, 0))
-	{
-		if (!IsDialogMessage(hwnd, &msg))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}
-
-	ShowWindow(hwnd, showCmd);
+	ShowWindow(addHwnd, SW_SHOW);
 }
 
 LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -387,7 +380,6 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void editEntry(void)
 {
-	MSG msg;
 	static WNDCLASSEX wcEdit = {0};
 	static bool editClassRegistered = false;
 
@@ -415,7 +407,7 @@ void editEntry(void)
 			editClassRegistered = true;
 	}
 
-	HWND hwnd = CreateWindowEx(WS_EX_LEFT,
+	editHwnd = CreateWindowEx(WS_EX_LEFT,
 								wcEdit.lpszClassName,
 								"Edit",
 								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
@@ -424,22 +416,13 @@ void editEntry(void)
 								NULL, NULL,
 								instance, NULL);
 
-	if (!hwnd)
+	if (!editHwnd)
 	{
 		MessageBox(NULL, "Edit window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
 
-	while (GetMessage(&msg, NULL, 0, 0))
-	{
-		if (!IsDialogMessage(hwnd, &msg))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}
-
-	ShowWindow(hwnd, showCmd);
+	ShowWindow(editHwnd, SW_SHOW);
 }
 
 LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
