@@ -2,10 +2,11 @@
 
 #include "gui.h"
 
-//TODO CtrlA does not work in editboxes
-//TODO implement Find
+//TODO Find should enable when text is present
+//TODO Find should move through all matches
 //TODO implement Settings
 //TODO implement encryption
+//TODO CtrlA does not work in editboxes
 
 static char tempFile[] = "temp.db";
 static bool running = true;
@@ -114,7 +115,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER,
 						10, 45, 190, 25, hwnd, (HMENU)ID_MAIN_TEXTBOX, NULL, NULL);
 			bFind = CreateWindowEx(WS_EX_LEFT, "Button", "Find",
-						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP,// | WS_DISABLED,
 						205, 45, 40, 25, hwnd, (HMENU)ID_MAIN_FIND, NULL, NULL);
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Quit",
 						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
@@ -151,8 +152,27 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			if (LOWORD(wParam) == ID_MAIN_FIND)
 			{
-				// find();
-				// iIndex = SendMessage(hwndList, LB_SELECTSTRING, iIndex, (LPARAM) szSearchString);
+				wchar_t find[MAXTITLE];
+				GetWindowTextW(tFind, find, MAXTITLE);
+
+				// test that find box is not empty
+				if (wcslen(find) == 0)
+				{
+					SetFocus(tFind);
+					SendMessage(lbList, LB_SETCURSEL, -1, 0);
+					return DefWindowProc(hwnd, msg, wParam, lParam);
+				}
+
+				LRESULT index = -1;
+				for (int i = 0; i < entryCount; ++i)
+					if (wcsstr(entries[i].title, find))
+					{
+						index = i;
+						break;
+					}
+
+				if (index)
+					SendMessage(lbList, LB_SETCURSEL, index, 0);
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_QUIT)
