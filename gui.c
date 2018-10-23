@@ -2,8 +2,7 @@
 
 #include "gui.h"
 
-//TODO Find should enable when text is present
-//TODO Find should move through all matches
+//TODO Find should re-start from the beginning properly
 //TODO implement Settings
 //TODO implement encryption
 //TODO CtrlA does not work in editboxes
@@ -89,7 +88,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bAdd, bSettings, tFind, bFind, bCancel, tTitle;
+	static HWND bAdd, bSettings, eFind, bFind, bCancel;
 
 	switch (msg)
 	{
@@ -111,11 +110,11 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						280, 10, 80, 25, hwnd, (HMENU)ID_MAIN_SETTINGS, NULL, NULL);
 
 			// second row
-			tFind = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
+			eFind = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
 						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER,
-						10, 45, 190, 25, hwnd, (HMENU)ID_MAIN_TEXTBOX, NULL, NULL);
+						10, 45, 190, 25, hwnd, (HMENU)ID_MAIN_FINDTEXT, NULL, NULL);
 			bFind = CreateWindowEx(WS_EX_LEFT, "Button", "Find",
-						WS_VISIBLE | WS_CHILD | WS_TABSTOP,// | WS_DISABLED,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						205, 45, 40, 25, hwnd, (HMENU)ID_MAIN_FIND, NULL, NULL);
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Quit",
 						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
@@ -150,29 +149,62 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				// settings();
 			}
 
+			if (LOWORD(wParam) == ID_MAIN_FINDTEXT)
+			{
+				// find text was changed
+				if (HIWORD(wParam) == EN_CHANGE)
+				{
+					// get text length
+					wchar_t findText[MAXTITLE];
+					GetWindowTextW(eFind, findText, MAXTITLE);
+
+					// enable Find button if text is present
+					if (wcslen(findText) > 0)
+						EnableWindow(bFind, TRUE);
+					else
+						EnableWindow(bFind, FALSE);
+				}
+			}
+
 			if (LOWORD(wParam) == ID_MAIN_FIND)
 			{
-				wchar_t find[MAXTITLE];
-				GetWindowTextW(tFind, find, MAXTITLE);
-
-				// test that find box is not empty
-				if (wcslen(find) == 0)
+				// find button was clicked
+				if (HIWORD(wParam) == BN_CLICKED)
 				{
-					SetFocus(tFind);
-					SendMessage(lbList, LB_SETCURSEL, -1, 0);
-					return DefWindowProc(hwnd, msg, wParam, lParam);
-				}
+					wchar_t find[MAXTITLE];
+					GetWindowTextW(eFind, find, MAXTITLE);
 
-				LRESULT index = -1;
-				for (int i = 0; i < entryCount; ++i)
-					if (wcsstr(entries[i].title, find))
+					// test that find box is not empty
+					if (wcslen(find) == 0)
 					{
-						index = i;
-						break;
+						SetFocus(eFind);
+						SendMessage(lbList, LB_SETCURSEL, -1, 0);
+						return DefWindowProc(hwnd, msg, wParam, lParam);
 					}
 
-				if (index)
-					SendMessage(lbList, LB_SETCURSEL, index, 0);
+					SendMessage(lbList, LB_SETCURSEL, -1, 0);
+
+					static int i = 0;
+
+					if (i == entryCount)
+					{
+						i = 0;
+						selectedRow = LB_ERR;
+					}
+
+//TODO replace this with a while loop using a boolean to determine whether found or not. Currently when on the last match another Find will not continue from the beginning.
+					for (; i < entryCount; ++i)
+					{
+						if (i != selectedRow && wcsstr(entries[i].title, find))
+						{
+							selectedRow = i;
+							break;
+						}
+					}
+
+					if (selectedRow != LB_ERR)
+						SendMessage(lbList, LB_SETCURSEL, selectedRow, 0);
+				}
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_QUIT)
@@ -290,7 +322,7 @@ void addEntry(void)
 
 LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bCancel, bGenerate, lTitle, tTitle, lId, tId, lPw, tPw, lMisc, tMisc;
+	static HWND bOK, bCancel, bGenerate, lTitle, eTitle, lId, eId, lPw, ePw, lMisc, eMisc;
 
 	switch (msg)
 	{
@@ -300,28 +332,28 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			lTitle = CreateWindowEx(WS_EX_LEFT, "Static", "Title",
 							WS_VISIBLE | WS_CHILD,
 							10, 10, 80, 25, hwnd, (HMENU)ID_EDIT_TITLE_LABEL, NULL, NULL);
-			tTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+			eTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 10, 170, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
 							WS_VISIBLE | WS_CHILD,
 							10, 45, 80, 25, hwnd, (HMENU)ID_EDIT_ID_LABEL, NULL, NULL);
-			tId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+			eId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 45, 170, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
 							WS_VISIBLE | WS_CHILD,
 							10, 80, 80, 25, hwnd, (HMENU)ID_EDIT_PW_LABEL, NULL, NULL);
-			tPw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+			ePw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 80, 170, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
 							WS_VISIBLE | WS_CHILD,
 							10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
-			tMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+			eMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 115, 410, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
 
@@ -335,7 +367,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							280, 80, 160, 25, hwnd, (HMENU)ID_EDIT_GENERATE, NULL, NULL);
 
-			SetFocus(tTitle);
+			SetFocus(eTitle);
 			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_EDIT_OK)
@@ -345,15 +377,15 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				wchar_t id[MAXID];
 				wchar_t pw[MAXPW];
 				wchar_t misc[MAXMISC];
-				GetWindowTextW(tTitle, title, MAXTITLE);
-				GetWindowTextW(tId, id, MAXID);
-				GetWindowTextW(tPw, pw, MAXPW);
-				GetWindowTextW(tMisc, misc, MAXMISC);
+				GetWindowTextW(eTitle, title, MAXTITLE);
+				GetWindowTextW(eId, id, MAXID);
+				GetWindowTextW(ePw, pw, MAXPW);
+				GetWindowTextW(eMisc, misc, MAXMISC);
 
 				// test that title field is not empty
 				if (wcslen(title) == 0)
 				{
-					SetFocus(tTitle);
+					SetFocus(eTitle);
 					return DefWindowProc(hwnd, msg, wParam, lParam);
 				}
 
@@ -363,7 +395,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					if (wcscmp(entries[i].title, title) == 0 && i != selectedRow)
 					{
 						MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
-						SetFocus(tTitle);
+						SetFocus(eTitle);
 						return DefWindowProc(hwnd, msg, wParam, lParam);
 					}
 				}
@@ -388,7 +420,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				wchar_t password[MAXPW];
 				generatePassword(password);
-				SetWindowTextW(tPw, password);
+				SetWindowTextW(ePw, password);
 			}
 			break;
 		case WM_DESTROY:
@@ -447,7 +479,7 @@ void editEntry(void)
 
 LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bCancel, bGenerate, lTitle, tTitle, lId, tId, lPw, tPw, lMisc, tMisc;
+	static HWND bOK, bCancel, bGenerate, lTitle, eTitle, lId, eId, lPw, ePw, lMisc, eMisc;
 
 	switch (msg)
 	{
@@ -457,28 +489,28 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			lTitle = CreateWindowEx(WS_EX_LEFT, "Static", "Title",
 							WS_VISIBLE | WS_CHILD,
 							10, 10, 80, 25, hwnd, (HMENU)ID_EDIT_TITLE_LABEL, NULL, NULL);
-			tTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+			eTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 10, 170, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
 							WS_VISIBLE | WS_CHILD,
 							10, 45, 80, 25, hwnd, (HMENU)ID_EDIT_ID_LABEL, NULL, NULL);
-			tId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+			eId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 45, 170, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
 							WS_VISIBLE | WS_CHILD,
 							10, 80, 80, 25, hwnd, (HMENU)ID_EDIT_PW_LABEL, NULL, NULL);
-			tPw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+			ePw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 80, 170, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
 							WS_VISIBLE | WS_CHILD,
 							10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
-			tMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+			eMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 							WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 							90, 115, 410, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
 
@@ -501,10 +533,10 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				if (wcscmp(entries[i].title, title) == 0)
 				{
-					SetWindowTextW(tTitle, entries[i].title);
-					SetWindowTextW(tId, entries[i].id);
-					SetWindowTextW(tPw, entries[i].pw);
-					SetWindowTextW(tMisc, entries[i].misc);
+					SetWindowTextW(eTitle, entries[i].title);
+					SetWindowTextW(eId, entries[i].id);
+					SetWindowTextW(ePw, entries[i].pw);
+					SetWindowTextW(eMisc, entries[i].misc);
 					break;
 				}
 			}
@@ -519,15 +551,15 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				wchar_t id[MAXID];
 				wchar_t pw[MAXPW];
 				wchar_t misc[MAXMISC];
-				GetWindowTextW(tTitle, title, MAXTITLE);
-				GetWindowTextW(tId, id, MAXID);
-				GetWindowTextW(tPw, pw, MAXPW);
-				GetWindowTextW(tMisc, misc, MAXMISC);
+				GetWindowTextW(eTitle, title, MAXTITLE);
+				GetWindowTextW(eId, id, MAXID);
+				GetWindowTextW(ePw, pw, MAXPW);
+				GetWindowTextW(eMisc, misc, MAXMISC);
 
 				// test that title field is not empty
 				if (wcslen(title) == 0)
 				{
-					SetFocus(tTitle);
+					SetFocus(eTitle);
 					return DefWindowProc(hwnd, msg, wParam, lParam);
 				}
 
@@ -537,7 +569,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					if (wcscmp(entries[i].title, title) == 0 && i != selectedRow)
 					{
 						MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
-						SetFocus(tTitle);
+						SetFocus(eTitle);
 						return DefWindowProc(hwnd, msg, wParam, lParam);
 					}
 				}
@@ -561,7 +593,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				wchar_t password[MAXPW];
 				generatePassword(password);
-				SetWindowTextW(tPw, password);
+				SetWindowTextW(ePw, password);
 			}
 			break;
 		case WM_DESTROY:
