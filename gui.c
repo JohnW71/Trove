@@ -8,13 +8,17 @@
 //TODO CtrlA does not work in editboxes
 
 static char tempFile[] = "temp.db";
+static char iniFile[] = "trove.ini";
 static bool running = true;
+static uint8_t iv[IV_SIZE];
 static int entryCount = 0;
-static int showCmd;
-static int generationSize = 20;	//TODO load from settings
-static int minSpecial = 4;		//TODO load from settings
-static int minNumeric = 4;		//TODO load from settings
-static int minUppercase = 4;	//TODO load from settings
+static int generationSize = 8;
+static int minSpecial = 0;
+static int maxSpecial = 0;
+static int minNumeric = 0;
+static int maxNumeric = 0;
+static int minUppercase = 0;
+static int maxUppercase = 0;
 static LRESULT selectedRow;
 static HINSTANCE instance;
 static HWND lbList, bEdit, bDelete;
@@ -25,7 +29,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					PWSTR pCmdLine, int nShowCmd)
 {
 	instance = hInstance;
-	showCmd = nShowCmd;
 	MSG msg;
 	WNDCLASSEX wc = {0};
 
@@ -67,6 +70,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		return 0;
 	}
 
+	readSettings();
 	ShowWindow(hwnd, nShowCmd);
 
 	while (running)
@@ -147,6 +151,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_MAIN_SETTINGS)
 			{
 				// settings();
+				writeSettings();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_FINDTEXT)
@@ -178,6 +183,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					if (wcslen(find) == 0)
 					{
 						SetFocus(eFind);
+						// deselect all entries
 						SendMessage(lbList, LB_SETCURSEL, -1, 0);
 						return DefWindowProc(hwnd, msg, wParam, lParam);
 					}
@@ -202,7 +208,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						}
 					}
 
-					if (selectedRow != LB_ERR)
+					if (selectedRow != LB_ERR) // select matching row
 						SendMessage(lbList, LB_SETCURSEL, selectedRow, 0);
 				}
 			}
@@ -609,6 +615,7 @@ void deleteEntry(void)
 	{
 		if (MessageBox(NULL, "Are you sure you want to delete this entry?", "Confirm delete", MB_YESNO | MB_ICONWARNING) == IDYES)
 		{
+			// delete row
 			SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
 			entries[selectedRow].title[0] = '\0';
 			updateListbox();
@@ -670,6 +677,7 @@ void loadEntries(void)
 	}
 	fclose(f);
 
+	// remove all entries
 	SendMessage(lbList, LB_RESETCONTENT, 0, 0);
 
 	// add entries to listbox
@@ -792,4 +800,76 @@ void outs(char *s)
 
 	fprintf(lf, "%s\n", s);
 	fclose(lf);
+}
+
+void readSettings(void)
+{
+	FILE *f = fopen(iniFile, "r");
+	if (f == NULL)
+	{
+		outs("Created settings file");
+		writeSettings();
+		return;
+	}
+
+	char line[MAXLINE];
+
+	while (fgets(line, MAXLINE, f) != NULL)
+	{
+		char setting[MAXLINE];
+		char value[MAXLINE];
+		char *l = line;
+		char *s = setting;
+		char *v = value;
+
+		for (int i = 0; i < MAXLINE; ++i)
+		{
+			setting[i] = '\0';
+			value[i] = '\0';
+		}
+
+		// find setting
+		while (*l && *l != '=')
+		{
+			*s = *l;
+			s++;
+			l++;
+		}
+		*s = '\0';
+
+		// find value
+		++l;
+		while (*l)
+		{
+			*v = *l;
+			l++;
+			v++;
+		}
+		*v = '\0';
+
+		if (strcmp(setting, "password_size") == 0)	generationSize = atoi(value);
+		if (strcmp(setting, "min_special") == 0)	minSpecial = atoi(value);
+		if (strcmp(setting, "min_numeric") == 0)	minNumeric = atoi(value);
+		if (strcmp(setting, "min_uppercase") == 0)	minUppercase = atoi(value);
+		if (strcmp(setting, "keygen") == 0)			strncpy((char *)iv, value, 16);
+
+	}
+	fclose(f);
+}
+
+void writeSettings(void)
+{
+	FILE *f = fopen(iniFile, "w");
+	if (f == NULL)
+	{
+		outs("Error saving entries!");
+		return;
+	}
+
+	fprintf(f, "password_size=%d\n", generationSize);
+	fprintf(f, "min_special=%d\n", minSpecial);
+	fprintf(f, "min_numeric=%d\n", minNumeric);
+	fprintf(f, "min_uppercase=%d\n", minUppercase);
+	fprintf(f, "keygen=%s\n", (char *)iv);
+	fclose(f);
 }
