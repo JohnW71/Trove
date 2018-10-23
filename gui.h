@@ -7,7 +7,7 @@
 #define ID_MAIN_DELETE 3
 #define ID_MAIN_SETTINGS 4
 #define ID_MAIN_QUIT 5
-#define ID_MAIN_TEXTBOX 6
+#define ID_MAIN_FINDTEXT 6
 #define ID_MAIN_FIND 7
 #define ID_MAIN_LISTBOX 8
 
