@@ -1,4 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>	// exit(), rand(), malloc()
+#include <string.h>	// strcmp(), strcpy(), strlen()
+#include <time.h>	// time()
+#include <ctype.h>	// isupper(), ispunct(), isdigit()
+#include <stdint.h>	// uint8_t
 #include <stdbool.h>
 #include <windows.h>
 
@@ -28,12 +33,12 @@
 #define MAXPW 21
 #define MAXMISC 51
 #define MAXLINE 120
-
-// #define MINPW 6
-// #define MINCHARS 0
-// #define MAXCHARS 6
-// #define MAXNAME 10
-// #define KEYSIZE 32
+#define MINPW 6
+#define MINCHARS 0
+#define MAXCHARS 6
+#define MAXNAME 10
+#define KEYSIZE 32
+#define IV_SIZE 17
 
 void loadEntries(void);
 void saveEntries(void);
@@ -45,6 +50,8 @@ void editEntry(void);
 void deleteEntry(void);
 void findEntry(void);
 void settings(void);
+void readSettings(void);
+void writeSettings(void);
 void generatePassword(wchar_t *);
 void outw(wchar_t *);
 void outs(char *);
