@@ -11,7 +11,7 @@
 
 int entryCount = 0;
 uint8_t iv[IV_SIZE];
-uint8_t DBpassword[KEYSIZE];
+uint8_t DBpassword[DBPASSWORDSIZE];
 
 static int generationSize = 12;
 static int minSpecial = 0;
@@ -739,10 +739,10 @@ void setNewKeygen(void)
 
 bool setDBpassword(void)
 {
-	uint8_t verifyPassword1[KEYSIZE];
-	uint8_t verifyPassword2[KEYSIZE];
+	uint8_t verifyPassword1[DBPASSWORDSIZE];
+	uint8_t verifyPassword2[DBPASSWORDSIZE];
 
-	printf("Enter new password up to %d chars, press enter for blank: ", KEYSIZE);
+	printf("Enter new password up to %d chars, press enter for blank: ", DBPASSWORDSIZE);
 	getPassword(verifyPassword1);
 	printf("\nEnter same password again to confirm: ");
 	getPassword(verifyPassword2);
@@ -754,7 +754,7 @@ bool setDBpassword(void)
 	}
 	puts("\n\nPassword set");
 
-	for (int i = 0; i < KEYSIZE; ++i)
+	for (int i = 0; i < DBPASSWORDSIZE; ++i)
 		DBpassword[i] = '\0';
 
 	strcpy(DBpassword, verifyPassword1);
@@ -793,7 +793,7 @@ void getPasswordWindows(uint8_t *password)
 			password[i] = c;
 		}
 	}
-	while (c != '\r' && i < KEYSIZE);
+	while (c != '\r' && i < DBPASSWORDSIZE);
 
 	password[i] = '\0';
 }
@@ -822,7 +822,7 @@ void getPasswordLinux(uint8_t *password)
 		exit(1);
 	}
 
-	for (int i = 0; i < KEYSIZE; ++i)
+	for (int i = 0; i < DBPASSWORDSIZE; ++i)
 		password[i] = '\0';
 
 	char c;
@@ -839,7 +839,7 @@ void getPasswordLinux(uint8_t *password)
 			password[i] = c;
 		}
 	}
-	while (c != '\n' && i < KEYSIZE);
+	while (c != '\n' && i < DBPASSWORDSIZE);
 
 	password[i] = '\0';
 
