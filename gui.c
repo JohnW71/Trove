@@ -2,7 +2,6 @@
 
 #include "gui.h"
 
-//TODO Find should re-start from the beginning properly
 //TODO implement Settings
 //TODO implement encryption
 //TODO CtrlA does not work in editboxes
@@ -135,27 +134,37 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_MAIN_ADD)
 			{
+				SetWindowTextW(eFind, L"");
 				addEntry();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_EDIT)
 			{
+				SetWindowTextW(eFind, L"");
 				editEntry();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_DELETE)
 			{
+				SetWindowTextW(eFind, L"");
 				deleteEntry();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_SETTINGS)
 			{
+				SetWindowTextW(eFind, L"");
 				// settings();
 				writeSettings();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_FINDTEXT)
 			{
+				if (HIWORD(wParam) == EN_SETFOCUS)
+				{
+					// deselect all entries
+					SendMessage(lbList, LB_SETCURSEL, -1, 0);
+				}
+
 				// find text was changed
 				if (HIWORD(wParam) == EN_CHANGE)
 				{
@@ -168,6 +177,9 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						EnableWindow(bFind, TRUE);
 					else
 						EnableWindow(bFind, FALSE);
+
+					// deselect all entries
+					SendMessage(lbList, LB_SETCURSEL, -1, 0);
 				}
 			}
 
@@ -179,33 +191,26 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					wchar_t find[MAXTITLE];
 					GetWindowTextW(eFind, find, MAXTITLE);
 
-					// test that find box is not empty
-					if (wcslen(find) == 0)
-					{
-						SetFocus(eFind);
-						// deselect all entries
-						SendMessage(lbList, LB_SETCURSEL, -1, 0);
-						return DefWindowProc(hwnd, msg, wParam, lParam);
-					}
-
+					// deselect all entries
 					SendMessage(lbList, LB_SETCURSEL, -1, 0);
 
 					static int i = 0;
+					int attempts = 0;
 
-					if (i == entryCount)
-					{
-						i = 0;
-						selectedRow = LB_ERR;
-					}
-
-//TODO replace this with a while loop using a boolean to determine whether found or not. Currently when on the last match another Find will not continue from the beginning.
-					for (; i < entryCount; ++i)
+					while (attempts <= entryCount)
 					{
 						if (i != selectedRow && wcsstr(entries[i].title, find))
 						{
 							selectedRow = i;
 							break;
 						}
+
+						++i;
+						++attempts;
+
+						// if at the end reset to the start
+						if (i == entryCount)
+							i = 0;
 					}
 
 					if (selectedRow != LB_ERR) // select matching row
