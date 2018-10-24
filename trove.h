@@ -6,8 +6,7 @@
 #define MINPW 6
 #define MINCHARS 0
 #define MAXCHARS 6
-#define MAXNAME 10
-#define KEYSIZE 32
+#define DBPASSWORDSIZE 32
 #define IV_SIZE 17
 
 #include <stdio.h>
