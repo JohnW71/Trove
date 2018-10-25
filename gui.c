@@ -2,8 +2,8 @@
 
 #include "gui.h"
 
-//TODO implement Settings
 //TODO implement encryption
+//TODO make password generation faster
 //TODO CtrlA does not work in editboxes
 
 static char tempFile[] = "temp.db";
@@ -11,18 +11,16 @@ static char iniFile[] = "trove.ini";
 static bool running = true;
 static uint8_t iv[IV_SIZE];
 static int entryCount = 0;
-static int generationSize = 8;
+static int passwordSize = MINPW;
 static int minSpecial = 0;
-static int maxSpecial = 0;
 static int minNumeric = 0;
-static int maxNumeric = 0;
 static int minUppercase = 0;
-static int maxUppercase = 0;
 static LRESULT selectedRow;
 static HINSTANCE instance;
 static HWND lbList, bEdit, bDelete;
 static HWND addHwnd;
 static HWND editHwnd;
+static HWND settingsHwnd;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					PWSTR pCmdLine, int nShowCmd)
@@ -78,6 +76,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			if (!IsDialogMessage(hwnd, &msg) &&
 				!IsDialogMessage(editHwnd, &msg) &&
+				!IsDialogMessage(settingsHwnd, &msg) &&
 				!IsDialogMessage(addHwnd, &msg))
 			{
 				TranslateMessage(&msg);
@@ -153,7 +152,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_MAIN_SETTINGS)
 			{
 				SetWindowTextW(eFind, L"");
-				// settings();
+				editSettings();
 				writeSettings();
 			}
 
@@ -205,11 +204,9 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							break;
 						}
 
-						++i;
 						++attempts;
 
-						// if at the end reset to the start
-						if (i == entryCount)
+						if (++i == entryCount)
 							i = 0;
 					}
 
@@ -258,30 +255,6 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			break;
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
-}
-
-void centerWindow(HWND hwnd)
-{
-	RECT rc = {0};
-
-	GetWindowRect(hwnd, &rc);
-	int windowWidth = rc.right - rc.left;
-	int windowHeight = rc.bottom - rc.top;
-	int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-
-	SetWindowPos(hwnd, HWND_TOP, (screenWidth - windowWidth) / 2,
-					(screenHeight - windowHeight) / 2, 0, 0, SWP_NOSIZE);
-}
-
-void updateListbox(void)
-{
-	// deselect all entries
-	SendMessage(lbList, LB_SETCURSEL, -1, 0);
-	EnableWindow(bEdit, FALSE);
-	EnableWindow(bDelete, FALSE);
-	selectedRow = LB_ERR;
-	sortEntries();
 }
 
 void addEntry(void)
@@ -370,18 +343,20 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-							280, 10, 80, 25, hwnd, (HMENU)ID_EDIT_OK, NULL, NULL);
+							320, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
+
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-							280, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
+							320, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
+
 			bGenerate = CreateWindowEx(WS_EX_LEFT, "Button", "Generate password",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-							280, 80, 160, 25, hwnd, (HMENU)ID_EDIT_GENERATE, NULL, NULL);
+							280, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
 			SetFocus(eTitle);
 			break;
 		case WM_COMMAND:
-			if (LOWORD(wParam) == ID_EDIT_OK)
+			if (LOWORD(wParam) == ID_OK)
 			{
 				// get fields from edit boxes
 				wchar_t title[MAXTITLE];
@@ -423,11 +398,13 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				DestroyWindow(hwnd);
 				updateListbox();
 			}
-			if (LOWORD(wParam) == ID_EDIT_CANCEL)
+
+			if (LOWORD(wParam) == ID_CANCEL)
 			{
 				DestroyWindow(hwnd);
 			}
-			if (LOWORD(wParam) == ID_EDIT_GENERATE)
+
+			if (LOWORD(wParam) == ID_GENERATE)
 			{
 				wchar_t password[MAXPW];
 				generatePassword(password);
@@ -527,13 +504,15 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-							280, 10, 80, 25, hwnd, (HMENU)ID_EDIT_OK, NULL, NULL);
+							320, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
+
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-							280, 45, 80, 25, hwnd, (HMENU)ID_EDIT_CANCEL, NULL, NULL);
+							320, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
+
 			bGenerate = CreateWindowEx(WS_EX_LEFT, "Button", "Generate password",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-							280, 80, 160, 25, hwnd, (HMENU)ID_EDIT_GENERATE, NULL, NULL);
+							280, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
 			// get selected row
 			wchar_t title[MAXLINE];
@@ -555,7 +534,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			SetFocus(bCancel);
 			break;
 		case WM_COMMAND:
-			if (LOWORD(wParam) == ID_EDIT_OK)
+			if (LOWORD(wParam) == ID_OK)
 			{
 				// get fields from edit boxes
 				wchar_t title[MAXTITLE];
@@ -596,11 +575,13 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				DestroyWindow(hwnd);
 				updateListbox();
 			}
-			if (LOWORD(wParam) == ID_EDIT_CANCEL)
+
+			if (LOWORD(wParam) == ID_CANCEL)
 			{
 				DestroyWindow(hwnd);
 			}
-			if (LOWORD(wParam) == ID_EDIT_GENERATE)
+
+			if (LOWORD(wParam) == ID_GENERATE)
 			{
 				wchar_t password[MAXPW];
 				generatePassword(password);
@@ -612,6 +593,298 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			break;
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+void editSettings(void)
+{
+	static WNDCLASSEX wcSettings = {0};
+	static bool settingsClassRegistered = false;
+
+	if (!settingsClassRegistered)
+	{
+		wcSettings.cbSize = sizeof(WNDCLASSEX);
+		wcSettings.cbClsExtra = 0;
+		wcSettings.cbWndExtra = 0;
+		wcSettings.hbrBackground = (HBRUSH)COLOR_WINDOW;
+		wcSettings.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wcSettings.hIcon = NULL;
+		wcSettings.hIconSm = NULL;
+		wcSettings.hInstance = instance;
+		wcSettings.lpfnWndProc = settingsWndProc;
+		wcSettings.lpszClassName = "TroveSettings";
+		wcSettings.lpszMenuName = NULL;
+		wcSettings.style = CS_HREDRAW | CS_VREDRAW;
+
+		if (!RegisterClassEx(&wcSettings))
+		{
+			MessageBox(NULL, "Settings window registration failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+			return;
+		}
+		else
+			settingsClassRegistered = true;
+	}
+
+	settingsHwnd = CreateWindowEx(WS_EX_LEFT,
+								wcSettings.lpszClassName,
+								"Settings",
+								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
+								CW_USEDEFAULT, CW_USEDEFAULT,
+								410, 260,
+								NULL, NULL,
+								instance, NULL);
+
+	if (!settingsHwnd)
+	{
+		MessageBox(NULL, "Settings window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	ShowWindow(settingsHwnd, SW_SHOW);
+}
+
+LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	static HWND bOK, bCancel, lPassword, lSpecial, lNumeric, lUppercase, lKeygen, eKeygen, bGenerate, cPassword, cSpecial, cNumeric, cUppercase;
+
+	switch (msg)
+	{
+		case WM_CREATE:
+			char title[40];
+			sprintf(title, "Password length from %d to %d", MINPW, MAXPW-1);
+
+			lPassword = CreateWindowEx(WS_EX_LEFT, "Static", title,
+							WS_VISIBLE | WS_CHILD,
+							10, 15, 220, 25, hwnd, (HMENU)ID_SETTINGS_PW_LABEL, NULL, NULL);
+			cPassword = CreateWindowEx(WS_EX_LEFT, "combobox", "",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP | CBS_DROPDOWN | WS_VSCROLL,
+							225, 10, 40, 100, hwnd, (HMENU)ID_SETTINGS_PW_LENGTH, NULL, NULL);
+			fillDropdown(cPassword, MINPW, MAXPW-1);
+
+			lSpecial = CreateWindowEx(WS_EX_LEFT, "Static", "Minimum special characters",
+							WS_VISIBLE | WS_CHILD,
+							10, 50, 220, 25, hwnd, (HMENU)ID_SETTINGS_SPECIAL_LABEL, NULL, NULL);
+			cSpecial = CreateWindowEx(WS_EX_LEFT, "combobox", "",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP | CBS_DROPDOWN | WS_VSCROLL,
+							225, 45, 35, 100, hwnd, (HMENU)ID_SETTINGS_SPECIAL_LENGTH, NULL, NULL);
+			fillDropdown(cSpecial, 0, MAXCHARS);
+
+			lNumeric = CreateWindowEx(WS_EX_LEFT, "Static", "Minimum numeric characters",
+							WS_VISIBLE | WS_CHILD,
+							10, 85, 220, 25, hwnd, (HMENU)ID_SETTINGS_NUMERIC_LABEL, NULL, NULL);
+			cNumeric = CreateWindowEx(WS_EX_LEFT, "combobox", "",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP | CBS_DROPDOWN | WS_VSCROLL,
+							225, 80, 35, 100, hwnd, (HMENU)ID_SETTINGS_NUMERIC_LENGTH, NULL, NULL);
+			fillDropdown(cNumeric, 0, MAXCHARS);
+
+			lUppercase = CreateWindowEx(WS_EX_LEFT, "Static", "Minimum uppercase characters",
+							WS_VISIBLE | WS_CHILD,
+							10, 120, 220, 25, hwnd, (HMENU)ID_SETTINGS_UPPERCASE_LABEL, NULL, NULL);
+			cUppercase = CreateWindowEx(WS_EX_LEFT, "combobox", "",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP | CBS_DROPDOWN | WS_VSCROLL,
+							225, 115, 35, 100, hwnd, (HMENU)ID_SETTINGS_UPPERCASE_LENGTH, NULL, NULL);
+			fillDropdown(cUppercase, 0, MAXCHARS);
+
+			lKeygen = CreateWindowEx(WS_EX_LEFT, "Static", "Encryption keygen",
+							WS_VISIBLE | WS_CHILD,
+							10, 155, 220, 25, hwnd, (HMENU)ID_SETTINGS_KEYGEN_LABEL, NULL, NULL);
+			eKeygen = CreateWindowEx(WS_EX_LEFT, "Edit", "",
+							WS_VISIBLE | WS_CHILD | WS_BORDER | ES_READONLY,
+							225, 150, 150, 25, hwnd, (HMENU)ID_SETTINGS_KEYGEN_LENGTH, NULL, NULL);
+
+			bGenerate = CreateWindowEx(WS_EX_LEFT, "Button", "Generate keygen",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							235, 180, 130, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
+
+			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							295, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
+
+			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							295, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
+
+			// populate each box
+			char buf[4];
+			sprintf(buf, "%d", passwordSize);
+			SetWindowText(cPassword, buf);
+			sprintf(buf, "%d", minNumeric);
+			SetWindowText(cNumeric, buf);
+			sprintf(buf, "%d", minSpecial);
+			SetWindowText(cSpecial, buf);
+			sprintf(buf, "%d", minUppercase);
+			SetWindowText(cUppercase, buf);
+			SetWindowText(eKeygen, iv);
+
+			centerWindow(hwnd);
+			break;
+		case WM_COMMAND:
+			if (LOWORD(wParam) == ID_OK)
+			{
+				bool valid = true;
+				char password[5];
+				char special[5];
+				char numeric[5];
+				char uppercase[5];
+				GetWindowText(cPassword, password, 5);
+				GetWindowText(cSpecial, special, 5);
+				GetWindowText(cNumeric, numeric, 5);
+				GetWindowText(cUppercase, uppercase, 5);
+
+				// check password length
+				if (strlen(password) == 0) // check if blank
+				{
+					char buf[5];
+					sprintf(buf, "%d", passwordSize);
+					SetWindowText(cPassword, buf);
+					valid = false;
+				}
+				else // check if non-numeric
+				{
+					if (isNumeric(password))
+						password[2] = '\0';
+					else
+					{
+						char buf[5];
+						sprintf(buf, "%d", passwordSize);
+						SetWindowText(cPassword, buf);
+						valid = false;
+					}
+				}
+
+				// check special length
+				if (strlen(special) == 0) // check if blank
+				{
+					char buf[5];
+					sprintf(buf, "%d", minSpecial);
+					SetWindowText(cSpecial, buf);
+					valid = false;
+				}
+				else // check if non-numeric
+				{
+					if (isNumeric(special))
+						special[1] = '\0';
+					else
+					{
+						char buf[5];
+						sprintf(buf, "%d", minSpecial);
+						SetWindowText(cSpecial, buf);
+						valid = false;
+					}
+				}
+
+				// check numeric length
+				if (strlen(numeric) == 0) // check if blank
+				{
+					char buf[5];
+					sprintf(buf, "%d", minNumeric);
+					SetWindowText(cNumeric, buf);
+					valid = false;
+				}
+				else // check if non-numeric
+				{
+					if (isNumeric(numeric))
+						numeric[1] = '\0';
+					else
+					{
+						char buf[5];
+						sprintf(buf, "%d", minNumeric);
+						SetWindowText(cNumeric, buf);
+						valid = false;
+					}
+				}
+
+				// check uppercase length
+				if (strlen(uppercase) == 0) // check if blank
+				{
+					char buf[5];
+					sprintf(buf, "%d", minUppercase);
+					SetWindowText(cUppercase, buf);
+					valid = false;
+				}
+				else // check if non-numeric
+				{
+					if (isNumeric(uppercase))
+						uppercase[1] = '\0';
+					else
+					{
+						char buf[5];
+						sprintf(buf, "%d", minUppercase);
+						SetWindowText(cUppercase, buf);
+						valid = false;
+					}
+				}
+
+				int newPasswordSize = atoi(password);
+				int newMinSpecial = atoi(special);
+				int newMinNumeric = atoi(numeric);
+				int newMinUppercase = atoi(uppercase);
+
+				// check if combined sizes are a problem
+				if (newMinSpecial + newMinNumeric + newMinUppercase > newPasswordSize)
+				{
+					MessageBox(NULL, "Combined minimum characters exceeds password size", "Error", MB_ICONEXCLAMATION | MB_OK);
+					valid = false;
+				}
+
+				// check password size is between limits
+				if (newPasswordSize < MINPW || newPasswordSize > MAXPW)
+				{
+					MessageBox(NULL, "Password size is outside min/max", "Error", MB_ICONEXCLAMATION | MB_OK);
+					valid = false;
+					SetFocus(cPassword);
+				}
+
+				if (valid)
+				{
+					passwordSize = newPasswordSize;
+					minSpecial = newMinSpecial;
+					minNumeric = newMinNumeric;
+					minUppercase = newMinUppercase;
+					writeSettings();
+					DestroyWindow(hwnd);
+				}
+			}
+
+			if (LOWORD(wParam) == ID_CANCEL)
+			{
+				DestroyWindow(hwnd);
+			}
+
+			if (LOWORD(wParam) == ID_GENERATE)
+			{
+				generateKeygen(iv);
+				SetWindowText(eKeygen, iv);
+			}
+			break;
+		case WM_DESTROY:
+			DestroyWindow(hwnd);
+			break;
+	}
+	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+void centerWindow(HWND hwnd)
+{
+	RECT rc = {0};
+
+	GetWindowRect(hwnd, &rc);
+	int windowWidth = rc.right - rc.left;
+	int windowHeight = rc.bottom - rc.top;
+	int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+	SetWindowPos(hwnd, HWND_TOP, (screenWidth - windowWidth) / 2,
+					(screenHeight - windowHeight) / 2, 0, 0, SWP_NOSIZE);
+}
+
+void updateListbox(void)
+{
+	// deselect all entries
+	SendMessage(lbList, LB_SETCURSEL, -1, 0);
+	EnableWindow(bEdit, FALSE);
+	EnableWindow(bDelete, FALSE);
+	selectedRow = LB_ERR;
+	sortEntries();
 }
 
 void deleteEntry(void)
@@ -758,7 +1031,7 @@ void generatePassword(wchar_t *buf)
 		numericCount = 0;
 		uppercaseCount = 0;
 
-		for (int i = 0; i < generationSize; ++i)
+		for (int i = 0; i < passwordSize; ++i)
 		{
 			int rn = rand() % 127;
 			if (rn < 33 || rn == 44)
@@ -768,14 +1041,11 @@ void generatePassword(wchar_t *buf)
 			}
 			buf[i] = (char)rn;
 
-			if (ispunct((char)rn))
-				++specialCount;
-			if (isdigit((char)rn))
-				++numericCount;
-			if (isupper((char)rn))
-				++uppercaseCount;
+			if (ispunct((char)rn)) ++specialCount;
+			if (isdigit((char)rn)) ++numericCount;
+			if (isupper((char)rn)) ++uppercaseCount;
 		}
-		buf[generationSize] = '\0';
+		buf[passwordSize] = '\0';
 	} while (specialCount < minSpecial ||
 			numericCount < minNumeric ||
 			uppercaseCount < minUppercase);
@@ -805,6 +1075,36 @@ void outs(char *s)
 
 	fprintf(lf, "%s\n", s);
 	fclose(lf);
+}
+
+// generate 16 random hex chars
+void generateKeygen(char *buf)
+{
+	int rn;
+	for (int i = 0; i < 16; ++i)
+	{
+		rn = rand() % 16;
+		sprintf(buf + i, "%X", rn);
+	}
+}
+
+//TODO handle 2nd char in password?
+bool isNumeric(char *buf)
+{
+	if ((int)buf[0] < 48 || (int)buf[0] > 57)
+		return false;
+	else
+		return true;
+}
+
+void fillDropdown(HWND hwnd, int min, int max)
+{
+	for (int i = min; i <= max; ++i)
+	{
+		char c[1];
+		sprintf(c, "%d", i);
+		SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)c);
+	}
 }
 
 void readSettings(void)
@@ -852,12 +1152,11 @@ void readSettings(void)
 		}
 		*v = '\0';
 
-		if (strcmp(setting, "password_size") == 0)	generationSize = atoi(value);
+		if (strcmp(setting, "password_size") == 0)	passwordSize = atoi(value);
 		if (strcmp(setting, "min_special") == 0)	minSpecial = atoi(value);
 		if (strcmp(setting, "min_numeric") == 0)	minNumeric = atoi(value);
 		if (strcmp(setting, "min_uppercase") == 0)	minUppercase = atoi(value);
 		if (strcmp(setting, "keygen") == 0)			strncpy((char *)iv, value, 16);
-
 	}
 	fclose(f);
 }
@@ -871,7 +1170,7 @@ void writeSettings(void)
 		return;
 	}
 
-	fprintf(f, "password_size=%d\n", generationSize);
+	fprintf(f, "password_size=%d\n", passwordSize);
 	fprintf(f, "min_special=%d\n", minSpecial);
 	fprintf(f, "min_numeric=%d\n", minNumeric);
 	fprintf(f, "min_uppercase=%d\n", minUppercase);
