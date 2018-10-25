@@ -24,9 +24,21 @@
 #define ID_EDIT_PW 15
 #define ID_EDIT_MISC_LABEL 16
 #define ID_EDIT_MISC 17
-#define ID_EDIT_CANCEL 18
-#define ID_EDIT_OK 19
-#define ID_EDIT_GENERATE 20
+
+#define ID_OK 20
+#define ID_CANCEL 21
+#define ID_GENERATE 22
+
+#define ID_SETTINGS_PW_LABEL 30
+#define ID_SETTINGS_PW_LENGTH 31
+#define ID_SETTINGS_SPECIAL_LABEL 32
+#define ID_SETTINGS_SPECIAL_LENGTH 33
+#define ID_SETTINGS_NUMERIC_LABEL 34
+#define ID_SETTINGS_NUMERIC_LENGTH 35
+#define ID_SETTINGS_UPPERCASE_LABEL 36
+#define ID_SETTINGS_UPPERCASE_LENGTH 37
+#define ID_SETTINGS_KEYGEN_LABEL 38
+#define ID_SETTINGS_KEYGEN_LENGTH 39
 
 #define MAXTITLE 21
 #define MAXID 21
@@ -34,10 +46,8 @@
 #define MAXMISC 51
 #define MAXLINE 120
 #define MINPW 6
-#define MINCHARS 0
-#define MAXCHARS 6
-#define MAXNAME 10
-#define KEYSIZE 32
+#define MAXCHARS 9
+#define DBPASSWORDSIZE 32
 #define IV_SIZE 17
 
 void loadEntries(void);
@@ -49,10 +59,13 @@ void addEntry(void);
 void editEntry(void);
 void deleteEntry(void);
 void findEntry(void);
-void settings(void);
+void editSettings(void);
 void readSettings(void);
 void writeSettings(void);
 void generatePassword(wchar_t *);
+void generateKeygen(char *);
+bool isNumeric(char *buf);
+void fillDropdown(HWND, int, int);
 void outw(wchar_t *);
 void outs(char *);
 
