@@ -6,3 +6,5 @@ a.out
 *.bat
 *.sh
 *.bin
+*.txt
+gui.ini
