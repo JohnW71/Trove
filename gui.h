@@ -50,7 +50,7 @@
 #define DBPASSWORDSIZE 32
 #define IV_SIZE 17
 
-void loadEntries(void);
+void readEntries(void);
 void saveEntries(void);
 void sortEntries(void);
 void centerWindow(HWND);
@@ -62,12 +62,20 @@ void findEntry(void);
 void editSettings(void);
 void readSettings(void);
 void writeSettings(void);
-void generatePassword(wchar_t *);
+void generatePassword(char *);
 void generateKeygen(char *);
 bool isNumeric(char *buf);
 void fillDropdown(HWND, int, int);
-void outw(wchar_t *);
 void outs(char *);
+void getDBpassword(uint8_t *);
+bool setDBpassword(void);
+void writeFile(void);
+void readFile(void);
+void encrypt_cbc(uint8_t *, uint8_t *);
+void decrypt_cbc(uint8_t *, uint8_t *);
+void addPadding(char *);
+void loadEncryptedEntries(void);
+void updateBuffer(void);
 
 LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK addWndProc(HWND, UINT, WPARAM, LPARAM);
@@ -76,8 +84,8 @@ LRESULT CALLBACK settingsWndProc(HWND, UINT, WPARAM, LPARAM);
 
 struct Entry
 {
-	wchar_t title[MAXTITLE];
-	wchar_t id[MAXID];
-	wchar_t pw[MAXPW];
-	wchar_t misc[MAXMISC];
+	char title[MAXTITLE];
+	char id[MAXID];
+	char pw[MAXPW];
+	char misc[MAXMISC];
 } *entries;

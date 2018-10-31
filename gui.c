@@ -2,15 +2,20 @@
 
 #include "gui.h"
 
-//TODO implement encryption
+//TODO prompt for db password on startup
 //TODO make password generation faster
+//TODO check with cppcheck & valgrind
 //TODO CtrlA does not work in editboxes
 
-static char tempFile[] = "temp.db";
-static char iniFile[] = "trove.ini";
+bool debugging = false;
+int entryCount = 0;
+char iv[IV_SIZE];
+char DBpassword[DBPASSWORDSIZE];
+
+// static char iniFile[] = "trove.ini";
+static char iniFile[] = "gui.ini";
+static char logFile[] = "gui_log.txt";
 static bool running = true;
-static uint8_t iv[IV_SIZE];
-static int entryCount = 0;
 static int passwordSize = MINPW;
 static int minSpecial = 0;
 static int minNumeric = 0;
@@ -25,12 +30,13 @@ static HWND settingsHwnd;
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					PWSTR pCmdLine, int nShowCmd)
 {
+	srand((unsigned int)time(NULL));
 	instance = hInstance;
 	MSG msg;
 	WNDCLASSEX wc = {0};
 
 	// reset log file
-	FILE *lf = fopen("log.txt", "w");
+	FILE *lf = fopen(logFile, "w");
 	if (lf == NULL)
 		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
 	fclose(lf);
@@ -54,6 +60,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		return 0;
 	}
 
+	readSettings();
+
 	HWND hwnd = CreateWindowEx(WS_EX_LEFT,
 						wc.lpszClassName,
 						"Trove",
@@ -67,7 +75,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		return 0;
 	}
 
-	readSettings();
 	ShowWindow(hwnd, nShowCmd);
 
 	while (running)
@@ -127,33 +134,41 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						WS_VISIBLE | WS_CHILD | LBS_STANDARD,
 						10, 80, 350, 475, hwnd, (HMENU)ID_MAIN_LISTBOX, NULL, NULL);
 
-			loadEntries();
+			readEntries();
+
+			// add entries to listbox
+			for (int i = 0; i < entryCount; ++i)
+			{
+				char row[MAXLINE];
+				strcpy(row, entries[i].title);
+				SendMessage(lbList, LB_ADDSTRING, i, (LPARAM)row);
+			}
+
 			updateListbox();
 			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_MAIN_ADD)
 			{
-				SetWindowTextW(eFind, L"");
+				SetWindowText(eFind, "");
 				addEntry();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_EDIT)
 			{
-				SetWindowTextW(eFind, L"");
+				SetWindowText(eFind, "");
 				editEntry();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_DELETE)
 			{
-				SetWindowTextW(eFind, L"");
+				SetWindowText(eFind, "");
 				deleteEntry();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_SETTINGS)
 			{
-				SetWindowTextW(eFind, L"");
+				SetWindowText(eFind, "");
 				editSettings();
-				writeSettings();
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_FINDTEXT)
@@ -168,11 +183,11 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (HIWORD(wParam) == EN_CHANGE)
 				{
 					// get text length
-					wchar_t findText[MAXTITLE];
-					GetWindowTextW(eFind, findText, MAXTITLE);
+					char findText[MAXTITLE];
+					GetWindowText(eFind, findText, MAXTITLE);
 
 					// enable Find button if text is present
-					if (wcslen(findText) > 0)
+					if (strlen(findText) > 0)
 						EnableWindow(bFind, TRUE);
 					else
 						EnableWindow(bFind, FALSE);
@@ -187,8 +202,8 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				// find button was clicked
 				if (HIWORD(wParam) == BN_CLICKED)
 				{
-					wchar_t find[MAXTITLE];
-					GetWindowTextW(eFind, find, MAXTITLE);
+					char find[MAXTITLE];
+					GetWindowText(eFind, find, MAXTITLE);
 
 					// deselect all entries
 					SendMessage(lbList, LB_SETCURSEL, -1, 0);
@@ -198,7 +213,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 					while (attempts <= entryCount)
 					{
-						if (i != selectedRow && wcsstr(entries[i].title, find))
+						if (i != selectedRow && strstr(entries[i].title, find))
 						{
 							selectedRow = i;
 							break;
@@ -259,6 +274,9 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void addEntry(void)
 {
+	if (debugging)
+		outs("addEntry()");
+
 	static WNDCLASSEX wcAdd = {0};
 	static bool addClassRegistered = false;
 
@@ -359,17 +377,17 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_OK)
 			{
 				// get fields from edit boxes
-				wchar_t title[MAXTITLE];
-				wchar_t id[MAXID];
-				wchar_t pw[MAXPW];
-				wchar_t misc[MAXMISC];
-				GetWindowTextW(eTitle, title, MAXTITLE);
-				GetWindowTextW(eId, id, MAXID);
-				GetWindowTextW(ePw, pw, MAXPW);
-				GetWindowTextW(eMisc, misc, MAXMISC);
+				char title[MAXTITLE];
+				char id[MAXID];
+				char pw[MAXPW];
+				char misc[MAXMISC];
+				GetWindowText(eTitle, title, MAXTITLE);
+				GetWindowText(eId, id, MAXID);
+				GetWindowText(ePw, pw, MAXPW);
+				GetWindowText(eMisc, misc, MAXMISC);
 
 				// test that title field is not empty
-				if (wcslen(title) == 0)
+				if (strlen(title) == 0)
 				{
 					SetFocus(eTitle);
 					return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -378,7 +396,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				// test for pre-existing title
 				for (int i = 0; i < entryCount; ++i)
 				{
-					if (wcscmp(entries[i].title, title) == 0 && i != selectedRow)
+					if (strcmp(entries[i].title, title) == 0 && i != selectedRow)
 					{
 						MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
 						SetFocus(eTitle);
@@ -387,12 +405,12 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 
 				// add to listbox & entries
-				SendMessageW(lbList, LB_ADDSTRING, 0, (LPARAM)title);
+				SendMessage(lbList, LB_ADDSTRING, 0, (LPARAM)title);
 				entries = realloc(entries, (entryCount+1) * sizeof(*entries));
-				wcscpy(entries[entryCount].title, title);
-				wcscpy(entries[entryCount].id, id);
-				wcscpy(entries[entryCount].pw, pw);
-				wcscpy(entries[entryCount].misc, misc);
+				strcpy(entries[entryCount].title, title);
+				strcpy(entries[entryCount].id, id);
+				strcpy(entries[entryCount].pw, pw);
+				strcpy(entries[entryCount].misc, misc);
 				++entryCount;
 
 				DestroyWindow(hwnd);
@@ -406,9 +424,9 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			if (LOWORD(wParam) == ID_GENERATE)
 			{
-				wchar_t password[MAXPW];
+				char password[MAXPW];
 				generatePassword(password);
-				SetWindowTextW(ePw, password);
+				SetWindowText(ePw, password);
 			}
 			break;
 		case WM_DESTROY:
@@ -420,6 +438,9 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void editEntry(void)
 {
+	if (debugging)
+		outs("editEntry()");
+
 	static WNDCLASSEX wcEdit = {0};
 	static bool editClassRegistered = false;
 
@@ -515,18 +536,18 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							280, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
 			// get selected row
-			wchar_t title[MAXLINE];
-			SendMessageW(lbList, LB_GETTEXT, selectedRow, (LPARAM)title);
+			char title[MAXLINE];
+			SendMessage(lbList, LB_GETTEXT, selectedRow, (LPARAM)title);
 
 			// populate fields
 			for (int i = 0; i < entryCount; ++i)
 			{
-				if (wcscmp(entries[i].title, title) == 0)
+				if (strcmp(entries[i].title, title) == 0)
 				{
-					SetWindowTextW(eTitle, entries[i].title);
-					SetWindowTextW(eId, entries[i].id);
-					SetWindowTextW(ePw, entries[i].pw);
-					SetWindowTextW(eMisc, entries[i].misc);
+					SetWindowText(eTitle, entries[i].title);
+					SetWindowText(eId, entries[i].id);
+					SetWindowText(ePw, entries[i].pw);
+					SetWindowText(eMisc, entries[i].misc);
 					break;
 				}
 			}
@@ -537,17 +558,17 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_OK)
 			{
 				// get fields from edit boxes
-				wchar_t title[MAXTITLE];
-				wchar_t id[MAXID];
-				wchar_t pw[MAXPW];
-				wchar_t misc[MAXMISC];
-				GetWindowTextW(eTitle, title, MAXTITLE);
-				GetWindowTextW(eId, id, MAXID);
-				GetWindowTextW(ePw, pw, MAXPW);
-				GetWindowTextW(eMisc, misc, MAXMISC);
+				char title[MAXTITLE];
+				char id[MAXID];
+				char pw[MAXPW];
+				char misc[MAXMISC];
+				GetWindowText(eTitle, title, MAXTITLE);
+				GetWindowText(eId, id, MAXID);
+				GetWindowText(ePw, pw, MAXPW);
+				GetWindowText(eMisc, misc, MAXMISC);
 
 				// test that title field is not empty
-				if (wcslen(title) == 0)
+				if (strlen(title) == 0)
 				{
 					SetFocus(eTitle);
 					return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -556,7 +577,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				// test for pre-existing title
 				for (int i = 0; i < entryCount; ++i)
 				{
-					if (wcscmp(entries[i].title, title) == 0 && i != selectedRow)
+					if (strcmp(entries[i].title, title) == 0 && i != selectedRow)
 					{
 						MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
 						SetFocus(eTitle);
@@ -566,11 +587,11 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 				// replace entry in listbox & entries
 				SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
-				SendMessageW(lbList, LB_ADDSTRING, 0, (LPARAM)title);
-				wcscpy(entries[selectedRow].title, title);
-				wcscpy(entries[selectedRow].id, id);
-				wcscpy(entries[selectedRow].pw, pw);
-				wcscpy(entries[selectedRow].misc, misc);
+				SendMessage(lbList, LB_ADDSTRING, 0, (LPARAM)title);
+				strcpy(entries[selectedRow].title, title);
+				strcpy(entries[selectedRow].id, id);
+				strcpy(entries[selectedRow].pw, pw);
+				strcpy(entries[selectedRow].misc, misc);
 
 				DestroyWindow(hwnd);
 				updateListbox();
@@ -583,9 +604,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			if (LOWORD(wParam) == ID_GENERATE)
 			{
-				wchar_t password[MAXPW];
+				char password[MAXPW];
 				generatePassword(password);
-				SetWindowTextW(ePw, password);
+				SetWindowText(ePw, password);
 			}
 			break;
 		case WM_DESTROY:
@@ -597,6 +618,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void editSettings(void)
 {
+	if (debugging)
+		outs("editSettings()");
+
 	static WNDCLASSEX wcSettings = {0};
 	static bool settingsClassRegistered = false;
 
@@ -865,6 +889,9 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 void centerWindow(HWND hwnd)
 {
+	if (debugging)
+		outs("centerWindow()");
+
 	RECT rc = {0};
 
 	GetWindowRect(hwnd, &rc);
@@ -879,6 +906,9 @@ void centerWindow(HWND hwnd)
 
 void updateListbox(void)
 {
+	if (debugging)
+		outs("updateListbox()");
+
 	// deselect all entries
 	SendMessage(lbList, LB_SETCURSEL, -1, 0);
 	EnableWindow(bEdit, FALSE);
@@ -889,6 +919,9 @@ void updateListbox(void)
 
 void deleteEntry(void)
 {
+	if (debugging)
+		outs("deleteEntry()");
+
 	if (selectedRow != LB_ERR)
 	{
 		if (MessageBox(NULL, "Are you sure you want to delete this entry?", "Confirm delete", MB_YESNO | MB_ICONWARNING) == IDYES)
@@ -901,126 +934,47 @@ void deleteEntry(void)
 	}
 }
 
-//TODO replace with encrypted database
-void loadEntries(void)
-{
-	FILE *f = fopen(tempFile, "r");
-	if (f == NULL)
-		return;
-
-	char line[MAXLINE];
-	wchar_t data[MAXLINE];
-	entryCount = 0;
-	entries = NULL;
-
-	while (!feof(f))
-	{
-		if (fgets(line, MAXLINE, f) != NULL)
-		{
-			entries = realloc(entries, (entryCount+1) * sizeof(*entries));
-			int field = 0;
-			int line_ctr = 0;
-			int data_ctr = 0;
-
-			while (line[line_ctr] != '\0')
-			{
-				if (line[line_ctr] == ',' || line[line_ctr] == '\n')
-				{
-					++line_ctr;
-					data[data_ctr] = '\0';
-					data_ctr = 0;
-
-					switch (field)
-					{
-						case 0:
-							wcscpy(entries[entryCount].title, data);
-							break;
-						case 1:
-							wcscpy(entries[entryCount].id, data);
-							break;
-						case 2:
-							wcscpy(entries[entryCount].pw, data);
-							break;
-						case 3:
-							wcscpy(entries[entryCount].misc, data);
-							break;
-					}
-					++field;
-					continue;
-				}
-				data[data_ctr++] = line[line_ctr++];
-			}
-			++entryCount;
-		}
-	}
-	fclose(f);
-
-	// remove all entries
-	SendMessage(lbList, LB_RESETCONTENT, 0, 0);
-
-	// add entries to listbox
-	for (int i = 0; i < entryCount; ++i)
-	{
-		wchar_t row[MAXLINE];
-		wcscpy(row, entries[i].title);
-		SendMessageW(lbList, LB_ADDSTRING, i, (LPARAM)row);
-	}
-}
-
-//TODO replace with encrypted database
-void saveEntries(void)
-{
-	FILE *f = fopen(tempFile, "w");
-	if (f == NULL)
-	{
-		puts("Error saving entries!");
-		return;
-	}
-
-	for (int i = 0; i < entryCount; ++i)
-		if (entries[i].title[0] != '\0')
-			fprintf(f, "%ls,%ls,%ls,%ls\n", entries[i].title, entries[i].id, entries[i].pw, entries[i].misc);
-
-	fclose(f);
-}
-
 void sortEntries(void)
 {
+	if (debugging)
+		outs("sortEntries()");
 	bool changed;
-
 	do
 	{
 		changed = false;
 
 		for (int i = 0; i < entryCount - 1; ++i)
 		{
-			if (wcscmp(entries[i].title, entries[i + 1].title) > 0) // s1 > s2
+			if (strcmp(entries[i].title, entries[i + 1].title) > 0) // s1 > s2
 			{
 				changed = true;
 				struct Entry tmp;
 
-				wcscpy(tmp.title, entries[i].title);
-				wcscpy(tmp.id, entries[i].id);
-				wcscpy(tmp.pw, entries[i].pw);
-				wcscpy(tmp.misc, entries[i].misc);
+				strcpy(tmp.title, entries[i].title);
+				strcpy(tmp.id, entries[i].id);
+				strcpy(tmp.pw, entries[i].pw);
+				strcpy(tmp.misc, entries[i].misc);
 
-				wcscpy(entries[i].title, entries[i + 1].title);
-				wcscpy(entries[i].id, entries[i + 1].id);
-				wcscpy(entries[i].pw, entries[i + 1].pw);
-				wcscpy(entries[i].misc, entries[i + 1].misc);
+				strcpy(entries[i].title, entries[i + 1].title);
+				strcpy(entries[i].id, entries[i + 1].id);
+				strcpy(entries[i].pw, entries[i + 1].pw);
+				strcpy(entries[i].misc, entries[i + 1].misc);
 
-				wcscpy(entries[i + 1].title, tmp.title);
-				wcscpy(entries[i + 1].id, tmp.id);
-				wcscpy(entries[i + 1].pw, tmp.pw);
-				wcscpy(entries[i + 1].misc, tmp.misc);
+				strcpy(entries[i + 1].title, tmp.title);
+				strcpy(entries[i + 1].id, tmp.id);
+				strcpy(entries[i + 1].pw, tmp.pw);
+				strcpy(entries[i + 1].misc, tmp.misc);
 			}
 		}
 	} while (changed);
 }
 
 // random chars from 33 to 126, except 44 (commas)
-void generatePassword(wchar_t *buf)
+void generatePassword(char *buf)
 {
+	if (debugging)
+		outs("generatePassword()");
+
 	int specialCount;
 	int numericCount;
 	int uppercaseCount;
@@ -1051,22 +1005,9 @@ void generatePassword(wchar_t *buf)
 			uppercaseCount < minUppercase);
 }
 
-void outw(wchar_t *s)
-{
-	FILE *lf = fopen("log.txt", "a");
-	if (lf == NULL)
-	{
-		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
-		return;
-	}
-
-	fprintf(lf, "%ls\n", s);
-	fclose(lf);
-}
-
 void outs(char *s)
 {
-	FILE *lf = fopen("log.txt", "a");
+	FILE *lf = fopen(logFile, "a");
 	if (lf == NULL)
 	{
 		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
@@ -1080,6 +1021,9 @@ void outs(char *s)
 // generate 16 random hex chars
 void generateKeygen(char *buf)
 {
+	if (debugging)
+		outs("generateKeygen()");
+
 	int rn;
 	for (int i = 0; i < 16; ++i)
 	{
@@ -1091,6 +1035,9 @@ void generateKeygen(char *buf)
 //TODO handle 2nd char in password?
 bool isNumeric(char *buf)
 {
+	if (debugging)
+		outs("isNumeric()");
+
 	if ((int)buf[0] < 48 || (int)buf[0] > 57)
 		return false;
 	else
@@ -1099,6 +1046,9 @@ bool isNumeric(char *buf)
 
 void fillDropdown(HWND hwnd, int min, int max)
 {
+	if (debugging)
+		outs("fillDropdown()");
+
 	for (int i = min; i <= max; ++i)
 	{
 		char c[1];
@@ -1109,6 +1059,9 @@ void fillDropdown(HWND hwnd, int min, int max)
 
 void readSettings(void)
 {
+	if (debugging)
+		outs("readSettings()");
+
 	FILE *f = fopen(iniFile, "r");
 	if (f == NULL)
 	{
@@ -1156,13 +1109,31 @@ void readSettings(void)
 		if (strcmp(setting, "min_special") == 0)	minSpecial = atoi(value);
 		if (strcmp(setting, "min_numeric") == 0)	minNumeric = atoi(value);
 		if (strcmp(setting, "min_uppercase") == 0)	minUppercase = atoi(value);
-		if (strcmp(setting, "keygen") == 0)			strncpy((char *)iv, value, 16);
+		if (strcmp(setting, "keygen") == 0)
+		{
+			strncpy((char *)iv, value, 16);
+if (debugging)
+{
+	outs("loaded keygen=");
+	outs(iv);
+}
+		}
 	}
+
+	if (strlen(iv) < IV_SIZE-1) // keygen is missing
+	{
+outs("readsettings keygen missing");
+		writeSettings();
+	}
+
 	fclose(f);
 }
 
 void writeSettings(void)
 {
+	if (debugging)
+		outs("writeSettings()");
+
 	FILE *f = fopen(iniFile, "w");
 	if (f == NULL)
 	{
@@ -1170,10 +1141,40 @@ void writeSettings(void)
 		return;
 	}
 
+	if (strlen(iv) < IV_SIZE - 1)
+	{
+		outs("Generating new keygen");
+		generateKeygen(iv);
+		outs(iv);
+		writeSettings();
+	}
+
 	fprintf(f, "password_size=%d\n", passwordSize);
 	fprintf(f, "min_special=%d\n", minSpecial);
 	fprintf(f, "min_numeric=%d\n", minNumeric);
 	fprintf(f, "min_uppercase=%d\n", minUppercase);
-	fprintf(f, "keygen=%s\n", (char *)iv);
+	fprintf(f, "keygen=%s\n", iv);
 	fclose(f);
+}
+
+bool setDBpassword(void)
+{
+	if (debugging)
+		outs("setDBpassword()");
+
+//TODO show password form
+
+	strcpy(DBpassword, "poop");
+	saveEntries();
+	return true;
+}
+
+void getDBpassword(uint8_t *password)
+{
+	if (debugging)
+		outs("getPassword()");
+
+//TODO show password form
+
+	strcpy(DBpassword, "poop");
 }
