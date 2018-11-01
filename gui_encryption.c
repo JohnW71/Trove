@@ -89,6 +89,7 @@ void readFile(void)
 	if (buffer == NULL)
 	{
 		outs("Memory alloc error for buffer");
+		fclose(f);
 		return;
 	}
 
@@ -96,6 +97,7 @@ void readFile(void)
 	if (result != fileSize)
 	{
 		outs("Error reading db into buffer");
+		fclose(f);
 		return;
 	}
 

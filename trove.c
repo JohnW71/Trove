@@ -183,7 +183,14 @@ password of %d chars)\n: ", MAXPW - 1, generationSize);
 			misc[i] = '\0';
 	}
 
-	entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
+	struct Entry *temp = realloc(entries, (entryCount+1) * sizeof(*entries));
+	if (temp == NULL)
+	{
+		puts("Failure reallocating memory for new entry");
+		return;
+	}
+	entries = temp;
+
 	strcpy(entries[entryCount].title, title);
 	strcpy(entries[entryCount].id, id);
 	strcpy(entries[entryCount].pw, password);
@@ -406,7 +413,12 @@ void clipboard(void)
 	GlobalUnlock(hMem);
 	OpenClipboard(0);
 	EmptyClipboard();
-	SetClipboardData(CF_TEXT, hMem); // automatically does GlobalFree(hMem);
+
+	// automatically does GlobalFree(hMem) if it succeeds
+	if (!SetClipboardData(CF_TEXT, hMem))
+		if (hMem)
+			GlobalFree(hMem);
+
 	CloseClipboard();
 
 	puts("\nPassword copied to clipboard");

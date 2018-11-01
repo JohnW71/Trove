@@ -4,8 +4,8 @@
 
 //TODO prompt for db password on startup
 //TODO make password generation faster
-//TODO check with cppcheck & valgrind
 //TODO CtrlA does not work in editboxes
+//TODO confirm final names for apps & files
 
 bool debugging = false;
 int entryCount = 0;
@@ -406,7 +406,16 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 				// add to listbox & entries
 				SendMessage(lbList, LB_ADDSTRING, 0, (LPARAM)title);
-				entries = realloc(entries, (entryCount+1) * sizeof(*entries));
+
+				struct Entry *temp = realloc(entries, (entryCount+1) * sizeof(*entries));
+				if (temp == NULL)
+				{
+					outs("Failure reallocating memory for new entry");
+					MessageBox(NULL, "Failed reallocating memory for new entry", "Error", MB_ICONEXCLAMATION | MB_OK);
+					return DefWindowProc(hwnd, msg, wParam, lParam);
+				}
+				entries = temp;
+
 				strcpy(entries[entryCount].title, title);
 				strcpy(entries[entryCount].id, id);
 				strcpy(entries[entryCount].pw, pw);
@@ -1051,7 +1060,7 @@ void fillDropdown(HWND hwnd, int min, int max)
 
 	for (int i = min; i <= max; ++i)
 	{
-		char c[1];
+		char c[2];
 		sprintf(c, "%d", i);
 		SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)c);
 	}
