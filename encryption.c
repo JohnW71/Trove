@@ -71,6 +71,7 @@ void readFile(void)
 	if (buffer == NULL)
 	{
 		puts("Memory allocation error for buffer");
+		fclose(f);
 		return;
 	}
 
@@ -78,6 +79,7 @@ void readFile(void)
 	if (result != fileSize)
 	{
 		puts("Error reading database into buffer");
+		fclose(f);
 		return;
 	}
 
