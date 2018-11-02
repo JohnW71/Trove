@@ -1,8 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>	// exit(), rand(), malloc()
-#include <string.h>	// strcmp(), strcpy(), strlen()
-#include <time.h>	// time()
-#include <ctype.h>	// isupper(), ispunct(), isdigit()
+#pragma once
+
 #include <stdint.h>	// uint8_t
 #include <stdbool.h>
 #include <windows.h>
@@ -40,19 +37,6 @@
 #define ID_SETTINGS_KEYGEN_LABEL 38
 #define ID_SETTINGS_KEYGEN_LENGTH 39
 
-#define MAXTITLE 21
-#define MAXID 21
-#define MAXPW 21
-#define MAXMISC 51
-#define MAXLINE 120
-#define MINPW 6
-#define MAXCHARS 9
-#define DBPASSWORDSIZE 32
-#define IV_SIZE 17
-
-void readEntries(void);
-void saveEntries(void);
-void sortEntries(void);
 void centerWindow(HWND);
 void updateListbox(void);
 void addEntry(void);
@@ -60,32 +44,12 @@ void editEntry(void);
 void deleteEntry(void);
 void findEntry(void);
 void editSettings(void);
-void readSettings(void);
-void writeSettings(void);
-void generatePassword(char *);
-void generateKeygen(char *);
 bool isNumeric(char *buf);
 void fillDropdown(HWND, int, int);
 void outs(char *);
 void getDBpassword(uint8_t *);
-bool setDBpassword(void);
-void writeFile(void);
-void readFile(void);
-void encrypt_cbc(uint8_t *, uint8_t *);
-void decrypt_cbc(uint8_t *, uint8_t *);
-void addPadding(char *);
-void loadEncryptedEntries(void);
-void updateBuffer(void);
 
 LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK addWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK editWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK settingsWndProc(HWND, UINT, WPARAM, LPARAM);
-
-struct Entry
-{
-	char title[MAXTITLE];
-	char id[MAXID];
-	char pw[MAXPW];
-	char misc[MAXMISC];
-} *entries;

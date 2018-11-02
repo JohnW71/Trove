@@ -1,28 +1,33 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "gui.h"
+#include "shared.h"
 
 //TODO prompt for db password on startup
+//TODO catch Enter keypress on edit window
 //TODO make password generation faster
-//TODO CtrlA does not work in editboxes
-//TODO confirm final names for apps & files
+//TODO remember main window position
+//TODO remove debugging stuff
+//TODO use one encryption file
+//TODO use one database & ini file
+//FIX CtrlA does not work in editboxes
 
 bool debugging = false;
 int entryCount = 0;
+int passwordSize = MINPW;
+int minSpecial = 0;
+int minNumeric = 0;
+int minUppercase = 0;
 char iv[IV_SIZE];
+char iniFile[] = "gui.ini";
+char logFile[] = "gui_log.txt";
 char DBpassword[DBPASSWORDSIZE];
+LRESULT selectedRow;
+HWND lbList, bEdit, bDelete;
 
 // static char iniFile[] = "trove.ini";
-static char iniFile[] = "gui.ini";
-static char logFile[] = "gui_log.txt";
 static bool running = true;
-static int passwordSize = MINPW;
-static int minSpecial = 0;
-static int minNumeric = 0;
-static int minUppercase = 0;
-static LRESULT selectedRow;
 static HINSTANCE instance;
-static HWND lbList, bEdit, bDelete;
 static HWND addHwnd;
 static HWND editHwnd;
 static HWND settingsHwnd;
@@ -894,296 +899,4 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			break;
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
-}
-
-void centerWindow(HWND hwnd)
-{
-	if (debugging)
-		outs("centerWindow()");
-
-	RECT rc = {0};
-
-	GetWindowRect(hwnd, &rc);
-	int windowWidth = rc.right - rc.left;
-	int windowHeight = rc.bottom - rc.top;
-	int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-
-	SetWindowPos(hwnd, HWND_TOP, (screenWidth - windowWidth) / 2,
-					(screenHeight - windowHeight) / 2, 0, 0, SWP_NOSIZE);
-}
-
-void updateListbox(void)
-{
-	if (debugging)
-		outs("updateListbox()");
-
-	// deselect all entries
-	SendMessage(lbList, LB_SETCURSEL, -1, 0);
-	EnableWindow(bEdit, FALSE);
-	EnableWindow(bDelete, FALSE);
-	selectedRow = LB_ERR;
-	sortEntries();
-}
-
-void deleteEntry(void)
-{
-	if (debugging)
-		outs("deleteEntry()");
-
-	if (selectedRow != LB_ERR)
-	{
-		if (MessageBox(NULL, "Are you sure you want to delete this entry?", "Confirm delete", MB_YESNO | MB_ICONWARNING) == IDYES)
-		{
-			// delete row
-			SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
-			entries[selectedRow].title[0] = '\0';
-			updateListbox();
-		}
-	}
-}
-
-void sortEntries(void)
-{
-	if (debugging)
-		outs("sortEntries()");
-	bool changed;
-	do
-	{
-		changed = false;
-
-		for (int i = 0; i < entryCount - 1; ++i)
-		{
-			if (strcmp(entries[i].title, entries[i + 1].title) > 0) // s1 > s2
-			{
-				changed = true;
-				struct Entry tmp;
-
-				strcpy(tmp.title, entries[i].title);
-				strcpy(tmp.id, entries[i].id);
-				strcpy(tmp.pw, entries[i].pw);
-				strcpy(tmp.misc, entries[i].misc);
-
-				strcpy(entries[i].title, entries[i + 1].title);
-				strcpy(entries[i].id, entries[i + 1].id);
-				strcpy(entries[i].pw, entries[i + 1].pw);
-				strcpy(entries[i].misc, entries[i + 1].misc);
-
-				strcpy(entries[i + 1].title, tmp.title);
-				strcpy(entries[i + 1].id, tmp.id);
-				strcpy(entries[i + 1].pw, tmp.pw);
-				strcpy(entries[i + 1].misc, tmp.misc);
-			}
-		}
-	} while (changed);
-}
-
-// random chars from 33 to 126, except 44 (commas)
-void generatePassword(char *buf)
-{
-	if (debugging)
-		outs("generatePassword()");
-
-	int specialCount;
-	int numericCount;
-	int uppercaseCount;
-
-	do
-	{
-		specialCount = 0;
-		numericCount = 0;
-		uppercaseCount = 0;
-
-		for (int i = 0; i < passwordSize; ++i)
-		{
-			int rn = rand() % 127;
-			if (rn < 33 || rn == 44)
-			{
-				--i;
-				continue;
-			}
-			buf[i] = (char)rn;
-
-			if (ispunct((char)rn)) ++specialCount;
-			if (isdigit((char)rn)) ++numericCount;
-			if (isupper((char)rn)) ++uppercaseCount;
-		}
-		buf[passwordSize] = '\0';
-	} while (specialCount < minSpecial ||
-			numericCount < minNumeric ||
-			uppercaseCount < minUppercase);
-}
-
-void outs(char *s)
-{
-	FILE *lf = fopen(logFile, "a");
-	if (lf == NULL)
-	{
-		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
-		return;
-	}
-
-	fprintf(lf, "%s\n", s);
-	fclose(lf);
-}
-
-// generate 16 random hex chars
-void generateKeygen(char *buf)
-{
-	if (debugging)
-		outs("generateKeygen()");
-
-	int rn;
-	for (int i = 0; i < 16; ++i)
-	{
-		rn = rand() % 16;
-		sprintf(buf + i, "%X", rn);
-	}
-}
-
-//TODO handle 2nd char in password?
-bool isNumeric(char *buf)
-{
-	if (debugging)
-		outs("isNumeric()");
-
-	if ((int)buf[0] < 48 || (int)buf[0] > 57)
-		return false;
-	else
-		return true;
-}
-
-void fillDropdown(HWND hwnd, int min, int max)
-{
-	if (debugging)
-		outs("fillDropdown()");
-
-	for (int i = min; i <= max; ++i)
-	{
-		char c[2];
-		sprintf(c, "%d", i);
-		SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)c);
-	}
-}
-
-void readSettings(void)
-{
-	if (debugging)
-		outs("readSettings()");
-
-	FILE *f = fopen(iniFile, "r");
-	if (f == NULL)
-	{
-		outs("Created settings file");
-		writeSettings();
-		return;
-	}
-
-	char line[MAXLINE];
-
-	while (fgets(line, MAXLINE, f) != NULL)
-	{
-		char setting[MAXLINE];
-		char value[MAXLINE];
-		char *l = line;
-		char *s = setting;
-		char *v = value;
-
-		for (int i = 0; i < MAXLINE; ++i)
-		{
-			setting[i] = '\0';
-			value[i] = '\0';
-		}
-
-		// find setting
-		while (*l && *l != '=')
-		{
-			*s = *l;
-			s++;
-			l++;
-		}
-		*s = '\0';
-
-		// find value
-		++l;
-		while (*l)
-		{
-			*v = *l;
-			l++;
-			v++;
-		}
-		*v = '\0';
-
-		if (strcmp(setting, "password_size") == 0)	passwordSize = atoi(value);
-		if (strcmp(setting, "min_special") == 0)	minSpecial = atoi(value);
-		if (strcmp(setting, "min_numeric") == 0)	minNumeric = atoi(value);
-		if (strcmp(setting, "min_uppercase") == 0)	minUppercase = atoi(value);
-		if (strcmp(setting, "keygen") == 0)
-		{
-			strncpy((char *)iv, value, 16);
-if (debugging)
-{
-	outs("loaded keygen=");
-	outs(iv);
-}
-		}
-	}
-
-	if (strlen(iv) < IV_SIZE-1) // keygen is missing
-	{
-outs("readsettings keygen missing");
-		writeSettings();
-	}
-
-	fclose(f);
-}
-
-void writeSettings(void)
-{
-	if (debugging)
-		outs("writeSettings()");
-
-	FILE *f = fopen(iniFile, "w");
-	if (f == NULL)
-	{
-		outs("Error saving entries!");
-		return;
-	}
-
-	if (strlen(iv) < IV_SIZE - 1)
-	{
-		outs("Generating new keygen");
-		generateKeygen(iv);
-		outs(iv);
-		writeSettings();
-	}
-
-	fprintf(f, "password_size=%d\n", passwordSize);
-	fprintf(f, "min_special=%d\n", minSpecial);
-	fprintf(f, "min_numeric=%d\n", minNumeric);
-	fprintf(f, "min_uppercase=%d\n", minUppercase);
-	fprintf(f, "keygen=%s\n", iv);
-	fclose(f);
-}
-
-bool setDBpassword(void)
-{
-	if (debugging)
-		outs("setDBpassword()");
-
-//TODO show password form
-
-	strcpy(DBpassword, "poop");
-	saveEntries();
-	return true;
-}
-
-void getDBpassword(uint8_t *password)
-{
-	if (debugging)
-		outs("getPassword()");
-
-//TODO show password form
-
-	strcpy(DBpassword, "poop");
 }
