@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "trove.h"
+#include "shared.h"
 #include "aes.h"
 
 extern int entryCount;

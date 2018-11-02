@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "trove.h"
+#include "shared.h"
 
 #ifdef _WIN32
 	#include <windows.h>
@@ -10,15 +11,15 @@
 #endif
 
 int entryCount = 0;
+int passwordSize = 12;
+int minSpecial = 0;
+int minNumeric = 0;
+int minUppercase = 0;
+char iniFile[] = "trove.ini";
 uint8_t iv[IV_SIZE];
 uint8_t DBpassword[DBPASSWORDSIZE];
 
-static int generationSize = 12;
-static int minSpecial = 0;
-static int minNumeric = 0;
-static int minUppercase = 0;
 static char heading[] = "    Title                ID                   Password             Misc";
-static char iniFile[] = "trove.ini";
 
 int main(void)
 {
@@ -30,7 +31,7 @@ int main(void)
 
 	while (choice != 0)
 	{
-		puts("\nTrove v1.1");
+		puts("\nTrove v1.2");
 		puts("----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -96,6 +97,8 @@ int main(void)
 
 void list(void)
 {
+	sortEntries();
+
 	puts(heading);
 	for (int i = 0; i < entryCount; ++i)
 		if (entries[i].title[0] != '\0')
@@ -150,7 +153,7 @@ void add(void)
 			id[i] = '\0';
 
 	printf("Enter password up to %d chars:\n(enter 'x' to generate random \
-password of %d chars)\n: ", MAXPW - 1, generationSize);
+password of %d chars)\n: ", MAXPW - 1, passwordSize);
 	if (fgets(password, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -303,7 +306,7 @@ void edit(void)
 	}
 
 	printf("Enter new password up to %d chars:\n(enter 'x' to generate random \
-password of %d chars)\n: ", MAXPW - 1, generationSize);
+password of %d chars)\n: ", MAXPW - 1, passwordSize);
 	if (fgets(password, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -425,107 +428,6 @@ void clipboard(void)
 #endif
 }
 
-// random chars from 33 to 126, except 44 (commas)
-void generatePassword(char *buf)
-{
-	int rn;
-	int specialCount;
-	int numericCount;
-	int uppercaseCount;
-
-	do
-	{
-		specialCount = 0;
-		numericCount = 0;
-		uppercaseCount = 0;
-
-		for (int i = 0; i < generationSize; ++i)
-		{
-			rn = rand() % 127;
-			if (rn < 33 || rn == 44)
-			{
-				--i;
-				continue;
-			}
-			buf[i] = (char)rn;
-
-			if (ispunct((char)rn))
-				++specialCount;
-			if (isdigit((char)rn))
-				++numericCount;
-			if (isupper((char)rn))
-				++uppercaseCount;
-		}
-		buf[generationSize] = '\0';
-	} while (specialCount < minSpecial ||
-			numericCount < minNumeric ||
-			uppercaseCount < minUppercase);
-}
-
-// generate 16 random hex chars
-void generateKeygen(char *buf)
-{
-	int rn;
-	for (int i = 0; i < 16; ++i)
-	{
-		rn = rand() % 16;
-		sprintf(buf + i, "%X", rn);
-	}
-}
-
-void readSettings(void)
-{
-	FILE *f = fopen(iniFile, "r");
-	if (f == NULL)
-	{
-		writeSettings();
-		return;
-	}
-
-	char line[MAXLINE];
-
-	while (fgets(line, MAXLINE, f) != NULL)
-	{
-		char setting[MAXLINE];
-		char value[MAXLINE];
-		char *l = line;
-		char *s = setting;
-		char *v = value;
-
-		for (int i = 0; i < MAXLINE; ++i)
-		{
-			setting[i] = '\0';
-			value[i] = '\0';
-		}
-
-		// find setting
-		while (*l && *l != '=')
-		{
-			*s = *l;
-			s++;
-			l++;
-		}
-		*s = '\0';
-
-		// find value
-		++l;
-		while (*l)
-		{
-			*v = *l;
-			l++;
-			v++;
-		}
-		*v = '\0';
-
-		if (strcmp(setting, "password_size") == 0)	generationSize = atoi(value);
-		if (strcmp(setting, "keygen") == 0)			strncpy((char *)iv, value, 16);
-		if (strcmp(setting, "min_special") == 0)	minSpecial = atoi(value);
-		if (strcmp(setting, "min_numeric") == 0)	minNumeric = atoi(value);
-		if (strcmp(setting, "min_uppercase") == 0)	minUppercase = atoi(value);
-	}
-	fclose(f);
-}
-
 void writeSettings(void)
 {
 	FILE *f = fopen(iniFile, "w");
@@ -535,11 +437,18 @@ void writeSettings(void)
 		return;
 	}
 
-	fprintf(f, "password_size=%d\n", generationSize);
-	fprintf(f, "keygen=%s\n", (char *)iv);
+	if (strlen(iv) < IV_SIZE - 1)
+	{
+		puts("Generating new keygen");
+		generateKeygen(iv);
+		writeSettings(); //FIX potential infinite loop here
+	}
+
+	fprintf(f, "password_size=%d\n", passwordSize);
 	fprintf(f, "min_special=%d\n", minSpecial);
 	fprintf(f, "min_numeric=%d\n", minNumeric);
 	fprintf(f, "min_uppercase=%d\n", minUppercase);
+	fprintf(f, "keygen=%s\n", (char *)iv);
 	fclose(f);
 }
 
@@ -552,7 +461,7 @@ void updateSettings(void)
 		puts("Change Settings");
 		puts("---------------");
 		printf("1 - Change database password\n");
-		printf("2 - Set password generation size (%d)\n", generationSize);
+		printf("2 - Set password generation size (%d)\n", passwordSize);
 		printf("3 - Set minimum special characters (%d)\n", minSpecial);
 		printf("4 - Set minimum numeric characters (%d)\n", minNumeric);
 		printf("5 - Set minimum uppercase characters (%d)\n", minUppercase);
@@ -630,7 +539,7 @@ void setPasswordSize(void)
 		return;
 	}
 
-	generationSize = atoi(line);
+	passwordSize = atoi(line);
 	writeSettings();
 }
 
