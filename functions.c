@@ -3,16 +3,22 @@
 #include "gui.h"
 #include "shared.h"
 
+extern int entryCount;
 extern int passwordSize;
 extern int minSpecial;
 extern int minNumeric;
 extern int minUppercase;
+extern int screenRow;
+extern int screenCol;
 extern bool debugging;
+extern bool running;
 extern char logFile[];
 extern char iniFile[];
 extern char iv[];
 extern char DBpassword[];
-extern HWND lbList, bEdit, bDelete;
+extern HWND lbList;
+extern HWND bMainEdit;
+extern HWND bMainDelete;
 extern LRESULT selectedRow;
 
 void centerWindow(HWND hwnd)
@@ -32,6 +38,21 @@ void centerWindow(HWND hwnd)
 					(screenHeight - windowHeight) / 2, 0, 0, SWP_NOSIZE);
 }
 
+void restoreWindow(HWND hwnd, int x, int y)
+{
+	SetWindowPos(hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE);
+}
+
+void fillListbox(void)
+{
+	for (int i = 0; i < entryCount; ++i)
+	{
+		char row[MAXLINE];
+		strcpy(row, entries[i].title);
+		SendMessage(lbList, LB_ADDSTRING, i, (LPARAM)row);
+	}
+}
+
 void updateListbox(void)
 {
 	if (debugging)
@@ -39,10 +60,10 @@ void updateListbox(void)
 
 	// deselect all entries
 	SendMessage(lbList, LB_SETCURSEL, -1, 0);
-	EnableWindow(bEdit, FALSE);
-	EnableWindow(bDelete, FALSE);
-	selectedRow = LB_ERR;
+	EnableWindow(bMainEdit, FALSE);
+	EnableWindow(bMainDelete, FALSE);
 	sortEntries();
+	selectedRow = LB_ERR;
 }
 
 void deleteEntry(void)
@@ -57,8 +78,8 @@ void deleteEntry(void)
 			// delete row
 			SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
 			entries[selectedRow].title[0] = '\0';
-			updateListbox();
 		}
+		updateListbox();
 	}
 }
 
@@ -125,27 +146,40 @@ void writeSettings(void)
 	fprintf(f, "min_numeric=%d\n", minNumeric);
 	fprintf(f, "min_uppercase=%d\n", minUppercase);
 	fprintf(f, "keygen=%s\n", iv);
+	fprintf(f, "window_row=%d\n", screenRow);
+	fprintf(f, "window_col=%d\n", screenCol);
 	fclose(f);
 }
 
-bool setDBpassword(void)
+// set password for new database
+// bool setDBpassword(void)
+// {
+// 	if (debugging)
+// 		outs("setDBpassword()");
+
+// 	strcpy(DBpassword, "poop");
+// 	saveEntries();
+// 	return true;
+// }
+
+// get password for current database
+// void getDBpassword(uint8_t *password)
+// {
+// 	if (debugging)
+// 		outs("getPassword()");
+
+// 	strcpy(DBpassword, "poop");
+// }
+
+void shutDown(HWND hwnd)
 {
-	if (debugging)
-		outs("setDBpassword()");
+	RECT rc = {0};
+	GetWindowRect(hwnd, &rc);
+	screenRow = rc.top;
+	screenCol = rc.left;
 
-//TODO show password form
-
-	strcpy(DBpassword, "poop");
+	writeSettings();
 	saveEntries();
-	return true;
-}
-
-void getDBpassword(uint8_t *password)
-{
-	if (debugging)
-		outs("getPassword()");
-
-//TODO show password form
-
-	strcpy(DBpassword, "poop");
+	PostQuitMessage(0);
+	running = false;
 }

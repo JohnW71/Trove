@@ -15,6 +15,8 @@ int passwordSize = 12;
 int minSpecial = 0;
 int minNumeric = 0;
 int minUppercase = 0;
+int screenCol = 0; // not used
+int screenRow = 0; // not used
 char iniFile[] = "trove.ini";
 uint8_t iv[IV_SIZE];
 uint8_t DBpassword[DBPASSWORDSIZE];
@@ -664,9 +666,9 @@ bool setDBpassword(void)
 	uint8_t verifyPassword2[DBPASSWORDSIZE];
 
 	printf("Enter new password up to %d chars, press enter for blank: ", DBPASSWORDSIZE);
-	getPassword(verifyPassword1);
+	getDBpassword(verifyPassword1);
 	printf("\nEnter same password again to confirm: ");
-	getPassword(verifyPassword2);
+	getDBpassword(verifyPassword2);
 
 	if (strcmp(verifyPassword1, verifyPassword2) != 0)
 	{
@@ -688,7 +690,7 @@ bool setDBpassword(void)
 	return true;
 }
 
-void getPassword(uint8_t *password)
+void getDBpassword(uint8_t *password)
 {
 #ifdef _WIN32
 	getPasswordWindows(password);

@@ -14,6 +14,7 @@ void setMinSpecial(void);
 void setMinNumeric(void);
 void setMinUppercase(void);
 void setNewKeygen(void);
+void getDBpassword(uint8_t *);
 #ifdef _WIN32
 void getPasswordWindows(uint8_t *);
 #else
