@@ -1,4 +1,5 @@
 trove
+trove_cli
 a.out
 *.exe
 *.db

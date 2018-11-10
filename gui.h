@@ -37,7 +37,15 @@
 #define ID_SETTINGS_KEYGEN_LABEL 38
 #define ID_SETTINGS_KEYGEN_LENGTH 39
 
+#define ID_PASSWORD_LABEL1 40
+#define ID_PASSWORD_PASSWORD1 41
+#define ID_PASSWORD_LABEL2 42
+#define ID_PASSWORD_PASSWORD2 43
+#define ID_PASSWORD_MESSAGE 44
+
 void centerWindow(HWND);
+void restoreWindow(HWND hwnd, int x, int y);
+void fillListbox(void);
 void updateListbox(void);
 void addEntry(void);
 void editEntry(void);
@@ -47,9 +55,13 @@ void editSettings(void);
 bool isNumeric(char *buf);
 void fillDropdown(HWND, int, int);
 void outs(char *);
-void getDBpassword(uint8_t *);
+void getDBpassword(void);
+void setNewDBpassword(void);
+void shutDown(HWND);
 
 LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK addWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK editWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK settingsWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK setPasswordWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK getPasswordWndProc(HWND, UINT, WPARAM, LPARAM);

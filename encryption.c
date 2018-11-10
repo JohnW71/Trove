@@ -33,7 +33,7 @@ void readEntries(void)
 	else
 	{
 		printf("\nEnter database password: ");
-		getPassword(DBpassword);
+		getDBpassword(DBpassword);
 	}
 
 #ifdef _WIN32

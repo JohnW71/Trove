@@ -34,7 +34,6 @@ void decrypt_cbc(uint8_t *, uint8_t *);
 void addPadding(char *);
 void loadEncryptedEntries(void);
 void updateBuffer(void);
-void getPassword(uint8_t *);
 
 struct Entry
 {

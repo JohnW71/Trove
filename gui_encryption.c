@@ -4,57 +4,21 @@
 #include "shared.h"
 #include "aes.h"
 
+bool noDatabase = false;
+
 extern bool debugging;
 extern int entryCount;
 extern uint8_t DBpassword[];
 extern uint8_t iv[IV_SIZE];
 
-// static char dbFile[] = "trove.db";
-static char dbFile[] = "gui.db";
+static char dbFile[] = "gui.db"; // "trove.db";
 static char *buffer;
 static char *paddedBuffer;
 static int bufferSize = 0;
 static int paddedSize = 0;
-static bool noDatabase = false;
 
 void readEntries(void)
 {
-	if (debugging)
-		outs("readEntries()");
-
-	// read encrypted data into buffer, if DB exists
-	readFile();
-
-	if (noDatabase)
-	{
-if (debugging)
-	outs("No DB found");
-
-		if (!setDBpassword())
-		{
-			outs("set DB password failed");
-			exit(1);
-		}
-if (debugging)
-{
-	outs("new password set to=");
-	outs(DBpassword);
-}
-	}
-	else
-	{
-if (debugging)
-	outs("User entering password");
-
-		getDBpassword(DBpassword);
-
-if (debugging)
-{
-	outs("user password set to=");
-	outs(DBpassword);
-}
-	}
-
 	if (noDatabase)
 		readFile();
 
@@ -138,6 +102,7 @@ if (debugging)
 	if (strcmp(header, "Trove") != 0)
 	{
 		outs("Invalid password");
+//TODO allow retry somehow
 		exit(1);
 	}
 

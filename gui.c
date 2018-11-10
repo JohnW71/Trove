@@ -3,34 +3,49 @@
 #include "gui.h"
 #include "shared.h"
 
-//TODO prompt for db password on startup
-//TODO catch Enter keypress on edit window
+//FIX set focus to get password window
+//TODO add retry for failed password
+//TODO tidy up db/pw loading functions
+//TODO catch Enter keypress on edit & password windows
+//FIX find selects a row even when no match
+//FIX after deleting an entry, can't do Edit OK on another entry
+//TODO test everything fully
+//TODO add change password option to settings
 //TODO make password generation faster
-//TODO remember main window position
 //TODO remove debugging stuff
-//TODO use one encryption file
-//TODO use one database & ini file
+//TODO use same database & ini file?
 //FIX CtrlA does not work in editboxes
 
-bool debugging = false;
+bool debugging = true;
+bool running = true;
 int entryCount = 0;
 int passwordSize = MINPW;
 int minSpecial = 0;
 int minNumeric = 0;
 int minUppercase = 0;
+int screenCol = 0;
+int screenRow = 0;
 char iv[IV_SIZE];
-char iniFile[] = "gui.ini";
+char iniFile[] = "gui.ini"; // "trove.ini";
 char logFile[] = "gui_log.txt";
 char DBpassword[DBPASSWORDSIZE];
 LRESULT selectedRow;
-HWND lbList, bEdit, bDelete;
+HWND lbList;
+HWND bMainAdd;
+HWND bMainEdit;
+HWND bMainDelete;
+HWND bMainSettings;
+HWND bMainQuit;
 
-// static char iniFile[] = "trove.ini";
-static bool running = true;
 static HINSTANCE instance;
+static HWND mainHwnd;
 static HWND addHwnd;
 static HWND editHwnd;
 static HWND settingsHwnd;
+static HWND setPasswordHwnd;
+static HWND getPasswordHwnd;
+
+extern bool noDatabase;
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					PWSTR pCmdLine, int nShowCmd)
@@ -67,29 +82,32 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	readSettings();
 
-	HWND hwnd = CreateWindowEx(WS_EX_LEFT,
+	mainHwnd = CreateWindowEx(WS_EX_LEFT,
 						wc.lpszClassName,
 						"Trove",
 						WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
 						CW_USEDEFAULT, CW_USEDEFAULT, 390, 600,
 						NULL, NULL,	hInstance, NULL);
 
-	if (!hwnd)
+	if (!mainHwnd)
 	{
 		MessageBox(NULL, "Window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
 		return 0;
 	}
 
-	ShowWindow(hwnd, nShowCmd);
+	EnableWindow(mainHwnd, false);
+	ShowWindow(mainHwnd, nShowCmd);
 
 	while (running)
 	{
 		while (GetMessage(&msg, NULL, 0, 0))
 		{
-			if (!IsDialogMessage(hwnd, &msg) &&
+			if (!IsDialogMessage(mainHwnd, &msg) &&
+				!IsDialogMessage(addHwnd, &msg) &&
 				!IsDialogMessage(editHwnd, &msg) &&
 				!IsDialogMessage(settingsHwnd, &msg) &&
-				!IsDialogMessage(addHwnd, &msg))
+				!IsDialogMessage(setPasswordHwnd, &msg) &&
+				!IsDialogMessage(getPasswordHwnd, &msg))
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
@@ -102,25 +120,28 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bAdd, bSettings, eFind, bFind, bCancel;
+	static HWND eFind, bFind;
 
 	switch (msg)
 	{
 		case WM_CREATE:
-			centerWindow(hwnd);
+			if (screenRow == 0 && screenRow == 0)
+				centerWindow(hwnd);
+			else
+				restoreWindow(hwnd, screenCol, screenRow);
 
 			// first row
-			bAdd = CreateWindowEx(WS_EX_LEFT, "Button", "Add",
-						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+			bMainAdd = CreateWindowEx(WS_EX_LEFT, "Button", "Add",
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						10, 10, 80, 25, hwnd, (HMENU)ID_MAIN_ADD, NULL, NULL);
-			bEdit = CreateWindowEx(WS_EX_LEFT, "Button", "Edit",
+			bMainEdit = CreateWindowEx(WS_EX_LEFT, "Button", "Edit",
 						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						100, 10, 80, 25, hwnd, (HMENU)ID_MAIN_EDIT, NULL, NULL);
-			bDelete = CreateWindowEx(WS_EX_LEFT, "Button", "Delete",
+			bMainDelete = CreateWindowEx(WS_EX_LEFT, "Button", "Delete",
 						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						190, 10, 80, 25, hwnd, (HMENU)ID_MAIN_DELETE, NULL, NULL);
-			bSettings = CreateWindowEx(WS_EX_LEFT, "Button", "Settings",
-						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+			bMainSettings = CreateWindowEx(WS_EX_LEFT, "Button", "Settings",
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						280, 10, 80, 25, hwnd, (HMENU)ID_MAIN_SETTINGS, NULL, NULL);
 
 			// second row
@@ -130,8 +151,8 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			bFind = CreateWindowEx(WS_EX_LEFT, "Button", "Find",
 						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						205, 45, 40, 25, hwnd, (HMENU)ID_MAIN_FIND, NULL, NULL);
-			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Quit",
-						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+			bMainQuit = CreateWindowEx(WS_EX_LEFT, "Button", "Quit",
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						280, 45, 80, 25, hwnd, (HMENU)ID_MAIN_QUIT, NULL, NULL);
 
 			// listbox
@@ -139,17 +160,13 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						WS_VISIBLE | WS_CHILD | LBS_STANDARD,
 						10, 80, 350, 475, hwnd, (HMENU)ID_MAIN_LISTBOX, NULL, NULL);
 
-			readEntries();
+			readFile();
 
-			// add entries to listbox
-			for (int i = 0; i < entryCount; ++i)
-			{
-				char row[MAXLINE];
-				strcpy(row, entries[i].title);
-				SendMessage(lbList, LB_ADDSTRING, i, (LPARAM)row);
-			}
+			if (noDatabase)
+				setNewDBpassword();
+			else
+				getDBpassword();
 
-			updateListbox();
 			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_MAIN_ADD)
@@ -237,9 +254,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			if (LOWORD(wParam) == ID_MAIN_QUIT)
 			{
-				saveEntries();
-				PostQuitMessage(0);
-				running = false;
+				shutDown(mainHwnd);
 			}
 
 			if (LOWORD(wParam) == ID_MAIN_LISTBOX)
@@ -252,8 +267,8 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 					if (selectedRow != LB_ERR)
 					{
-						EnableWindow(bEdit, TRUE);
-						EnableWindow(bDelete, TRUE);
+						EnableWindow(bMainEdit, TRUE);
+						EnableWindow(bMainDelete, TRUE);
 					}
 				}
 
@@ -269,9 +284,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case WM_DESTROY:
-			saveEntries();
-			PostQuitMessage(0);
-			running = false;
+			shutDown(mainHwnd);
 			break;
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -614,6 +627,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_CANCEL)
 			{
 				DestroyWindow(hwnd);
+				updateListbox();
 			}
 
 			if (LOWORD(wParam) == ID_GENERATE)
@@ -895,6 +909,277 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			}
 			break;
 		case WM_DESTROY:
+			DestroyWindow(hwnd);
+			break;
+	}
+	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+void setNewDBpassword(void)
+{
+	if (debugging)
+		outs("setNewDBpassword()");
+
+	static WNDCLASSEX wcSetPassword = {0};
+	static bool setPasswordClassRegistered = false;
+
+	if (!setPasswordClassRegistered)
+	{
+		wcSetPassword.cbSize = sizeof(WNDCLASSEX);
+		wcSetPassword.cbClsExtra = 0;
+		wcSetPassword.cbWndExtra = 0;
+		wcSetPassword.hbrBackground = (HBRUSH)COLOR_WINDOW;
+		wcSetPassword.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wcSetPassword.hIcon = NULL;
+		wcSetPassword.hIconSm = NULL;
+		wcSetPassword.hInstance = instance;
+		wcSetPassword.lpfnWndProc = setPasswordWndProc;
+		wcSetPassword.lpszClassName = "TroveSetPassword";
+		wcSetPassword.lpszMenuName = NULL;
+		wcSetPassword.style = CS_HREDRAW | CS_VREDRAW;
+
+		if (!RegisterClassEx(&wcSetPassword))
+		{
+			MessageBox(NULL, "Set password window registration failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+			return;
+		}
+		else
+			setPasswordClassRegistered = true;
+	}
+
+	setPasswordHwnd = CreateWindowEx(WS_EX_LEFT,
+								wcSetPassword.lpszClassName,
+								"Set New DB Password",
+								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
+								CW_USEDEFAULT, CW_USEDEFAULT,
+								490, 170,
+								NULL, NULL,
+								instance, NULL);
+
+	if (!setPasswordHwnd)
+	{
+		MessageBox(NULL, "Set Password window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	ShowWindow(setPasswordHwnd, SW_SHOW);
+}
+
+LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	static HWND bOK, bQuit, bGenerate, lMessage, lPassword1, lPassword2, ePassword1, ePassword2;
+	static bool closeEverything = true;
+
+	switch (msg)
+	{
+		case WM_CREATE:
+			lPassword1 = CreateWindowEx(WS_EX_LEFT, "Static", "Enter new password",
+							WS_VISIBLE | WS_CHILD,
+							10, 15, 150, 25, hwnd, (HMENU)ID_PASSWORD_LABEL1, NULL, NULL);
+			ePassword1 = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER,
+							165, 10, 170, 25, hwnd, (HMENU)ID_PASSWORD_PASSWORD1, NULL, NULL);
+
+			lPassword2 = CreateWindowEx(WS_EX_LEFT, "Static", "Confirm new password",
+							WS_VISIBLE | WS_CHILD,
+							10, 50, 150, 25, hwnd, (HMENU)ID_PASSWORD_LABEL2, NULL, NULL);
+			ePassword2 = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER,
+							165, 45, 170, 25, hwnd, (HMENU)ID_PASSWORD_PASSWORD2, NULL, NULL);
+
+			lMessage = CreateWindowEx(WS_EX_LEFT, "Static", "",
+							WS_VISIBLE | WS_CHILD,
+							50, 90, 250, 25, hwnd, (HMENU)ID_PASSWORD_MESSAGE, NULL, NULL);
+
+			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							350, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
+
+			bQuit = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							350, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
+
+			bGenerate = CreateWindowEx(WS_EX_LEFT, "Button", "Generate password",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							320, 90, 140, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
+
+			SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+			centerWindow(hwnd);
+			SetFocus(ePassword1);
+			break;
+		case WM_COMMAND:
+			if (LOWORD(wParam) == ID_OK)
+			{
+				char pw1[MAXPW];
+				char pw2[MAXPW];
+				GetWindowText(ePassword1, pw1, MAXPW);
+				GetWindowText(ePassword2, pw2, MAXPW);
+
+				// check passwords match
+				if (strcmp(pw1, pw2) != 0)
+				{
+					SetWindowText(lMessage,"Passwords do not match!");
+					SetFocus(ePassword1);
+					return DefWindowProc(hwnd, msg, wParam, lParam);
+				}
+
+				strcpy(DBpassword, pw1);
+if (debugging)
+{
+	outs("new password set to=");
+	outs(DBpassword);
+}
+				fillListbox();
+				EnableWindow(mainHwnd, true);
+				EnableWindow(bMainAdd, true);
+				EnableWindow(bMainSettings, true);
+				EnableWindow(bMainQuit, true);
+				saveEntries();
+				readEntries();
+				updateListbox();
+				closeEverything = false;
+				DestroyWindow(hwnd);
+			}
+
+			if (LOWORD(wParam) == ID_CANCEL)
+			{
+				DestroyWindow(hwnd);
+			}
+
+			if (LOWORD(wParam) == ID_GENERATE)
+			{
+				char password[MAXPW];
+				generatePassword(password);
+				SetWindowText(ePassword1, password);
+				SetWindowText(ePassword2, password);
+			}
+			break;
+		case WM_DESTROY:
+			if (closeEverything)
+			{
+				DestroyWindow(hwnd);
+				exit(EXIT_SUCCESS);
+			}
+
+			DestroyWindow(hwnd);
+			break;
+	}
+	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+void getDBpassword(void)
+{
+	if (debugging)
+		outs("getDBpassword()");
+
+	static WNDCLASSEX wcGetPassword = {0};
+	static bool getPasswordClassRegistered = false;
+
+	if (!getPasswordClassRegistered)
+	{
+		wcGetPassword.cbSize = sizeof(WNDCLASSEX);
+		wcGetPassword.cbClsExtra = 0;
+		wcGetPassword.cbWndExtra = 0;
+		wcGetPassword.hbrBackground = (HBRUSH)COLOR_WINDOW;
+		wcGetPassword.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wcGetPassword.hIcon = NULL;
+		wcGetPassword.hIconSm = NULL;
+		wcGetPassword.hInstance = instance;
+		wcGetPassword.lpfnWndProc = getPasswordWndProc;
+		wcGetPassword.lpszClassName = "TroveGetPassword";
+		wcGetPassword.lpszMenuName = NULL;
+		wcGetPassword.style = CS_HREDRAW | CS_VREDRAW;
+
+		if (!RegisterClassEx(&wcGetPassword))
+		{
+			MessageBox(NULL, "Get password window registration failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+			return;
+		}
+		else
+			getPasswordClassRegistered = true;
+	}
+
+	getPasswordHwnd = CreateWindowEx(WS_EX_LEFT,
+								wcGetPassword.lpszClassName,
+								"Enter DB Password",
+								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
+								CW_USEDEFAULT, CW_USEDEFAULT,
+								435, 125,
+								NULL, NULL,
+								instance, NULL);
+
+	if (!getPasswordHwnd)
+	{
+		MessageBox(NULL, "Get Password window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	ShowWindow(getPasswordHwnd, SW_SHOW);
+}
+
+LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	static HWND bOK, bQuit, lPassword, ePassword;
+	static bool closeEverything = true;
+
+	switch (msg)
+	{
+		case WM_CREATE:
+			lPassword = CreateWindowEx(WS_EX_LEFT, "Static", "Enter password",
+							WS_VISIBLE | WS_CHILD,
+							10, 15, 150, 25, hwnd, (HMENU)ID_PASSWORD_LABEL1, NULL, NULL);
+
+			ePassword = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER | ES_PASSWORD,
+							130, 10, 170, 25, hwnd, (HMENU)ID_PASSWORD_PASSWORD1, NULL, NULL);
+
+			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							320, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
+
+			bQuit = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							320, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
+
+			SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+			centerWindow(hwnd);
+			SetFocus(ePassword);
+			break;
+		case WM_COMMAND:
+			if (LOWORD(wParam) == ID_OK)
+			{
+				char pw[MAXPW];
+				GetWindowText(ePassword, pw, MAXPW);
+				strcpy(DBpassword, pw);
+
+if (debugging)
+{
+	outs("password entered=");
+	outs(DBpassword);
+}
+				readEntries();
+				fillListbox();
+				EnableWindow(mainHwnd, true);
+				EnableWindow(bMainAdd, true);
+				EnableWindow(bMainSettings, true);
+				EnableWindow(bMainQuit, true);
+				updateListbox();
+				closeEverything = false;
+				DestroyWindow(hwnd);
+			}
+
+			if (LOWORD(wParam) == ID_CANCEL)
+			{
+				DestroyWindow(hwnd);
+			}
+			break;
+		case WM_DESTROY:
+			if (closeEverything)
+			{
+				DestroyWindow(hwnd);
+				exit(EXIT_SUCCESS);
+			}
+
 			DestroyWindow(hwnd);
 			break;
 	}
