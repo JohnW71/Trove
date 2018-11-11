@@ -3,7 +3,6 @@
 #include "gui.h"
 #include "shared.h"
 
-//TODO add retry for failed password
 //TODO tidy up db/pw loading functions
 //TODO catch Enter keypress on edit & password windows
 //FIX find selects a row even when no match
@@ -17,6 +16,7 @@
 
 bool debugging = true;
 bool running = true;
+bool verified = false;
 int entryCount = 0;
 int passwordSize = MINPW;
 int minSpecial = 0;
@@ -1149,11 +1149,21 @@ if (debugging)
 	outs(DBpassword);
 }
 				readEntries();
-				fillListbox();
-				ShowWindow(mainHwnd, SW_SHOW);
-				updateListbox();
-				closeEverything = false;
-				DestroyWindow(hwnd);
+				if (verified)
+				{
+					fillListbox();
+					ShowWindow(mainHwnd, SW_SHOW);
+					updateListbox();
+					closeEverything = false;
+					DestroyWindow(hwnd);
+				}
+				else
+				{
+					for (int i = 0; i < MAXPW; ++i)
+						DBpassword[i] = '\0';
+					MessageBox(NULL, "Incorrect password", "Error", MB_ICONEXCLAMATION | MB_OK);
+					readFile(); // reset buffer to pre-decrypted
+				}
 			}
 
 			if (LOWORD(wParam) == ID_CANCEL)

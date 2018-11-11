@@ -7,6 +7,7 @@
 bool noDatabase = false;
 
 extern bool debugging;
+extern bool verified;
 extern int entryCount;
 extern uint8_t DBpassword[];
 extern uint8_t iv[IV_SIZE];
@@ -93,18 +94,13 @@ void loadEncryptedEntries(void)
 	char *header;
 	header = tokens;
 
-if (debugging)
-{
-	outs("header=");
-	outs(header);
-}
-
 	if (strcmp(header, "Trove") != 0)
 	{
-		outs("Invalid password");
-//TODO allow retry somehow
-		exit(1);
+		outs("Invalid password entered");
+		verified = false;
+		return;
 	}
+	verified = true;
 
 	tokens = strtok(NULL, ",\n");
 	while(tokens != NULL)
