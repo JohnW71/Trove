@@ -3,7 +3,6 @@
 #include "gui.h"
 #include "shared.h"
 
-//FIX set focus to get password window
 //TODO add retry for failed password
 //TODO tidy up db/pw loading functions
 //TODO catch Enter keypress on edit & password windows
@@ -85,7 +84,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	mainHwnd = CreateWindowEx(WS_EX_LEFT,
 						wc.lpszClassName,
 						"Trove",
-						WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
+						WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 						CW_USEDEFAULT, CW_USEDEFAULT, 390, 600,
 						NULL, NULL,	hInstance, NULL);
 
@@ -94,9 +93,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		MessageBox(NULL, "Window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
 		return 0;
 	}
-
-	EnableWindow(mainHwnd, false);
-	ShowWindow(mainHwnd, nShowCmd);
 
 	while (running)
 	{
@@ -132,7 +128,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			// first row
 			bMainAdd = CreateWindowEx(WS_EX_LEFT, "Button", "Add",
-						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 						10, 10, 80, 25, hwnd, (HMENU)ID_MAIN_ADD, NULL, NULL);
 			bMainEdit = CreateWindowEx(WS_EX_LEFT, "Button", "Edit",
 						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
@@ -141,7 +137,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						190, 10, 80, 25, hwnd, (HMENU)ID_MAIN_DELETE, NULL, NULL);
 			bMainSettings = CreateWindowEx(WS_EX_LEFT, "Button", "Settings",
-						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 						280, 10, 80, 25, hwnd, (HMENU)ID_MAIN_SETTINGS, NULL, NULL);
 
 			// second row
@@ -152,7 +148,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
 						205, 45, 40, 25, hwnd, (HMENU)ID_MAIN_FIND, NULL, NULL);
 			bMainQuit = CreateWindowEx(WS_EX_LEFT, "Button", "Quit",
-						WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
+						WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 						280, 45, 80, 25, hwnd, (HMENU)ID_MAIN_QUIT, NULL, NULL);
 
 			// listbox
@@ -1003,7 +999,6 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							320, 90, 140, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
-			SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 			centerWindow(hwnd);
 			SetFocus(ePassword1);
 			break;
@@ -1030,10 +1025,7 @@ if (debugging)
 	outs(DBpassword);
 }
 				fillListbox();
-				EnableWindow(mainHwnd, true);
-				EnableWindow(bMainAdd, true);
-				EnableWindow(bMainSettings, true);
-				EnableWindow(bMainQuit, true);
+				ShowWindow(mainHwnd, SW_SHOW);
 				saveEntries();
 				readEntries();
 				updateListbox();
@@ -1141,7 +1133,6 @@ LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							320, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
 
-			SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 			centerWindow(hwnd);
 			SetFocus(ePassword);
 			break;
@@ -1159,10 +1150,7 @@ if (debugging)
 }
 				readEntries();
 				fillListbox();
-				EnableWindow(mainHwnd, true);
-				EnableWindow(bMainAdd, true);
-				EnableWindow(bMainSettings, true);
-				EnableWindow(bMainQuit, true);
+				ShowWindow(mainHwnd, SW_SHOW);
 				updateListbox();
 				closeEverything = false;
 				DestroyWindow(hwnd);
