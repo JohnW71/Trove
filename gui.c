@@ -3,17 +3,6 @@
 #include "gui.h"
 #include "shared.h"
 
-//TODO tidy up db/pw loading functions
-//TODO catch Enter keypress on edit & password windows
-//FIX find selects a row even when no match
-//FIX after deleting an entry, can't do Edit OK on another entry
-//TODO test everything fully
-//TODO add change password option to settings
-//TODO make password generation faster
-//TODO remove debugging stuff
-//TODO use same database & ini file?
-//FIX CtrlA does not work in editboxes
-
 bool debugging = true;
 bool running = true;
 bool verified = false;
@@ -194,6 +183,8 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (HIWORD(wParam) == EN_SETFOCUS)
 				{
 					// deselect all entries
+					EnableWindow(bMainEdit, FALSE);
+					EnableWindow(bMainDelete, FALSE);
 					SendMessage(lbList, LB_SETCURSEL, -1, 0);
 				}
 
@@ -220,6 +211,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				// find button was clicked
 				if (HIWORD(wParam) == BN_CLICKED)
 				{
+					bool found = false;
 					char find[MAXTITLE];
 					GetWindowText(eFind, find, MAXTITLE);
 
@@ -234,6 +226,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						if (i != selectedRow && strstr(entries[i].title, find))
 						{
 							selectedRow = i;
+							found = true;
 							break;
 						}
 
@@ -243,7 +236,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							i = 0;
 					}
 
-					if (selectedRow != LB_ERR) // select matching row
+					if (found && selectedRow != LB_ERR) // select matching row
 						SendMessage(lbList, LB_SETCURSEL, selectedRow, 0);
 				}
 			}
