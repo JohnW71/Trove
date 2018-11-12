@@ -126,19 +126,18 @@ void writeSettings(void)
 	if (debugging)
 		outs("writeSettings()");
 
-	FILE *f = fopen(iniFile, "w");
-	if (f == NULL)
-	{
-		outs("Error saving entries!");
-		return;
-	}
-
 	if (strlen(iv) < IV_SIZE - 1)
 	{
 		outs("Generating new keygen");
 		generateKeygen(iv);
 		outs(iv);
-		writeSettings(); //FIX potential infinite loop here
+	}
+
+	FILE *f = fopen(iniFile, "w");
+	if (f == NULL)
+	{
+		outs("Error saving entries!");
+		return;
 	}
 
 	fprintf(f, "password_size=%d\n", passwordSize);
