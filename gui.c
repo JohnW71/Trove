@@ -411,6 +411,11 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					}
 				}
 
+				// avoid any completely blank fields
+				if (strlen(id) == 0) strcpy(id, " ");
+				if (strlen(pw) == 0) strcpy(pw, " ");
+				if (strlen(misc) == 0) strcpy(misc, " ");
+
 				// add to listbox & entries
 				SendMessage(lbList, LB_ADDSTRING, 0, (LPARAM)title);
 
@@ -561,9 +566,22 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (strcmp(entries[i].title, title) == 0)
 				{
 					SetWindowText(eTitle, entries[i].title);
-					SetWindowText(eId, entries[i].id);
-					SetWindowText(ePw, entries[i].pw);
-					SetWindowText(eMisc, entries[i].misc);
+
+					if (strlen(entries[i].id) == 1 && entries[i].id[0] == ' ')
+						SetWindowText(eId, "");
+					else
+						SetWindowText(eId, entries[i].id);
+
+					if (strlen(entries[i].pw) == 1 && entries[i].pw[0] == ' ')
+						SetWindowText(ePw, "");
+					else
+						SetWindowText(ePw, entries[i].pw);
+
+					if (strlen(entries[i].misc) == 1 && entries[i].misc[0] == ' ')
+						SetWindowText(eMisc, "");
+					else
+						SetWindowText(eMisc, entries[i].misc);
+
 					break;
 				}
 			}
@@ -600,6 +618,11 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						return DefWindowProc(hwnd, msg, wParam, lParam);
 					}
 				}
+
+				// avoid any completely blank fields
+				if (strlen(id) == 0) strcpy(id, " ");
+				if (strlen(pw) == 0) strcpy(pw, " ");
+				if (strlen(misc) == 0) strcpy(misc, " ");
 
 				// replace entry in listbox & entries
 				SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
