@@ -47,17 +47,97 @@ void sortEntries(void)
 
 void generatePassword(char *buf)
 {
-	int specialCount;
-	int numericCount;
-	int uppercaseCount;
+	int rpos;
 
-	do
+	// clear password array first
+	for (int i = 0; i <= MAXPW; ++i)
+		buf[i] = '\0';
+
+	// add random special chars
+	for (int specialCount = 0; specialCount < minSpecial; ++specialCount)
 	{
-		specialCount = 0;
-		numericCount = 0;
-		uppercaseCount = 0;
+		int rn = rand() % 127;
+		if (rn < 33 || rn == 44)
+		{
+			--specialCount;
+			continue;
+		}
 
-		for (int i = 0; i < passwordSize; ++i)
+		if (ispunct((char)rn))
+		{
+			do
+			{
+				rpos = rand() % passwordSize;
+			}
+			while (buf[rpos] != '\0');// && rpos != passwordSize-1);
+
+			buf[rpos] = (char)rn;
+		}
+		else
+		{
+			--specialCount;
+			continue;
+		}
+	}
+
+	// add random numeric chars
+	for (int numericCount = 0; numericCount < minNumeric; ++numericCount)
+	{
+		int rn = rand() % 127;
+		if (rn < 33 || rn == 44)
+		{
+			--numericCount;
+			continue;
+		}
+
+		if (isdigit((char)rn))
+		{
+			do
+			{
+				rpos = rand() % passwordSize;
+			}
+			while (buf[rpos] != '\0');// && rpos != passwordSize-1);
+
+			buf[rpos] = (char)rn;
+		}
+		else
+		{
+			--numericCount;
+			continue;
+		}
+	}
+
+	// add random uppercase chars
+	for (int uppercaseCount = 0; uppercaseCount < minUppercase; ++uppercaseCount)
+	{
+		int rn = rand() % 127;
+		if (rn < 33 || rn == 44)
+		{
+			--uppercaseCount;
+			continue;
+		}
+
+		if (isupper((char)rn))
+		{
+			do
+			{
+				rpos = rand() % passwordSize;
+			}
+			while (buf[rpos] != '\0');// && rpos != passwordSize-1);
+
+			buf[rpos] = (char)rn;
+		}
+		else
+		{
+			--uppercaseCount;
+			continue;
+		}
+	}
+
+	// fill in the remaining positions
+	for (int i = 0; i < passwordSize; ++i)
+	{
+		if (buf[i] == '\0')
 		{
 			int rn = rand() % 127;
 			if (rn < 33 || rn == 44)
@@ -66,15 +146,8 @@ void generatePassword(char *buf)
 				continue;
 			}
 			buf[i] = (char)rn;
-
-			if (ispunct((char)rn)) ++specialCount;
-			if (isdigit((char)rn)) ++numericCount;
-			if (isupper((char)rn)) ++uppercaseCount;
 		}
-		buf[passwordSize] = '\0';
-	} while (specialCount < minSpecial ||
-			numericCount < minNumeric ||
-			uppercaseCount < minUppercase);
+	}
 }
 
 void generateKeygen(char *buf)
