@@ -33,7 +33,7 @@ int main(void)
 
 	while (choice != 0)
 	{
-		puts("\nTrove v1.2");
+		puts("\nTrove v1.3");
 		puts("----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -100,14 +100,12 @@ int main(void)
 void list(void)
 {
 	sortEntries();
-
 	puts(heading);
 	for (int i = 0; i < entryCount; ++i)
-		if (entries[i].title[0] != '\0')
-			printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
-													MAXID, entries[i].id,
-													MAXPW, entries[i].pw,
-													entries[i].misc);
+		printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
+												MAXID, entries[i].id,
+												MAXPW, entries[i].pw,
+												entries[i].misc);
 }
 
 void add(void)
@@ -376,7 +374,24 @@ void delEntry(void)
 		return;
 	}
 
-	entries[choice - 1].title[0] = '\0';
+	// recreate array without deleted row
+	struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * (entryCount-1));
+
+	for (int i = 0, j = 0; i < entryCount; ++i, ++j)
+		if (i != (choice-1))
+		{
+			strcpy(newEntries[j].title, entries[i].title);
+			strcpy(newEntries[j].id, entries[i].id);
+			strcpy(newEntries[j].pw, entries[i].pw);
+			strcpy(newEntries[j].misc, entries[i].misc);
+		}
+		else
+			--j;
+
+	free(entries);
+	entries = newEntries;
+	newEntries = NULL;
+	--entryCount;
 	saveEntries();
 }
 
@@ -432,18 +447,18 @@ void clipboard(void)
 
 void writeSettings(void)
 {
+	if (strlen(iv) < IV_SIZE - 1)
+	{
+		puts("Generating new keygen");
+		generateKeygen(iv);
+		puts(iv);
+	}
+
 	FILE *f = fopen(iniFile, "w");
 	if (f == NULL)
 	{
 		puts("Error saving entries!");
 		return;
-	}
-
-	if (strlen(iv) < IV_SIZE - 1)
-	{
-		puts("Generating new keygen");
-		generateKeygen(iv);
-		writeSettings(); //FIX potential infinite loop here
 	}
 
 	fprintf(f, "password_size=%d\n", passwordSize);
