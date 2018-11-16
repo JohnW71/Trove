@@ -168,33 +168,12 @@ void writeSettings(void)
 	fclose(f);
 }
 
-// set password for new database
-// bool setDBpassword(void)
-// {
-// 	if (debugging)
-// 		outs("setDBpassword()");
-
-// 	strcpy(DBpassword, "poop");
-// 	saveEntries();
-// 	return true;
-// }
-
-// get password for current database
-// void getDBpassword(uint8_t *password)
-// {
-// 	if (debugging)
-// 		outs("getPassword()");
-
-// 	strcpy(DBpassword, "poop");
-// }
-
 void shutDown(HWND hwnd)
 {
 	RECT rc = {0};
 	GetWindowRect(hwnd, &rc);
 	screenRow = rc.top;
 	screenCol = rc.left;
-
 	writeSettings();
 	saveEntries();
 	PostQuitMessage(0);

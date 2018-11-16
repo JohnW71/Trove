@@ -3,6 +3,7 @@
 #include "gui.h"
 #include "shared.h"
 
+bool blockingReturn = false;
 bool debugging = true;
 bool running = true;
 bool verified = false;
@@ -32,6 +33,9 @@ static HWND editHwnd;
 static HWND settingsHwnd;
 static HWND setPasswordHwnd;
 static HWND getPasswordHwnd;
+static HWND eGetPassword;
+static HWND bGetPasswordOK;
+static WNDPROC originalGetPasswordEditProc;
 
 extern bool noDatabase;
 
@@ -982,7 +986,7 @@ void setNewDBpassword(void)
 
 LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bQuit, bGenerate, lMessage, lPassword1, lPassword2, ePassword1, ePassword2;
+	static HWND bOK, bCancel, bGenerate, lMessage, lPassword1, lPassword2, ePassword1, ePassword2;
 	static bool closeEverything = true;
 
 	switch (msg)
@@ -1010,7 +1014,7 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							350, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
 
-			bQuit = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
+			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							350, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
 
@@ -1130,36 +1134,37 @@ void getDBpassword(void)
 
 LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bQuit, lPassword, ePassword;
+	static HWND bGetPasswordCancel, lGetPassword;
 	static bool closeEverything = true;
 
 	switch (msg)
 	{
 		case WM_CREATE:
-			lPassword = CreateWindowEx(WS_EX_LEFT, "Static", "Enter password",
+			lGetPassword = CreateWindowEx(WS_EX_LEFT, "Static", "Enter password",
 							WS_VISIBLE | WS_CHILD,
 							10, 15, 150, 25, hwnd, (HMENU)ID_PASSWORD_LABEL1, NULL, NULL);
 
-			ePassword = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
+			eGetPassword = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER | ES_PASSWORD,
 							130, 10, 170, 25, hwnd, (HMENU)ID_PASSWORD_PASSWORD1, NULL, NULL);
+			originalGetPasswordEditProc = (WNDPROC)SetWindowLongPtr(eGetPassword, GWLP_WNDPROC, (LONG_PTR)customGetPasswordEditProc);
 
-			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
+			bGetPasswordOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							320, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
 
-			bQuit = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
+			bGetPasswordCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							320, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
 
 			centerWindow(hwnd);
-			SetFocus(ePassword);
+			SetFocus(eGetPassword);
 			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_OK)
 			{
 				char pw[MAXPW];
-				GetWindowText(ePassword, pw, MAXPW);
+				GetWindowText(eGetPassword, pw, MAXPW);
 				strcpy(DBpassword, pw);
 
 if (debugging)
@@ -1182,6 +1187,8 @@ if (debugging)
 						DBpassword[i] = '\0';
 					MessageBox(NULL, "Incorrect password", "Error", MB_ICONEXCLAMATION | MB_OK);
 					readFile(); // reset buffer to pre-decrypted
+					blockingReturn = true;
+					SetFocus(eGetPassword);
 				}
 			}
 
@@ -1201,4 +1208,31 @@ if (debugging)
 			break;
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK customGetPasswordEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+		case WM_KEYUP:
+			switch (wParam)
+			{
+				case VK_RETURN:
+					if (!blockingReturn)
+						SendMessage(bGetPasswordOK, BM_CLICK, 0, 0);
+					break;
+				case 'A':
+					if (GetAsyncKeyState(VK_CONTROL))
+						SendMessage(eGetPassword, EM_SETSEL, 0, -1);
+					break;
+				default:
+					blockingReturn = false;
+					return CallWindowProc(originalGetPasswordEditProc, hwnd, msg, wParam, lParam);
+			}
+			break;
+		default:
+			return CallWindowProc(originalGetPasswordEditProc, hwnd, msg, wParam, lParam);
+	}
+
+	return 0;
 }
