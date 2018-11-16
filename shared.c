@@ -50,7 +50,7 @@ void generatePassword(char *buf)
 	int rpos;
 
 	// clear password array first
-	for (int i = 0; i <= MAXPW; ++i)
+	for (int i = 0; i < MAXPW; ++i)
 		buf[i] = '\0';
 
 	// add random special chars
@@ -69,7 +69,7 @@ void generatePassword(char *buf)
 			{
 				rpos = rand() % passwordSize;
 			}
-			while (buf[rpos] != '\0');// && rpos != passwordSize-1);
+			while (buf[rpos] != '\0');
 
 			buf[rpos] = (char)rn;
 		}
@@ -96,7 +96,7 @@ void generatePassword(char *buf)
 			{
 				rpos = rand() % passwordSize;
 			}
-			while (buf[rpos] != '\0');// && rpos != passwordSize-1);
+			while (buf[rpos] != '\0');
 
 			buf[rpos] = (char)rn;
 		}
@@ -123,7 +123,7 @@ void generatePassword(char *buf)
 			{
 				rpos = rand() % passwordSize;
 			}
-			while (buf[rpos] != '\0');// && rpos != passwordSize-1);
+			while (buf[rpos] != '\0');
 
 			buf[rpos] = (char)rn;
 		}
@@ -152,10 +152,9 @@ void generatePassword(char *buf)
 
 void generateKeygen(char *buf)
 {
-	int rn;
 	for (int i = 0; i < 16; ++i)
 	{
-		rn = rand() % 16;
+		int rn = rand() % 16;
 		sprintf(buf + i, "%X", rn);
 	}
 }

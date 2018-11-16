@@ -158,8 +158,12 @@ void updateBuffer(void)
 
 	int maxRowSize = MAXTITLE + MAXID + MAXPW + MAXMISC;
 	buffer = NULL;
-	buffer = (char *)malloc(entryCount * maxRowSize);
+	if (entryCount > 0)
+		buffer = (char *)malloc(entryCount * maxRowSize);
+	else
+		buffer = (char *)malloc(16);
 	buffer[0] = 0;
+
 	char *row = (char *)malloc(sizeof(char) * maxRowSize);
 	row[0] = 0;
 
