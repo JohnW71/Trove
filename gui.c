@@ -110,10 +110,10 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch (msg)
 	{
 		case WM_CREATE:
-			if (screenRow == 0 && screenRow == 0)
+			if (screenRow == 0 && screenCol == 0)
 				centerWindow(hwnd);
 			else
-				restoreWindow(hwnd, screenCol, screenRow);
+				SetWindowPos(hwnd, HWND_TOP, screenCol, screenRow, 0, 0, SWP_NOSIZE);
 
 			// first row
 			bMainAdd = CreateWindowEx(WS_EX_LEFT, "Button", "Add",
@@ -708,11 +708,13 @@ void editSettings(void)
 
 LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bCancel, lPassword, lSpecial, lNumeric, lUppercase, lKeygen, eKeygen, bGenerate, cPassword, cSpecial, cNumeric, cUppercase;
+	static HWND eKeygen, cPassword, cSpecial, cNumeric, cUppercase;
 
 	switch (msg)
 	{
 		case WM_CREATE:
+		{
+			static HWND bOK, bCancel, lPassword, lSpecial, lNumeric, lUppercase, lKeygen, bGenerate;
 			char title[40];
 			sprintf(title, "Password length from %d to %d", MINPW, MAXPW-1);
 
@@ -781,6 +783,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 			centerWindow(hwnd);
 			break;
+		}
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_OK)
 			{

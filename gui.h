@@ -44,13 +44,11 @@
 #define ID_PASSWORD_MESSAGE 44
 
 void centerWindow(HWND);
-void restoreWindow(HWND hwnd, int x, int y);
 void fillListbox(void);
 void updateListbox(void);
 void addEntry(void);
 void editEntry(void);
 void deleteEntry(void);
-void findEntry(void);
 void editSettings(void);
 bool isNumeric(char *buf);
 void fillDropdown(HWND, int, int);

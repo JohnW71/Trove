@@ -133,7 +133,7 @@ void fillDropdown(HWND hwnd, int min, int max)
 
 	for (int i = min; i <= max; ++i)
 	{
-		char c[2];
+		char c[3];
 		sprintf(c, "%d", i);
 		SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)c);
 	}
