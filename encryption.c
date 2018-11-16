@@ -161,16 +161,12 @@ void updateBuffer(void)
 
 	for (int i = 0; i < entryCount; ++i)
 	{
-		if (entries[i].title[0] != '\0')
-		{
-			snprintf(row, maxRowSize, "%s,%s,%s,%s\n", entries[i].title,
-														entries[i].id,
-														entries[i].pw,
-														entries[i].misc);
-			strcat(buffer, row);
-		}
+		snprintf(row, maxRowSize, "%s,%s,%s,%s\n", entries[i].title,
+													entries[i].id,
+													entries[i].pw,
+													entries[i].misc);
+		strcat(buffer, row);
 	}
-
 	free(row);
 }
 

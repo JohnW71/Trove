@@ -77,7 +77,25 @@ void deleteEntry(void)
 		{
 			// delete row
 			SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
-			entries[selectedRow].title[0] = '\0';
+
+			// recreate array without deleted row
+			struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * (entryCount-1));
+
+			for (int i = 0, j = 0; i < entryCount; ++i, ++j)
+				if (i != (selectedRow))
+				{
+					strcpy(newEntries[j].title, entries[i].title);
+					strcpy(newEntries[j].id, entries[i].id);
+					strcpy(newEntries[j].pw, entries[i].pw);
+					strcpy(newEntries[j].misc, entries[i].misc);
+				}
+				else
+					--j;
+
+			free(entries);
+			entries = newEntries;
+			newEntries = NULL;
+			--entryCount;
 		}
 		updateListbox();
 	}
