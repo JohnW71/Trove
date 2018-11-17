@@ -39,19 +39,20 @@ static WNDPROC originalGetPasswordEditProc;
 
 extern bool noDatabase;
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-					PWSTR pCmdLine, int nShowCmd)
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+					_In_ LPWSTR lpCmdLine, _In_ int nShowCmd)
 {
 	srand((unsigned int)time(NULL));
 	instance = hInstance;
-	MSG msg;
+	MSG msg = {0};
 	WNDCLASSEX wc = {0};
 
 	// reset log file
 	FILE *lf = fopen(logFile, "w");
 	if (lf == NULL)
 		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
-	fclose(lf);
+	else
+		fclose(lf);
 
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.cbClsExtra = 0;
@@ -562,7 +563,8 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			// get selected row
 			char title[MAXLINE];
-			SendMessage(lbList, LB_GETTEXT, selectedRow, (LPARAM)title);
+			int textLen = (int)SendMessage(lbList, LB_GETTEXT, selectedRow, (LPARAM)title);
+			title[textLen] = '\0';
 
 			// populate fields
 			for (int i = 0; i < entryCount; ++i)

@@ -49,15 +49,16 @@ void readFile(void)
 
 	buffer = NULL;
 	buffer = (char *)malloc(sizeof(char) * fileSize);
-	buffer[0] = 0;
-	bufferSize = sizeof(char) * fileSize;
 
 	if (buffer == NULL)
 	{
-		outs("Memory alloc error for buffer");
+		outs("Memory allocation error for buffer");
+		MessageBox(NULL, "Memory allocation error for buffer", "Error", MB_ICONEXCLAMATION | MB_OK);
 		fclose(f);
 		return;
 	}
+	buffer[0] = 0;
+	bufferSize = sizeof(char) * fileSize;
 
 	long result = (long)fread(buffer, 1, fileSize, f);
 	if (result != fileSize)
@@ -105,7 +106,15 @@ void loadEncryptedEntries(void)
 	tokens = strtok(NULL, ",\n");
 	while(tokens != NULL)
 	{
-		entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
+		//entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
+		struct Entry *temp = realloc(entries, (entryCount + 1) * sizeof(*entries));
+		if (temp == NULL)
+		{
+			outs("Failure reallocating memory for new entry");
+			MessageBox(NULL, "Failed reallocating memory for new entry", "Error", MB_ICONEXCLAMATION | MB_OK);
+			return;
+		}
+		entries = temp;
 
 		strcpy(entries[entryCount].title, tokens);
 		tokens = strtok(NULL, ",\n");
@@ -162,9 +171,22 @@ void updateBuffer(void)
 		buffer = (char *)malloc(entryCount * maxRowSize);
 	else
 		buffer = (char *)malloc(16);
+
+	if (!buffer)
+	{
+		outs("Failure allocating memory for update buffer");
+		MessageBox(NULL, "Failure allocating memory for update buffer", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
 	buffer[0] = 0;
 
 	char *row = (char *)malloc(sizeof(char) * maxRowSize);
+	if (!row)
+	{
+		outs("Failure allocating memory for update buffer row");
+		MessageBox(NULL, "Failure allocating memory for update buffer row", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
 	row[0] = 0;
 
 	strcat(buffer, "Trove\n");
@@ -198,7 +220,15 @@ void addPadding(char *text)
 	paddedSize = currentSize + (16 - (currentSize % 16));
 	paddedBuffer = NULL;
 	paddedBuffer = (char *)malloc(sizeof(char) * paddedSize);
+
+	if (!paddedBuffer)
+	{
+		outs("Failure allocating memory for add padding");
+		MessageBox(NULL, "Failure allocating memory for add padding", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
 	paddedBuffer[0] = 0;
+
 	strcpy(paddedBuffer, text);
 
 	for (int i = currentSize; i < paddedSize; ++i)

@@ -207,9 +207,13 @@ void readSettings(void)
 		if (strcmp(setting, "min_special") == 0)	minSpecial = atoi(value);
 		if (strcmp(setting, "min_numeric") == 0)	minNumeric = atoi(value);
 		if (strcmp(setting, "min_uppercase") == 0)	minUppercase = atoi(value);
-		if (strcmp(setting, "keygen") == 0)			strncpy((char *)iv, value, 16);
 		if (strcmp(setting, "window_row") == 0)		screenRow = atoi(value);
 		if (strcmp(setting, "window_col") == 0)		screenCol = atoi(value);
+		if (strcmp(setting, "keygen") == 0)
+		{
+			strncpy((char *)iv, value, 16);
+			iv[16] = '\0';
+		}
 	}
 
 	if (strlen(iv) < IV_SIZE-1) // keygen is missing
