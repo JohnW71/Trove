@@ -80,6 +80,11 @@ void deleteEntry(void)
 
 			// recreate array without deleted row
 			struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * (entryCount-1));
+			if (!newEntries)
+			{
+				outs("Failed to allocate memory for new array during deletion");
+				return;
+			}
 
 			for (int i = 0, j = 0; i < entryCount; ++i, ++j)
 				if (i != (selectedRow))
