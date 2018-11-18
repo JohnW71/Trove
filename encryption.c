@@ -66,15 +66,15 @@ void readFile(void)
 
 	buffer = NULL;
 	buffer = (char *)malloc(sizeof(char) * fileSize);
-	buffer[0] = 0;
-	bufferSize = sizeof(char) * fileSize;
 
-	if (buffer == NULL)
+	if (!buffer)
 	{
 		puts("Memory allocation error for buffer");
 		fclose(f);
 		return;
 	}
+	buffer[0] = 0;
+	bufferSize = sizeof(char) * fileSize;
 
 	long result = (long)fread(buffer, 1, fileSize, f);
 	if (result != fileSize)
@@ -116,7 +116,13 @@ void loadEncryptedEntries(void)
 	tokens = strtok(NULL, ",\n");
 	while(tokens != NULL)
 	{
-		entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
+		struct Entry *temp = realloc(entries, (entryCount + 1) * sizeof(*entries));
+		if (temp == NULL)
+		{
+			puts("Failure reallocating memory for new entry");
+			return;
+		}
+		entries = temp;
 
 		strcpy(entries[entryCount].title, tokens);
 		tokens = strtok(NULL, ",\n");
@@ -176,7 +182,14 @@ void addPadding(char *text)
 	paddedSize = currentSize + (16 - (currentSize % 16));
 	paddedBuffer = NULL;
 	paddedBuffer = (char *)malloc(sizeof(char) * paddedSize);
+
+	if (!paddedBuffer)
+	{
+		puts("Failure allocating memory for add padding");
+		return;
+	}
 	paddedBuffer[0] = 0;
+
 	strcpy(paddedBuffer, text);
 
 	for (int i = currentSize; i < paddedSize; ++i)
