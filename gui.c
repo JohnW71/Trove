@@ -7,6 +7,7 @@ bool blockingReturn = false;
 bool debugging = true;
 bool running = true;
 bool verified = false;
+bool changingPassword = false;
 int entryCount = 0;
 int passwordSize = MINPW;
 int minSpecial = 0;
@@ -699,7 +700,7 @@ void editSettings(void)
 								"Settings",
 								WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
 								CW_USEDEFAULT, CW_USEDEFAULT,
-								410, 260,
+								410, 300,
 								NULL, NULL,
 								instance, NULL);
 
@@ -720,7 +721,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	{
 		case WM_CREATE:
 		{
-			static HWND bOK, bCancel, lPassword, lSpecial, lNumeric, lUppercase, lKeygen, bGenerate;
+			static HWND bOK, bCancel, bSetPassword, lPassword, lSpecial, lNumeric, lUppercase, lKeygen, bGenerate;
 			char title[40];
 			sprintf(title, "Password length from %d to %d", MINPW, MAXPW-1);
 
@@ -774,6 +775,10 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 							295, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
+
+			bSetPassword = CreateWindowEx(WS_EX_LEFT, "Button", "Change database password",
+							WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+							100, 215, 210, 25, hwnd, (HMENU)ID_SETTINGS_SET_PASSWORD, NULL, NULL);
 
 			// populate each box
 			char buf[4];
@@ -928,6 +933,12 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				generateKeygen(iv);
 				SetWindowText(eKeygen, iv);
 			}
+
+			if (LOWORD(wParam) == ID_SETTINGS_SET_PASSWORD)
+			{
+				changingPassword = true;
+				setNewDBpassword();
+			}
 			break;
 		case WM_DESTROY:
 			DestroyWindow(hwnd);
@@ -1043,17 +1054,24 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 					return DefWindowProc(hwnd, msg, wParam, lParam);
 				}
 
+				for (int i = 0; i < DBPASSWORDSIZE; ++i)
+					DBpassword[i] = '\0';
 				strcpy(DBpassword, pw1);
 if (debugging)
 {
 	outs("new password set to=");
 	outs(DBpassword);
 }
-				fillListbox();
-				ShowWindow(mainHwnd, SW_SHOW);
-				saveEntries();
-				readEntries();
-				updateListbox();
+
+				if (!changingPassword)
+				{
+					fillListbox();
+					ShowWindow(mainHwnd, SW_SHOW);
+					saveEntries();
+					readEntries();
+					updateListbox();
+				}
+
 				closeEverything = false;
 				DestroyWindow(hwnd);
 			}
