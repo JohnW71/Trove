@@ -229,6 +229,9 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 					while (attempts <= entryCount)
 					{
+						if (i == selectedRow && strstr(entries[i].title, find))
+							found = true;
+
 						if (i != selectedRow && strstr(entries[i].title, find))
 						{
 							selectedRow = i;

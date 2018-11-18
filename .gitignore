@@ -10,3 +10,7 @@ a.out
 *.txt
 *.pdb
 gui.ini
+/CLI
+/GUI
+/Debug
+/Release
