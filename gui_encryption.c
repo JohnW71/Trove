@@ -50,7 +50,7 @@ void readFile(void)
 	buffer = NULL;
 	buffer = (char *)malloc(sizeof(char) * fileSize);
 
-	if (buffer == NULL)
+	if (!buffer)
 	{
 		outs("Memory allocation error for buffer");
 		MessageBox(NULL, "Memory allocation error for buffer", "Error", MB_ICONEXCLAMATION | MB_OK);
@@ -106,7 +106,6 @@ void loadEncryptedEntries(void)
 	tokens = strtok(NULL, ",\n");
 	while(tokens != NULL)
 	{
-		//entries = realloc(entries, (entryCount + 1) * sizeof(*entries));
 		struct Entry *temp = realloc(entries, (entryCount + 1) * sizeof(*entries));
 		if (temp == NULL)
 		{
@@ -193,19 +192,16 @@ void updateBuffer(void)
 
 	for (int i = 0; i < entryCount; ++i)
 	{
-		if (entries[i].title[0] != '\0')
-		{
-			snprintf(row, maxRowSize, "%s,%s,%s,%s\n", entries[i].title,
-														entries[i].id,
-														entries[i].pw,
-														entries[i].misc);
+		snprintf(row, maxRowSize, "%s,%s,%s,%s\n", entries[i].title,
+													entries[i].id,
+													entries[i].pw,
+													entries[i].misc);
 if (debugging)
 {
 	outs("row to save to buffer=");
 	outs(row);
 }
-			strcat(buffer, row);
-		}
+		strcat(buffer, row);
 	}
 
 	free(row);

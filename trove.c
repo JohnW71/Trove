@@ -429,7 +429,20 @@ void clipboard(void)
 	const char *output = entries[choice].pw;
 	const size_t len = strlen(output) + 1;
 	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
-	memcpy(GlobalLock(hMem), output, len);
+	if (!hMem)
+	{
+		puts("Failure allocating memory for clipboard");
+		return;
+	}
+
+	hMem = GlobalLock(hMem);
+	if (!hMem)
+	{
+		puts("Failure locking memory for clipboard");
+		return;
+	}
+
+	memcpy(hMem, output, len);
 	GlobalUnlock(hMem);
 	OpenClipboard(0);
 	EmptyClipboard();
