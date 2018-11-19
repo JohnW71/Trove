@@ -33,8 +33,8 @@ int main(void)
 
 	while (choice != 0)
 	{
-		puts("\nTrove v1.3");
-		puts("----------");
+		puts("\nTrove v1.31");
+		puts("-----------");
 		puts("1 - List");
 		puts("2 - Add");
 		puts("3 - Find");

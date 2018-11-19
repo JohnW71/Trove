@@ -96,23 +96,24 @@ void decrypt_cbc(uint8_t *text, uint8_t *init)
 
 void loadEncryptedEntries(void)
 {
+	// test for header to confirm password was valid
+	char header[] = "Trove\n";
+
+	for (int i = 0; i < 6; ++i)
+		if (buffer[i] != header[i])
+		{
+			puts("\nWrong password...");
+#ifndef _WIN32
+			puts("");
+#endif
+			free(buffer);
+			exit(1);
+		}
+
 	entryCount = 0;
 	entries = NULL;
 	char *tokens;
 	tokens = strtok(buffer, ",\n");
-
-	// test for header "Trove" to confirm password was valid
-	char *header;
-	header = tokens;
-	if (strcmp(header, "Trove") != 0)
-	{
-		puts("\nWrong password...");
-#ifndef _WIN32
-		puts("");
-#endif
-		exit(1);
-	}
-
 	tokens = strtok(NULL, ",\n");
 	while(tokens != NULL)
 	{
@@ -158,9 +159,24 @@ void updateBuffer(void)
 {
 	int maxRowSize = MAXTITLE + MAXID + MAXPW + MAXMISC;
 	buffer = NULL;
-	buffer = (char *)malloc(entryCount * maxRowSize);
+	if (entryCount > 0)
+		buffer = (char *)malloc(entryCount * maxRowSize);
+	else
+		buffer = (char *)malloc(16);
+
+	if (!buffer)
+	{
+		puts("Failure allocating memory for update buffer");
+		return;
+	}
 	buffer[0] = 0;
+
 	char *row = (char *)malloc(sizeof(char) * maxRowSize);
+	if (!row)
+	{
+		puts("Failure allocating memory for update buffer row");
+		return;
+	}
 	row[0] = 0;
 
 	strcat(buffer, "Trove\n");
