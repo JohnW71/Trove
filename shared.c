@@ -42,7 +42,8 @@ void sortEntries(void)
 				strcpy(entries[i + 1].misc, tmp.misc);
 			}
 		}
-	} while (changed);
+	}
+	while (changed);
 }
 
 void generatePassword(char *buf)
@@ -216,7 +217,7 @@ void readSettings(void)
 		}
 	}
 
-	if (strlen(iv) < IV_SIZE-1) // keygen is missing
+	if (strlen(iv) < IV_SIZE - 1) // keygen is missing
 		writeSettings();
 
 	fclose(f);
