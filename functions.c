@@ -35,7 +35,7 @@ void centerWindow(HWND hwnd)
 	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
 	SetWindowPos(hwnd, HWND_TOP, (screenWidth - windowWidth) / 2,
-					(screenHeight - windowHeight) / 2, 0, 0, SWP_NOSIZE);
+		(screenHeight - windowHeight) / 2, 0, 0, SWP_NOSIZE);
 }
 
 void restoreWindow(HWND hwnd, int x, int y)
@@ -79,7 +79,7 @@ void deleteEntry(void)
 			SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
 
 			// recreate array without deleted row
-			struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * (entryCount-1));
+			struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * (entryCount - 1));
 			if (!newEntries)
 			{
 				outs("Failed to allocate memory for new array during deletion");
