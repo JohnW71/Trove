@@ -17,8 +17,8 @@ extern char iniFile[];
 extern char iv[];
 extern char DBpassword[];
 extern HWND lbList;
-extern HWND bMainEdit;
-extern HWND bMainDelete;
+extern HWND bEdit;
+extern HWND bDelete;
 extern LRESULT selectedRow;
 
 void centerWindow(HWND hwnd)
@@ -60,8 +60,8 @@ void updateListbox(void)
 
 	// deselect all entries
 	SendMessage(lbList, LB_SETCURSEL, -1, 0);
-	EnableWindow(bMainEdit, FALSE);
-	EnableWindow(bMainDelete, FALSE);
+	EnableWindow(bEdit, FALSE);
+	EnableWindow(bDelete, FALSE);
 	sortEntries();
 	selectedRow = LB_ERR;
 }
