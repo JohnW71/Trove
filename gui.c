@@ -3,7 +3,7 @@
 #include "gui.h"
 #include "shared.h"
 
-bool debugging = true;
+bool debugging = false;
 bool running = true;
 bool readVerified = false;
 int entryCount = 0;
@@ -14,13 +14,17 @@ int minUppercase = 0;
 int screenCol = 0;
 int screenRow = 0;
 char iv[IV_SIZE];
-char iniFile[] = "gui.ini"; // "trove.ini";
-char logFile[] = "gui_log.txt";
+char iniFile[] = "trove.ini";
+char logFile[] = "log.txt";
 char DBpassword[DBPASSWORDSIZE];
 LRESULT selectedRow;
 HWND lbList;
+HWND bAdd;
 HWND bEdit;
 HWND bDelete;
+HWND bSettings;
+HWND bQuit;
+HWND eFind;
 
 static char version[] = "v1.0";
 static bool changingPassword = false;
@@ -31,9 +35,6 @@ static HWND editHwnd;
 static HWND settingsHwnd;
 static HWND setPasswordHwnd;
 static HWND getPasswordHwnd;
-static HWND bAdd;
-static HWND bSettings;
-static HWND bQuit;
 static HWND bFind;
 static HWND bGetPasswordOK;
 static HWND bSetPasswordOK;
@@ -117,8 +118,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND eFind;
-
 	switch (msg)
 	{
 		case WM_CREATE:
@@ -358,6 +357,7 @@ void addEntry(void)
 		return;
 	}
 
+	disableControls();
 	ShowWindow(addHwnd, SW_SHOW);
 }
 
@@ -464,6 +464,9 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 				entries = temp;
 
+				removeCommas(title);
+				removeCommas(id);
+				removeCommas(misc);
 				strcpy(entries[entryCount].title, title);
 				strcpy(entries[entryCount].id, id);
 				strcpy(entries[entryCount].pw, pw);
@@ -487,6 +490,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case WM_DESTROY:
+			enableControls();
 			DestroyWindow(hwnd);
 			break;
 	}
@@ -540,6 +544,7 @@ void editEntry(void)
 		return;
 	}
 
+	disableControls();
 	ShowWindow(editHwnd, SW_SHOW);
 }
 
@@ -666,6 +671,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (strlen(misc) == 0) strcpy(misc, " ");
 
 				// replace entry in listbox & entries
+				removeCommas(title);
+				removeCommas(id);
+				removeCommas(misc);
 				SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
 				SendMessage(lbList, LB_ADDSTRING, 0, (LPARAM)title);
 				strcpy(entries[selectedRow].title, title);
@@ -691,6 +699,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case WM_DESTROY:
+			enableControls();
 			DestroyWindow(hwnd);
 			break;
 	}
@@ -744,6 +753,7 @@ void editSettings(void)
 		return;
 	}
 
+	disableControls();
 	ShowWindow(settingsHwnd, SW_SHOW);
 }
 
@@ -979,6 +989,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			}
 			break;
 		case WM_DESTROY:
+			enableControls();
 			DestroyWindow(hwnd);
 			break;
 	}
@@ -1032,6 +1043,7 @@ void setNewDBpassword(void)
 		return;
 	}
 
+	disableControls();
 	ShowWindow(setPasswordHwnd, SW_SHOW);
 }
 
@@ -1136,6 +1148,7 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				exit(EXIT_SUCCESS);
 			}
 
+			enableControls();
 			DestroyWindow(hwnd);
 			break;
 	}

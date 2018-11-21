@@ -194,6 +194,9 @@ password of %d chars)\n: ", MAXPW - 1, passwordSize);
 	}
 	entries = temp;
 
+	removeCommas(title);
+	removeCommas(id);
+	removeCommas(misc);
 	strcpy(entries[entryCount].title, title);
 	strcpy(entries[entryCount].id, id);
 	strcpy(entries[entryCount].pw, password);
@@ -345,6 +348,9 @@ password of %d chars)\n: ", MAXPW - 1, passwordSize);
 				misc[i] = '\0';
 	}
 
+	removeCommas(title);
+	removeCommas(id);
+	removeCommas(misc);
 	strcpy(entries[choice].title, title);
 	strcpy(entries[choice].id, id);
 	strcpy(entries[choice].pw, password);

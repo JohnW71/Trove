@@ -17,9 +17,33 @@ extern char iniFile[];
 extern char iv[];
 extern char DBpassword[];
 extern HWND lbList;
+extern HWND bAdd;
 extern HWND bEdit;
 extern HWND bDelete;
+extern HWND bSettings;
+extern HWND bQuit;
+extern HWND eFind;
 extern LRESULT selectedRow;
+
+void disableControls(void)
+{
+	EnableWindow(bAdd, FALSE);
+	EnableWindow(bEdit, FALSE);
+	EnableWindow(bDelete, FALSE);
+	EnableWindow(bSettings, FALSE);
+	EnableWindow(bQuit, FALSE);
+	EnableWindow(lbList, FALSE);
+	EnableWindow(eFind, FALSE);
+}
+
+void enableControls(void)
+{
+	EnableWindow(bAdd, TRUE);
+	EnableWindow(bSettings, TRUE);
+	EnableWindow(bQuit, TRUE);
+	EnableWindow(lbList, TRUE);
+	EnableWindow(eFind, TRUE);
+}
 
 void centerWindow(HWND hwnd)
 {

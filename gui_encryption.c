@@ -12,7 +12,7 @@ extern int entryCount;
 extern uint8_t DBpassword[];
 extern uint8_t iv[IV_SIZE];
 
-static char dbFile[] = "gui.db"; // "trove.db";
+static char dbFile[] = "trove.db";
 static char *buffer;
 static char *paddedBuffer;
 static int bufferSize = 0;
