@@ -124,17 +124,18 @@ void loadEncryptedEntries(void)
 		strcpy(entries[entryCount].misc, tokens);
 		tokens = strtok(NULL, ",\n");
 
-//if (debugging)
-//{
-//	char row[120];
-//	snprintf(row, 120, "%s,%s,%s,%s\n",
-//				entries[entryCount].title,
-//				entries[entryCount].id,
-//				entries[entryCount].pw,
-//				entries[entryCount].misc);
-//	outs("row loaded in=");
-//	outs(row);
-//}
+		if (debugging)
+		{
+			char row[120];
+			snprintf(row, 120, "%s,%s,%s,%s\n",
+						entries[entryCount].title,
+						entries[entryCount].id,
+						entries[entryCount].pw,
+						entries[entryCount].misc);
+			outs("row loaded in=");
+			outs(row);
+		}
+
 		++entryCount;
 	}
 
@@ -196,11 +197,12 @@ void updateBuffer(void)
 													entries[i].id,
 													entries[i].pw,
 													entries[i].misc);
-//if (debugging)
-//{
-//	outs("row to save to buffer=");
-//	outs(row);
-//}
+		if (debugging)
+		{
+			outs("row to save to buffer=");
+			outs(row);
+		}
+
 		strcat(buffer, row);
 	}
 
@@ -236,13 +238,14 @@ void encrypt_cbc(uint8_t *text, uint8_t *init)
 	if (debugging)
 		outs("encrypt()");
 
-//if (debugging)
-//{
-//	outs("buffer to encrypt=");
-//	outs(text);
-//	outs("iv to encrypt=");
-//	outs(init);
-//}
+	if (debugging)
+	{
+		outs("buffer to encrypt=");
+		outs(text);
+		outs("iv to encrypt=");
+		outs(init);
+	}
+
 	struct AES_ctx ctx;
 	AES_init_ctx_iv(&ctx, DBpassword, init);
 	AES_CBC_encrypt_buffer(&ctx, text, paddedSize);

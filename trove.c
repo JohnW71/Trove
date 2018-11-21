@@ -33,7 +33,7 @@ int main(void)
 
 	while (choice != 0)
 	{
-		puts("\nTrove v1.31");
+		puts("\nTrove v1.32");
 		puts("-----------");
 		puts("1 - List");
 		puts("2 - Add");
