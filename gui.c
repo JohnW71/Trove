@@ -37,10 +37,11 @@ static HWND bQuit;
 static HWND bFind;
 static HWND bGetPasswordOK;
 static HWND bSetPasswordOK;
-static WNDPROC originalMainEditProc;
+static WNDPROC originalMainProc;
+static WNDPROC originalAddProc;
 static WNDPROC originalEditProc;
-static WNDPROC originalSetPasswordEditProc;
-static WNDPROC originalGetPasswordEditProc;
+static WNDPROC originalSetPasswordProc;
+static WNDPROC originalGetPasswordProc;
 
 extern bool noDatabase;
 
@@ -143,7 +144,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eFind = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER,
 				10, 45, 190, 25, hwnd, (HMENU)ID_MAIN_FINDTEXT, NULL, NULL);
-			originalMainEditProc = (WNDPROC)SetWindowLongPtr(eFind, GWLP_WNDPROC, (LONG_PTR)customMainEditProc);
+			originalMainProc = (WNDPROC)SetWindowLongPtr(eFind, GWLP_WNDPROC, (LONG_PTR)customMainProc);
 
 			bFind = CreateWindowEx(WS_EX_LEFT, "Button", "Find",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
@@ -156,6 +157,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			lbList = CreateWindowEx(WS_EX_LEFT, "ListBox", NULL,
 				WS_VISIBLE | WS_CHILD | LBS_STANDARD,
 				10, 80, 350, 475, hwnd, (HMENU)ID_MAIN_LISTBOX, NULL, NULL);
+			//SetWindowLongPtr(lbList, GWLP_WNDPROC, (LONG_PTR)customMainProc);
 
 			readFile();
 
@@ -373,7 +375,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 10, 170, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
-			originalEditProc = (WNDPROC)SetWindowLongPtr(eTitle, GWLP_WNDPROC, (LONG_PTR)customEditProc);
+			originalAddProc = (WNDPROC)SetWindowLongPtr(eTitle, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
 				WS_VISIBLE | WS_CHILD,
@@ -381,7 +383,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 45, 170, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
-			SetWindowLongPtr(eId, GWLP_WNDPROC, (LONG_PTR)customEditProc);
+			SetWindowLongPtr(eId, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
 				WS_VISIBLE | WS_CHILD,
@@ -389,7 +391,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			ePw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 80, 170, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
-			SetWindowLongPtr(ePw, GWLP_WNDPROC, (LONG_PTR)customEditProc);
+			SetWindowLongPtr(ePw, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
 				WS_VISIBLE | WS_CHILD,
@@ -397,7 +399,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 115, 410, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
-			SetWindowLongPtr(eMisc, GWLP_WNDPROC, (LONG_PTR)customEditProc);
+			SetWindowLongPtr(eMisc, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
@@ -1046,7 +1048,7 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			eSetPassword1 = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER,
 				165, 10, 170, 25, hwnd, (HMENU)ID_PASSWORD_PASSWORD1, NULL, NULL);
-			originalSetPasswordEditProc = (WNDPROC)SetWindowLongPtr(eSetPassword1, GWLP_WNDPROC, (LONG_PTR)customSetPasswordEditProc);
+			originalSetPasswordProc = (WNDPROC)SetWindowLongPtr(eSetPassword1, GWLP_WNDPROC, (LONG_PTR)customSetPasswordProc);
 
 			lPassword2 = CreateWindowEx(WS_EX_LEFT, "Static", "Confirm new password",
 				WS_VISIBLE | WS_CHILD,
@@ -1054,7 +1056,7 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			eSetPassword2 = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER,
 				165, 45, 170, 25, hwnd, (HMENU)ID_PASSWORD_PASSWORD2, NULL, NULL);
-			SetWindowLongPtr(eSetPassword2, GWLP_WNDPROC, (LONG_PTR)customSetPasswordEditProc);
+			SetWindowLongPtr(eSetPassword2, GWLP_WNDPROC, (LONG_PTR)customSetPasswordProc);
 
 			lMessage = CreateWindowEx(WS_EX_LEFT, "Static", "",
 				WS_VISIBLE | WS_CHILD,
@@ -1207,7 +1209,7 @@ LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			eGetPassword = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER | ES_PASSWORD,
 				130, 10, 170, 25, hwnd, (HMENU)ID_PASSWORD_PASSWORD1, NULL, NULL);
-			originalGetPasswordEditProc = (WNDPROC)SetWindowLongPtr(eGetPassword, GWLP_WNDPROC, (LONG_PTR)customGetPasswordEditProc);
+			originalGetPasswordProc = (WNDPROC)SetWindowLongPtr(eGetPassword, GWLP_WNDPROC, (LONG_PTR)customGetPasswordProc);
 
 			bGetPasswordOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
@@ -1283,7 +1285,7 @@ LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK customMainEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK customMainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
@@ -1302,17 +1304,101 @@ LRESULT CALLBACK customMainEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 						SendMessage(hwnd, EM_SETSEL, 0, -1);
 					break;
 				default:
-					return CallWindowProc(originalMainEditProc, hwnd, msg, wParam, lParam);
+					return CallWindowProc(originalMainProc, hwnd, msg, wParam, lParam);
 			}
 			break;
 		default:
-			return CallWindowProc(originalMainEditProc, hwnd, msg, wParam, lParam);
+			return CallWindowProc(originalMainProc, hwnd, msg, wParam, lParam);
 	}
 
-	return CallWindowProc(originalMainEditProc, hwnd, msg, wParam, lParam);
+	return CallWindowProc(originalMainProc, hwnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK customSetPasswordEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK customAddProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+		case WM_KEYUP:
+			switch (wParam)
+			{
+				case VK_RETURN: // catch Enter and send a Tab
+				{
+					KEYBDINPUT kb = {0};
+					INPUT input = {0};
+
+					// generate down
+					kb.wVk = VK_TAB;
+					input.type = INPUT_KEYBOARD;
+					input.ki = kb;
+					SendInput(1, &input, sizeof(input));
+
+					// generate up 
+					ZeroMemory(&kb, sizeof(KEYBDINPUT));
+					ZeroMemory(&input, sizeof(INPUT));
+					kb.dwFlags = KEYEVENTF_KEYUP;
+					kb.wVk = VK_TAB;
+					input.type = INPUT_KEYBOARD;
+					input.ki = kb;
+					SendInput(1, &input, sizeof(input));
+
+					break;
+				}
+				case 'A': // CTRL A
+					if (GetAsyncKeyState(VK_CONTROL))
+						SendMessage(hwnd, EM_SETSEL, 0, -1);
+					break;
+				default:
+					return CallWindowProc(originalAddProc, hwnd, msg, wParam, lParam);
+			}
+		break;
+	}
+
+	return CallWindowProc(originalAddProc, hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK customEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+		case WM_KEYUP:
+			switch (wParam)
+			{
+				case VK_RETURN: // catch Enter and send a Tab
+				{
+					KEYBDINPUT kb = {0};
+					INPUT input = {0};
+
+					// generate down
+					kb.wVk = VK_TAB;
+					input.type = INPUT_KEYBOARD;
+					input.ki = kb;
+					SendInput(1, &input, sizeof(input));
+
+					// generate up 
+					ZeroMemory(&kb, sizeof(KEYBDINPUT));
+					ZeroMemory(&input, sizeof(INPUT));
+					kb.dwFlags = KEYEVENTF_KEYUP;
+					kb.wVk = VK_TAB;
+					input.type = INPUT_KEYBOARD;
+					input.ki = kb;
+					SendInput(1, &input, sizeof(input));
+
+					break;
+				}
+				case 'A': // CTRL A
+					if (GetAsyncKeyState(VK_CONTROL))
+						SendMessage(hwnd, EM_SETSEL, 0, -1);
+					break;
+				default:
+					return CallWindowProc(originalEditProc, hwnd, msg, wParam, lParam);
+			}
+		break;
+	}
+
+	return CallWindowProc(originalEditProc, hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK customSetPasswordProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
@@ -1325,22 +1411,22 @@ LRESULT CALLBACK customSetPasswordEditProc(HWND hwnd, UINT msg, WPARAM wParam, L
 				case VK_RETURN:
 					SendMessage(bSetPasswordOK, BM_CLICK, 0, 0);
 					break;
-				case 'A':
+				case 'A': // CTRL A
 					if (GetAsyncKeyState(VK_CONTROL))
 						SendMessage(hwnd, EM_SETSEL, 0, -1);
 					break;
 				default:
-					return CallWindowProc(originalSetPasswordEditProc, hwnd, msg, wParam, lParam);
+					return CallWindowProc(originalSetPasswordProc, hwnd, msg, wParam, lParam);
 			}
 			break;
 		default:
-			return CallWindowProc(originalSetPasswordEditProc, hwnd, msg, wParam, lParam);
+			return CallWindowProc(originalSetPasswordProc, hwnd, msg, wParam, lParam);
 	}
 
-	return CallWindowProc(originalSetPasswordEditProc, hwnd, msg, wParam, lParam);
+	return CallWindowProc(originalSetPasswordProc, hwnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK customGetPasswordEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK customGetPasswordProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
@@ -1353,38 +1439,17 @@ LRESULT CALLBACK customGetPasswordEditProc(HWND hwnd, UINT msg, WPARAM wParam, L
 				case VK_RETURN:
 					SendMessage(bGetPasswordOK, BM_CLICK, 0, 0);
 					break;
-				case 'A':
+				case 'A': // CTRL A
 					if (GetAsyncKeyState(VK_CONTROL))
 						SendMessage(hwnd, EM_SETSEL, 0, -1);
 					break;
 				default:
-					return CallWindowProc(originalGetPasswordEditProc, hwnd, msg, wParam, lParam);
+					return CallWindowProc(originalGetPasswordProc, hwnd, msg, wParam, lParam);
 			}
 			break;
 		default:
-			return CallWindowProc(originalGetPasswordEditProc, hwnd, msg, wParam, lParam);
+			return CallWindowProc(originalGetPasswordProc, hwnd, msg, wParam, lParam);
 	}
 
-	return CallWindowProc(originalGetPasswordEditProc, hwnd, msg, wParam, lParam);
-}
-
-LRESULT CALLBACK customEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (msg)
-	{
-		case WM_KEYUP:
-			switch (wParam)
-			{
-				//TODO catch Enter and send a Tab
-				case 'A':
-					if (GetAsyncKeyState(VK_CONTROL))
-						SendMessage(hwnd, EM_SETSEL, 0, -1);
-					break;
-				default:
-					return CallWindowProc(originalEditProc, hwnd, msg, wParam, lParam);
-			}
-		break;
-	}
-
-	return CallWindowProc(originalEditProc, hwnd, msg, wParam, lParam);
+	return CallWindowProc(originalGetPasswordProc, hwnd, msg, wParam, lParam);
 }
