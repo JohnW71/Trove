@@ -222,3 +222,10 @@ void readSettings(void)
 
 	fclose(f);
 }
+
+void removeCommas(char *text)
+{
+	for (int i = 0; i < MAXMISC; ++i)
+		if (text[i] == ',')
+			text[i] = ' ';
+}

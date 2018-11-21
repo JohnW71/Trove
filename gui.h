@@ -49,6 +49,8 @@
 #define ID_TIMER1 1
 #define ID_TIMER2 2
 
+void enableControls(void);
+void disableControls(void);
 void centerWindow(HWND);
 void fillListbox(void);
 void updateListbox(void);
