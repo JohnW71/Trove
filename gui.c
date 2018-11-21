@@ -38,6 +38,7 @@ static HWND bFind;
 static HWND bGetPasswordOK;
 static HWND bSetPasswordOK;
 static WNDPROC originalMainProc;
+static WNDPROC originalListboxProc;
 static WNDPROC originalAddProc;
 static WNDPROC originalEditProc;
 static WNDPROC originalSetPasswordProc;
@@ -157,7 +158,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			lbList = CreateWindowEx(WS_EX_LEFT, "ListBox", NULL,
 				WS_VISIBLE | WS_CHILD | LBS_STANDARD,
 				10, 80, 350, 475, hwnd, (HMENU)ID_MAIN_LISTBOX, NULL, NULL);
-			//SetWindowLongPtr(lbList, GWLP_WNDPROC, (LONG_PTR)customMainProc);
+			originalListboxProc = (WNDPROC)SetWindowLongPtr(lbList, GWLP_WNDPROC, (LONG_PTR)customListboxProc);
 
 			readFile();
 
@@ -291,7 +292,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						EnableWindow(bDelete, TRUE);
 					}
 				}
-
+				
 				// a row was double-clicked
 				if (HIWORD(wParam) == LBN_DBLCLK)
 				{
@@ -1312,6 +1313,31 @@ LRESULT CALLBACK customMainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 	}
 
 	return CallWindowProc(originalMainProc, hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK customListboxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+		case WM_KEYUP:
+			switch (wParam)
+			{
+				case VK_RETURN:
+					// get row index
+					selectedRow = SendMessage(lbList, LB_GETCURSEL, 0, 0);
+
+					if (selectedRow != LB_ERR)
+						editEntry();
+					break;
+				default:
+					return CallWindowProc(originalListboxProc, hwnd, msg, wParam, lParam);
+			}
+			break;
+		default:
+			return CallWindowProc(originalListboxProc, hwnd, msg, wParam, lParam);
+	}
+
+	return CallWindowProc(originalListboxProc, hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK customAddProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
