@@ -487,6 +487,8 @@ void writeSettings(void)
 		return;
 	}
 
+	fputs("#Manually editing the keygen value will make it\n", f);
+	fputs("#impossible to decrypt your database again!\n", f);
 	fprintf(f, "password_size=%d\n", passwordSize);
 	fprintf(f, "min_special=%d\n", minSpecial);
 	fprintf(f, "min_numeric=%d\n", minNumeric);
