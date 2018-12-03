@@ -181,11 +181,11 @@ static void KeyExpansion(uint8_t* RoundKey, const uint8_t* Key)
 
       // Function RotWord()
       {
-        k = tempa[0];
+        const uint8_t u8tmp = tempa[0];
         tempa[0] = tempa[1];
         tempa[1] = tempa[2];
         tempa[2] = tempa[3];
-        tempa[3] = k;
+        tempa[3] = u8tmp;
       }
 
       // SubWord() is a function that takes a four-byte input word and
