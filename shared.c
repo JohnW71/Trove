@@ -173,6 +173,9 @@ void readSettings(void)
 
 	while (fgets(line, MAXLINE, f) != NULL)
 	{
+		if (line[0] == '#')
+			continue;
+
 		char setting[MAXLINE];
 		char value[MAXLINE];
 		char *l = line;
