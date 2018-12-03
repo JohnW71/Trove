@@ -18,13 +18,20 @@ int minUppercase = 0;
 int screenCol = 0; // not used
 int screenRow = 0; // not used
 char iniFile[] = "trove.ini";
+char version[] = "\nTrove v1.33";
 uint8_t iv[IV_SIZE];
 uint8_t DBpassword[DBPASSWORDSIZE];
 
 static char heading[] = "    Title                ID                   Password             Misc";
 
-int main(void)
+int main(int argc, char *argv[])
 {
+	if (argc > 1)
+	{
+		handleParameters(argv[1]);
+		exit(0);
+	}
+
 	readSettings();
 	readEntries();
 
@@ -33,7 +40,7 @@ int main(void)
 
 	while (choice != 0)
 	{
-		puts("\nTrove v1.32");
+		puts(version);
 		puts("-----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -809,3 +816,26 @@ void getPasswordLinux(uint8_t *password)
 	puts("");
 }
 #endif
+
+void handleParameters(char *parameter)
+{
+	if (strcmp(parameter, "-v") == 0 ||
+		strcmp(parameter, "-version") == 0 ||
+		strcmp(parameter, "-h") == 0 ||
+		strcmp(parameter, "-help") == 0)
+	{
+		puts(version);
+		puts("By John Wingfield\n");
+		puts("Trove is an encrypted password database for Windows and Linux.");
+		puts("It uses AES-256 bit encryption with the tiny-AES library. The encrypion");
+		puts("uses a random keygen stored in the INI file. You can generate a new key");
+		puts("from the application settings menu if required. Changing the key manually");
+		puts("will make it impossible to decrypt your database.\n");
+		puts("The latest version can be downloaded from");
+		puts("https://github.com/JohnW71/Trove/releases\n");
+	}
+	else
+	{
+		puts("Use just \"trove_cli\" or with \"-v\" for the info page\n");
+	}
+}
