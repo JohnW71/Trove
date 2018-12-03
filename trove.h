@@ -9,6 +9,7 @@ void edit(void);
 void delEntry(void);
 void clipboard(void);
 void updateSettings(void);
+void handleParameters(char *);
 void setPasswordSize(void);
 void setMinSpecial(void);
 void setMinNumeric(void);
