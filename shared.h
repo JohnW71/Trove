@@ -41,7 +41,7 @@ void decrypt_cbc(uint8_t *, uint8_t *);
 void addPadding(char *);
 void loadEncryptedEntries(void);
 void updateBuffer(void);
-void removeCommas(char *);
+void removeCommas(char *, int);
 
 struct Entry
 {

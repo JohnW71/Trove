@@ -223,9 +223,9 @@ void readSettings(char *iniFile)
 	fclose(f);
 }
 
-void removeCommas(char *text)
+void removeCommas(char *text, int length)
 {
-	for (int i = 0; i < MAXMISC; ++i)
+	for (int i = 0; i < length; ++i)
 		if (text[i] == ',')
 			text[i] = ' ';
 }
