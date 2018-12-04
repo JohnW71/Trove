@@ -451,9 +451,9 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 				entries = temp;
 
-				removeCommas(title);
-				removeCommas(id);
-				removeCommas(misc);
+				removeCommas(title, strlen(title));
+				removeCommas(id, strlen(id));
+				removeCommas(misc, strlen(misc));
 				strcpy(entries[state.entryCount].title, title);
 				strcpy(entries[state.entryCount].id, id);
 				strcpy(entries[state.entryCount].pw, pw);
@@ -658,9 +658,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (strlen(misc) == 0) strcpy(misc, " ");
 
 				// replace entry in listbox & entries
-				removeCommas(title);
-				removeCommas(id);
-				removeCommas(misc);
+				removeCommas(title, strlen(title));
+				removeCommas(id, strlen(id));
+				removeCommas(misc, strlen(misc));
 				SendMessage(lbList, LB_DELETESTRING, state.selectedRow, 0);
 				SendMessage(lbList, LB_ADDSTRING, 0, (LPARAM)title);
 				strcpy(entries[state.selectedRow].title, title);
