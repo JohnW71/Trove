@@ -4,42 +4,31 @@
 #include "shared.h"
 #include "aes.h"
 
-bool noDatabase = false;
-
-extern bool debugging;
-extern bool readVerified;
-extern int entryCount;
-extern uint8_t DBpassword[];
-extern uint8_t iv[IV_SIZE];
-
-static char dbFile[] = "trove.db";
 static char *buffer;
 static char *paddedBuffer;
-static int bufferSize = 0;
-static int paddedSize = 0;
 
 void readEntries(void)
 {
-	if (noDatabase)
-		readFile();
+	if (state.noDatabase)
+		readFile(DB_FILE);
 
 	// decrypt buffer into buffer
-	decrypt_cbc(buffer, iv);
+	decrypt_cbc(buffer, settings.iv);
 
 	// load data from buffer and split into entries
 	loadEncryptedEntries();
 }
 
-void readFile(void)
+void readFile(char *dbFile)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("readFile()");
 
 	FILE *f;
 	f = fopen(dbFile, "rb");
 	if (f == NULL)
 	{
-		noDatabase = true;
+		state.noDatabase = true;
 		return;
 	}
 
@@ -58,7 +47,7 @@ void readFile(void)
 		return;
 	}
 	buffer[0] = 0;
-	bufferSize = sizeof(char) * fileSize;
+	state.bufferSize = sizeof(char) * fileSize;
 
 	long result = (long)fread(buffer, 1, fileSize, f);
 	if (result != fileSize)
@@ -73,20 +62,20 @@ void readFile(void)
 
 void decrypt_cbc(uint8_t *text, uint8_t *init)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("decrypt()");
 
 	struct AES_ctx ctx;
-	AES_init_ctx_iv(&ctx, DBpassword, init);
-	AES_CBC_decrypt_buffer(&ctx, text, bufferSize);
+	AES_init_ctx_iv(&ctx, state.DBpassword, init);
+	AES_CBC_decrypt_buffer(&ctx, text, state.bufferSize);
 }
 
 void loadEncryptedEntries(void)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("loadEncryptedEntries()");
 
-	entryCount = 0;
+	state.entryCount = 0;
 	entries = NULL;
 	char *tokens;
 	tokens = strtok(buffer, ",\n");
@@ -98,15 +87,15 @@ void loadEncryptedEntries(void)
 	if (strcmp(header, "Trove") != 0)
 	{
 		outs("Invalid password entered");
-		readVerified = false;
+		state.readVerified = false;
 		return;
 	}
-	readVerified = true;
+	state.readVerified = true;
 
 	tokens = strtok(NULL, ",\n");
 	while (tokens != NULL)
 	{
-		struct Entry *temp = realloc(entries, (entryCount + 1) * sizeof(*entries));
+		struct Entry *temp = realloc(entries, ((uint64_t)state.entryCount + 1) * sizeof(*entries));
 		if (temp == NULL)
 		{
 			outs("Failure reallocating memory for new entry");
@@ -115,28 +104,28 @@ void loadEncryptedEntries(void)
 		}
 		entries = temp;
 
-		strcpy(entries[entryCount].title, tokens);
+		strcpy(entries[state.entryCount].title, tokens);
 		tokens = strtok(NULL, ",\n");
-		strcpy(entries[entryCount].id, tokens);
+		strcpy(entries[state.entryCount].id, tokens);
 		tokens = strtok(NULL, ",\n");
-		strcpy(entries[entryCount].pw, tokens);
+		strcpy(entries[state.entryCount].pw, tokens);
 		tokens = strtok(NULL, ",\n");
-		strcpy(entries[entryCount].misc, tokens);
+		strcpy(entries[state.entryCount].misc, tokens);
 		tokens = strtok(NULL, ",\n");
 
-		if (debugging)
+		if (state.debugging)
 		{
 			char row[120];
 			snprintf(row, 120, "%s,%s,%s,%s\n",
-						entries[entryCount].title,
-						entries[entryCount].id,
-						entries[entryCount].pw,
-						entries[entryCount].misc);
+						entries[state.entryCount].title,
+						entries[state.entryCount].id,
+						entries[state.entryCount].pw,
+						entries[state.entryCount].misc);
 			outs("row loaded in=");
 			outs(row);
 		}
 
-		++entryCount;
+		++state.entryCount;
 	}
 
 	free(buffer);
@@ -144,7 +133,7 @@ void loadEncryptedEntries(void)
 
 void saveEntries(void)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("saveEntries()");
 
 	// replace buffer with current entries list
@@ -154,21 +143,20 @@ void saveEntries(void)
 	addPadding(buffer);
 
 	// encrypt paddedBuffer
-	encrypt_cbc(paddedBuffer, iv);
+	encrypt_cbc(paddedBuffer, settings.iv);
 
 	// save paddedBuffer to dbFile
-	writeFile();
+	writeFile(DB_FILE);
 }
 
 void updateBuffer(void)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("updateBuffer()");
 
-	int maxRowSize = MAXTITLE + MAXID + MAXPW + MAXMISC;
 	buffer = NULL;
-	if (entryCount > 0)
-		buffer = (char *)malloc(entryCount * maxRowSize);
+	if (state.entryCount > 0)
+		buffer = (char *)malloc(state.entryCount * MAXLINE);
 	else
 		buffer = (char *)malloc(16);
 
@@ -180,7 +168,7 @@ void updateBuffer(void)
 	}
 	buffer[0] = 0;
 
-	char *row = (char *)malloc(sizeof(char) * maxRowSize);
+	char *row = (char *)malloc(sizeof(char) * MAXLINE);
 	if (!row)
 	{
 		outs("Failure allocating memory for update buffer row");
@@ -191,13 +179,13 @@ void updateBuffer(void)
 
 	strcat(buffer, "Trove\n");
 
-	for (int i = 0; i < entryCount; ++i)
+	for (int i = 0; i < state.entryCount; ++i)
 	{
-		snprintf(row, maxRowSize, "%s,%s,%s,%s\n", entries[i].title,
+		snprintf(row, MAXLINE, "%s,%s,%s,%s\n", entries[i].title,
 													entries[i].id,
 													entries[i].pw,
 													entries[i].misc);
-		if (debugging)
+		if (state.debugging)
 		{
 			outs("row to save to buffer=");
 			outs(row);
@@ -211,13 +199,13 @@ void updateBuffer(void)
 
 void addPadding(char *text)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("addPadding()");
 
 	int currentSize = (int)strlen(text);
-	paddedSize = currentSize + (16 - (currentSize % 16));
+	state.paddedSize = currentSize + (16 - (currentSize % 16));
 	paddedBuffer = NULL;
-	paddedBuffer = (char *)malloc(sizeof(char) * paddedSize);
+	paddedBuffer = (char *)malloc(sizeof(char) * state.paddedSize);
 
 	if (!paddedBuffer)
 	{
@@ -229,16 +217,16 @@ void addPadding(char *text)
 
 	strcpy(paddedBuffer, text);
 
-	for (int i = currentSize; i < paddedSize; ++i)
+	for (int i = currentSize; i < state.paddedSize; ++i)
 		paddedBuffer[i] = '\0';
 }
 
 void encrypt_cbc(uint8_t *text, uint8_t *init)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("encrypt()");
 
-	if (debugging)
+	if (state.debugging)
 	{
 		outs("buffer to encrypt=");
 		outs(text);
@@ -247,18 +235,18 @@ void encrypt_cbc(uint8_t *text, uint8_t *init)
 	}
 
 	struct AES_ctx ctx;
-	AES_init_ctx_iv(&ctx, DBpassword, init);
-	AES_CBC_encrypt_buffer(&ctx, text, paddedSize);
+	AES_init_ctx_iv(&ctx, state.DBpassword, init);
+	AES_CBC_encrypt_buffer(&ctx, text, state.paddedSize);
 }
 
-void writeFile(void)
+void writeFile(char *dbFile)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("writeFile()");
 
 	FILE *f;
 	f = fopen(dbFile, "wb");
-	fwrite(paddedBuffer, paddedSize, 1, f);
+	fwrite(paddedBuffer, state.paddedSize, 1, f);
 	fclose(f);
 	free(paddedBuffer);
 	free(buffer);

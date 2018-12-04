@@ -5,19 +5,26 @@
 #include <string.h>	// strcmp(), strcpy(), strlen()
 #include <time.h>	// time()
 #include <ctype.h>	// isupper(), ispunct(), isdigit()
-#include <stdint.h>	// uint8_t
+#include <stdint.h>
 #include <stdbool.h>
+
+#ifdef _WIN32
+	#include <windows.h>
+#endif
 
 #define MAXTITLE 21
 #define MAXID 21
 #define MAXPW 21
 #define MAXMISC 51
-#define MAXLINE 120
+#define MAXLINE 130
 #define MINPW 6
 #define MINCHARS 0
 #define MAXCHARS 6
 #define DBPASSWORDSIZE 32
 #define IV_SIZE 17
+
+#define INI_FILE "trove.ini"
+#define DB_FILE "trove.db"
 
 void readEntries(void);
 void saveEntries(void);
@@ -25,10 +32,10 @@ void sortEntries(void);
 void generatePassword(char *);
 void generateKeygen(char *);
 bool setDBpassword(void);
-void readSettings(void);
-void writeSettings(void);
-void writeFile(void);
-void readFile(void);
+void readSettings(char *);
+void writeSettings(char *);
+void writeFile(char *);
+void readFile(char *);
 void encrypt_cbc(uint8_t *, uint8_t *);
 void decrypt_cbc(uint8_t *, uint8_t *);
 void addPadding(char *);
@@ -43,3 +50,31 @@ struct Entry
 	char pw[MAXPW];
 	char misc[MAXMISC];
 } *entries;
+
+struct Settings
+{
+	int passwordSize;
+	int minSpecial;
+	int minNumeric;
+	int minUppercase;
+	int screenRow;
+	int screenCol;
+	uint8_t iv[IV_SIZE];
+} settings;
+
+struct State
+{
+	char DBpassword[DBPASSWORDSIZE];
+	bool noDatabase;
+	int entryCount;
+	int bufferSize;
+	int paddedSize;
+
+#ifdef _WIN32
+	bool running;
+	bool debugging;
+	bool readVerified;
+	bool changingPassword;
+	LRESULT selectedRow;
+#endif
+} state;

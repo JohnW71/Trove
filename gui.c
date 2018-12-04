@@ -3,21 +3,6 @@
 #include "gui.h"
 #include "shared.h"
 
-bool debugging = false;
-bool running = true;
-bool readVerified = false;
-int entryCount = 0;
-int passwordSize = MINPW;
-int minSpecial = 0;
-int minNumeric = 0;
-int minUppercase = 0;
-int screenCol = 0;
-int screenRow = 0;
-char iv[IV_SIZE];
-char iniFile[] = "trove.ini";
-char logFile[] = "log.txt";
-char DBpassword[DBPASSWORDSIZE];
-LRESULT selectedRow;
 HWND lbList;
 HWND bAdd;
 HWND bEdit;
@@ -26,8 +11,6 @@ HWND bSettings;
 HWND bQuit;
 HWND eFind;
 
-static char version[] = "v1.0";
-static bool changingPassword = false;
 static HINSTANCE instance;
 static HWND mainHwnd;
 static HWND addHwnd;
@@ -45,8 +28,6 @@ static WNDPROC originalEditProc;
 static WNDPROC originalSetPasswordProc;
 static WNDPROC originalGetPasswordProc;
 
-extern bool noDatabase;
-
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPWSTR lpCmdLine, _In_ int nShowCmd)
 {
@@ -56,7 +37,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	WNDCLASSEX wc = {0};
 
 	// reset log file
-	FILE *lf = fopen(logFile, "w");
+	FILE *lf = fopen(LOG_FILE, "w");
 	if (lf == NULL)
 		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
 	else
@@ -81,7 +62,13 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		return 0;
 	}
 
-	readSettings();
+	state.entryCount = 0;
+	state.debugging = false;
+	state.readVerified = false;
+	state.running = true;
+	state.noDatabase = false;
+	state.changingPassword = false;
+	readSettings(INI_FILE);
 
 	mainHwnd = CreateWindowEx(WS_EX_LEFT,
 		wc.lpszClassName,
@@ -96,7 +83,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		return 0;
 	}
 
-	while (running)
+	while (state.running)
 	{
 		while (GetMessage(&msg, NULL, 0, 0))
 		{
@@ -121,10 +108,10 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch (msg)
 	{
 		case WM_CREATE:
-			if (screenRow == 0 && screenCol == 0)
+			if (settings.screenRow == 0 && settings.screenCol == 0)
 				centerWindow(hwnd);
 			else
-				SetWindowPos(hwnd, HWND_TOP, screenCol, screenRow, 0, 0, SWP_NOSIZE);
+				SetWindowPos(hwnd, HWND_TOP, settings.screenCol, settings.screenRow, 0, 0, SWP_NOSIZE);
 
 			// first row
 			bAdd = CreateWindowEx(WS_EX_LEFT, "Button", "Add",
@@ -159,9 +146,9 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				10, 80, 350, 475, hwnd, (HMENU)ID_MAIN_LISTBOX, NULL, NULL);
 			originalListboxProc = (WNDPROC)SetWindowLongPtr(lbList, GWLP_WNDPROC, (LONG_PTR)customListboxProc);
 
-			readFile();
+			readFile(DB_FILE);
 
-			if (noDatabase)
+			if (state.noDatabase)
 				setNewDBpassword();
 			else
 				getDBpassword();
@@ -242,27 +229,27 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					static int i = 0;
 					int attempts = 0;
 
-					while (attempts <= entryCount)
+					while (attempts <= state.entryCount)
 					{
-						if (i == selectedRow && strstr(entries[i].title, find))
+						if (i == state.selectedRow && strstr(entries[i].title, find))
 							found = true;
 
-						if (i != selectedRow && strstr(entries[i].title, find))
+						if (i != state.selectedRow && strstr(entries[i].title, find))
 						{
-							selectedRow = i;
+							state.selectedRow = i;
 							found = true;
 							break;
 						}
 
 						++attempts;
 
-						if (++i == entryCount)
+						if (++i == state.entryCount)
 							i = 0;
 					}
 
-					if (found && selectedRow != LB_ERR) // select matching row
+					if (found && state.selectedRow != LB_ERR) // select matching row
 					{
-						SendMessage(lbList, LB_SETCURSEL, selectedRow, 0);
+						SendMessage(lbList, LB_SETCURSEL, state.selectedRow, 0);
 						EnableWindow(bAdd, FALSE);
 						EnableWindow(bEdit, TRUE);
 						EnableWindow(bDelete, TRUE);
@@ -283,22 +270,22 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (HIWORD(wParam) == LBN_SELCHANGE)
 				{
 					// get row index
-					selectedRow = SendMessage(lbList, LB_GETCURSEL, 0, 0);
+					state.selectedRow = SendMessage(lbList, LB_GETCURSEL, 0, 0);
 
-					if (selectedRow != LB_ERR)
+					if (state.selectedRow != LB_ERR)
 					{
 						EnableWindow(bEdit, TRUE);
 						EnableWindow(bDelete, TRUE);
 					}
 				}
-				
+
 				// a row was double-clicked
 				if (HIWORD(wParam) == LBN_DBLCLK)
 				{
 					// get row index
-					selectedRow = SendMessage(lbList, LB_GETCURSEL, 0, 0);
+					state.selectedRow = SendMessage(lbList, LB_GETCURSEL, 0, 0);
 
-					if (selectedRow != LB_ERR)
+					if (state.selectedRow != LB_ERR)
 						editEntry();
 				}
 			}
@@ -312,7 +299,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void addEntry(void)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("addEntry()");
 
 	static WNDCLASSEX wcAdd = {0};
@@ -437,9 +424,9 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 
 				// test for pre-existing title
-				for (int i = 0; i < entryCount; ++i)
+				for (int i = 0; i < state.entryCount; ++i)
 				{
-					if (strcmp(entries[i].title, title) == 0 && i != selectedRow)
+					if (strcmp(entries[i].title, title) == 0 && i != state.selectedRow)
 					{
 						MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
 						SetFocus(eTitle);
@@ -455,7 +442,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				// add to listbox & entries
 				SendMessage(lbList, LB_ADDSTRING, 0, (LPARAM)title);
 
-				struct Entry *temp = realloc(entries, (entryCount + 1) * sizeof(*entries));
+				struct Entry *temp = realloc(entries, ((uint64_t)state.entryCount + 1) * sizeof(*entries));
 				if (temp == NULL)
 				{
 					outs("Failure reallocating memory for new entry");
@@ -467,11 +454,11 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				removeCommas(title);
 				removeCommas(id);
 				removeCommas(misc);
-				strcpy(entries[entryCount].title, title);
-				strcpy(entries[entryCount].id, id);
-				strcpy(entries[entryCount].pw, pw);
-				strcpy(entries[entryCount].misc, misc);
-				++entryCount;
+				strcpy(entries[state.entryCount].title, title);
+				strcpy(entries[state.entryCount].id, id);
+				strcpy(entries[state.entryCount].pw, pw);
+				strcpy(entries[state.entryCount].misc, misc);
+				++state.entryCount;
 
 				DestroyWindow(hwnd);
 				updateListbox();
@@ -499,7 +486,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void editEntry(void)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("editEntry()");
 
 	static WNDCLASSEX wcEdit = {0};
@@ -603,11 +590,11 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			// get selected row
 			char title[MAXLINE];
-			int textLen = (int)SendMessage(lbList, LB_GETTEXT, selectedRow, (LPARAM)title);
+			int textLen = (int)SendMessage(lbList, LB_GETTEXT, state.selectedRow, (LPARAM)title);
 			title[textLen] = '\0';
 
 			// populate fields
-			for (int i = 0; i < entryCount; ++i)
+			for (int i = 0; i < state.entryCount; ++i)
 			{
 				if (strcmp(entries[i].title, title) == 0)
 				{
@@ -655,9 +642,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 
 				// test for pre-existing title
-				for (int i = 0; i < entryCount; ++i)
+				for (int i = 0; i < state.entryCount; ++i)
 				{
-					if (strcmp(entries[i].title, title) == 0 && i != selectedRow)
+					if (strcmp(entries[i].title, title) == 0 && i != state.selectedRow)
 					{
 						MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
 						SetFocus(eTitle);
@@ -674,12 +661,12 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				removeCommas(title);
 				removeCommas(id);
 				removeCommas(misc);
-				SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
+				SendMessage(lbList, LB_DELETESTRING, state.selectedRow, 0);
 				SendMessage(lbList, LB_ADDSTRING, 0, (LPARAM)title);
-				strcpy(entries[selectedRow].title, title);
-				strcpy(entries[selectedRow].id, id);
-				strcpy(entries[selectedRow].pw, pw);
-				strcpy(entries[selectedRow].misc, misc);
+				strcpy(entries[state.selectedRow].title, title);
+				strcpy(entries[state.selectedRow].id, id);
+				strcpy(entries[state.selectedRow].pw, pw);
+				strcpy(entries[state.selectedRow].misc, misc);
 
 				DestroyWindow(hwnd);
 				updateListbox();
@@ -708,7 +695,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void editSettings(void)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("editSettings()");
 
 	static WNDCLASSEX wcSettings = {0};
@@ -824,21 +811,21 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 				100, 215, 210, 25, hwnd, (HMENU)ID_SETTINGS_SET_PASSWORD, NULL, NULL);
 
-			lVersion = CreateWindowEx(WS_EX_LEFT, "Static", version,
+			lVersion = CreateWindowEx(WS_EX_LEFT, "Static", APP_VERSION,
 				WS_VISIBLE | WS_CHILD,
 				320, 85, 210, 25, hwnd, (HMENU)ID_SETTINGS_VERSION, NULL, NULL);
 
 			// populate each box
 			char buf[4];
-			sprintf(buf, "%d", passwordSize);
+			sprintf(buf, "%d", settings.passwordSize);
 			SetWindowText(cPassword, buf);
-			sprintf(buf, "%d", minNumeric);
+			sprintf(buf, "%d", settings.minNumeric);
 			SetWindowText(cNumeric, buf);
-			sprintf(buf, "%d", minSpecial);
+			sprintf(buf, "%d", settings.minSpecial);
 			SetWindowText(cSpecial, buf);
-			sprintf(buf, "%d", minUppercase);
+			sprintf(buf, "%d", settings.minUppercase);
 			SetWindowText(cUppercase, buf);
-			SetWindowText(eKeygen, iv);
+			SetWindowText(eKeygen, settings.iv);
 
 			centerWindow(hwnd);
 			break;
@@ -860,7 +847,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				if (strlen(password) == 0) // check if blank
 				{
 					char buf[5];
-					sprintf(buf, "%d", passwordSize);
+					sprintf(buf, "%d", settings.passwordSize);
 					SetWindowText(cPassword, buf);
 					valid = false;
 				}
@@ -871,7 +858,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					else
 					{
 						char buf[5];
-						sprintf(buf, "%d", passwordSize);
+						sprintf(buf, "%d", settings.passwordSize);
 						SetWindowText(cPassword, buf);
 						valid = false;
 					}
@@ -881,7 +868,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				if (strlen(special) == 0) // check if blank
 				{
 					char buf[5];
-					sprintf(buf, "%d", minSpecial);
+					sprintf(buf, "%d", settings.minSpecial);
 					SetWindowText(cSpecial, buf);
 					valid = false;
 				}
@@ -892,7 +879,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					else
 					{
 						char buf[5];
-						sprintf(buf, "%d", minSpecial);
+						sprintf(buf, "%d", settings.minSpecial);
 						SetWindowText(cSpecial, buf);
 						valid = false;
 					}
@@ -902,7 +889,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				if (strlen(numeric) == 0) // check if blank
 				{
 					char buf[5];
-					sprintf(buf, "%d", minNumeric);
+					sprintf(buf, "%d", settings.minNumeric);
 					SetWindowText(cNumeric, buf);
 					valid = false;
 				}
@@ -913,7 +900,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					else
 					{
 						char buf[5];
-						sprintf(buf, "%d", minNumeric);
+						sprintf(buf, "%d", settings.minNumeric);
 						SetWindowText(cNumeric, buf);
 						valid = false;
 					}
@@ -923,7 +910,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				if (strlen(uppercase) == 0) // check if blank
 				{
 					char buf[5];
-					sprintf(buf, "%d", minUppercase);
+					sprintf(buf, "%d", settings.minUppercase);
 					SetWindowText(cUppercase, buf);
 					valid = false;
 				}
@@ -934,7 +921,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					else
 					{
 						char buf[5];
-						sprintf(buf, "%d", minUppercase);
+						sprintf(buf, "%d", settings.minUppercase);
 						SetWindowText(cUppercase, buf);
 						valid = false;
 					}
@@ -962,11 +949,11 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 				if (valid)
 				{
-					passwordSize = newPasswordSize;
-					minSpecial = newMinSpecial;
-					minNumeric = newMinNumeric;
-					minUppercase = newMinUppercase;
-					writeSettings();
+					settings.passwordSize = newPasswordSize;
+					settings.minSpecial = newMinSpecial;
+					settings.minNumeric = newMinNumeric;
+					settings.minUppercase = newMinUppercase;
+					writeSettings(INI_FILE);
 					DestroyWindow(hwnd);
 				}
 			}
@@ -978,13 +965,13 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 			if (LOWORD(wParam) == ID_GENERATE)
 			{
-				generateKeygen(iv);
-				SetWindowText(eKeygen, iv);
+				generateKeygen(settings.iv);
+				SetWindowText(eKeygen, settings.iv);
 			}
 
 			if (LOWORD(wParam) == ID_SETTINGS_SET_PASSWORD)
 			{
-				changingPassword = true;
+				state.changingPassword = true;
 				setNewDBpassword();
 			}
 			break;
@@ -998,7 +985,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 void setNewDBpassword(void)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("setNewDBpassword()");
 
 	static WNDCLASSEX wcSetPassword = {0};
@@ -1107,15 +1094,15 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				}
 
 				for (int i = 0; i < DBPASSWORDSIZE; ++i)
-					DBpassword[i] = '\0';
-				strcpy(DBpassword, pw1);
-				if (debugging)
+					state.DBpassword[i] = '\0';
+				strcpy(state.DBpassword, pw1);
+				if (state.debugging)
 				{
 					outs("new password set to=");
-					outs(DBpassword);
+					outs(state.DBpassword);
 				}
 
-				if (!changingPassword)
+				if (!state.changingPassword)
 				{
 					fillListbox();
 					ShowWindow(mainHwnd, SW_SHOW);
@@ -1142,7 +1129,7 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			}
 			break;
 		case WM_DESTROY:
-			if (closeEverything && !changingPassword)
+			if (closeEverything && !state.changingPassword)
 			{
 				DestroyWindow(hwnd);
 				exit(EXIT_SUCCESS);
@@ -1157,7 +1144,7 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 void getDBpassword(void)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("getDBpassword()");
 
 	static WNDCLASSEX wcGetPassword = {0};
@@ -1244,15 +1231,15 @@ LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			{
 				char pw[MAXPW];
 				GetWindowText(eGetPassword, pw, MAXPW);
-				strcpy(DBpassword, pw);
+				strcpy(state.DBpassword, pw);
 
-				if (debugging)
+				if (state.debugging)
 				{
 					outs("password entered=");
-					outs(DBpassword);
+					outs(state.DBpassword);
 				}
 				readEntries();
-				if (readVerified)
+				if (state.readVerified)
 				{
 					fillListbox();
 					ShowWindow(mainHwnd, SW_SHOW);
@@ -1263,10 +1250,10 @@ LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				else
 				{
 					for (int i = 0; i < MAXPW; ++i)
-						DBpassword[i] = '\0';
+						state.DBpassword[i] = '\0';
 
 					SetWindowText(lWarning, "Incorrect password");
-					readFile(); // reset buffer to pre-decrypted
+					readFile(DB_FILE); // reset buffer to pre-decrypted
 					SetFocus(eGetPassword);
 				}
 			}
@@ -1337,9 +1324,9 @@ LRESULT CALLBACK customListboxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			{
 				case VK_RETURN:
 					// get row index
-					selectedRow = SendMessage(lbList, LB_GETCURSEL, 0, 0);
+					state.selectedRow = SendMessage(lbList, LB_GETCURSEL, 0, 0);
 
-					if (selectedRow != LB_ERR)
+					if (state.selectedRow != LB_ERR)
 						editEntry();
 					break;
 				default:
@@ -1371,7 +1358,7 @@ LRESULT CALLBACK customAddProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 					input.ki = kb;
 					SendInput(1, &input, sizeof(input));
 
-					// generate up 
+					// generate up
 					ZeroMemory(&kb, sizeof(KEYBDINPUT));
 					ZeroMemory(&input, sizeof(INPUT));
 					kb.dwFlags = KEYEVENTF_KEYUP;
@@ -1413,7 +1400,7 @@ LRESULT CALLBACK customEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 					input.ki = kb;
 					SendInput(1, &input, sizeof(input));
 
-					// generate up 
+					// generate up
 					ZeroMemory(&kb, sizeof(KEYBDINPUT));
 					ZeroMemory(&input, sizeof(INPUT));
 					kb.dwFlags = KEYEVENTF_KEYUP;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>	// uint8_t
+#include <stdint.h>
 #include <stdbool.h>
 #include <windows.h>
 
@@ -48,6 +48,9 @@
 
 #define ID_TIMER1 1
 #define ID_TIMER2 2
+
+#define LOG_FILE "log.txt"
+#define APP_VERSION "v1.01"
 
 void enableControls(void);
 void disableControls(void);
