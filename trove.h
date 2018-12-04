@@ -1,6 +1,8 @@
 #pragma once
 
-#include <stdint.h>	// uint8_t
+#include <stdint.h>
+
+#define APP_VERSION "\nTrove v1.34"
 
 void list(void);
 void add(void);
@@ -15,9 +17,9 @@ void setMinSpecial(void);
 void setMinNumeric(void);
 void setMinUppercase(void);
 void setNewKeygen(void);
-void getDBpassword(uint8_t *);
+void getDBpassword(char *);
 #ifdef _WIN32
-void getPasswordWindows(uint8_t *);
+void getPasswordWindows(char *);
 #else
-void getPasswordLinux(uint8_t *);
+void getPasswordLinux(char *);
 #endif

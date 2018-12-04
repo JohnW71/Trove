@@ -2,16 +2,6 @@
 
 #include "shared.h"
 
-extern int entryCount;
-extern int passwordSize;
-extern int minSpecial;
-extern int minNumeric;
-extern int minUppercase;
-extern int screenRow;
-extern int screenCol;
-extern uint8_t iv[IV_SIZE];
-extern char iniFile[];
-
 void sortEntries(void)
 {
 	bool changed;
@@ -19,7 +9,7 @@ void sortEntries(void)
 	{
 		changed = false;
 
-		for (int i = 0; i < entryCount - 1; ++i)
+		for (int i = 0; i < state.entryCount - 1; ++i)
 		{
 			if (strcmp(entries[i].title, entries[i + 1].title) > 0) // s1 > s2
 			{
@@ -55,7 +45,7 @@ void generatePassword(char *buf)
 		buf[i] = '\0';
 
 	// add random special chars
-	for (int specialCount = 0; specialCount < minSpecial; ++specialCount)
+	for (int specialCount = 0; specialCount < settings.minSpecial; ++specialCount)
 	{
 		int rn = rand() % 127;
 		if (rn < 33 || rn == 44)
@@ -68,7 +58,7 @@ void generatePassword(char *buf)
 		{
 			do
 			{
-				rpos = rand() % passwordSize;
+				rpos = rand() % settings.passwordSize;
 			}
 			while (buf[rpos] != '\0');
 
@@ -82,7 +72,7 @@ void generatePassword(char *buf)
 	}
 
 	// add random numeric chars
-	for (int numericCount = 0; numericCount < minNumeric; ++numericCount)
+	for (int numericCount = 0; numericCount < settings.minNumeric; ++numericCount)
 	{
 		int rn = rand() % 127;
 		if (rn < 33 || rn == 44)
@@ -95,7 +85,7 @@ void generatePassword(char *buf)
 		{
 			do
 			{
-				rpos = rand() % passwordSize;
+				rpos = rand() % settings.passwordSize;
 			}
 			while (buf[rpos] != '\0');
 
@@ -109,7 +99,7 @@ void generatePassword(char *buf)
 	}
 
 	// add random uppercase chars
-	for (int uppercaseCount = 0; uppercaseCount < minUppercase; ++uppercaseCount)
+	for (int uppercaseCount = 0; uppercaseCount < settings.minUppercase; ++uppercaseCount)
 	{
 		int rn = rand() % 127;
 		if (rn < 33 || rn == 44)
@@ -122,7 +112,7 @@ void generatePassword(char *buf)
 		{
 			do
 			{
-				rpos = rand() % passwordSize;
+				rpos = rand() % settings.passwordSize;
 			}
 			while (buf[rpos] != '\0');
 
@@ -136,7 +126,7 @@ void generatePassword(char *buf)
 	}
 
 	// fill in the remaining positions
-	for (int i = 0; i < passwordSize; ++i)
+	for (int i = 0; i < settings.passwordSize; ++i)
 	{
 		if (buf[i] == '\0')
 		{
@@ -160,15 +150,22 @@ void generateKeygen(char *buf)
 	}
 }
 
-void readSettings(void)
+void readSettings(char *iniFile)
 {
 	FILE *f = fopen(iniFile, "r");
 	if (f == NULL)
 	{
-		writeSettings();
+		settings.passwordSize = MINPW;
+		writeSettings(iniFile);
 		return;
 	}
 
+	settings.passwordSize = MINPW;
+	settings.minSpecial = 0;
+	settings.minNumeric = 0;
+	settings.minUppercase = 0;
+	settings.screenRow = 0;
+	settings.screenCol = 0;
 	char line[MAXLINE];
 
 	while (fgets(line, MAXLINE, f) != NULL)
@@ -207,21 +204,21 @@ void readSettings(void)
 		}
 		*v = '\0';
 
-		if (strcmp(setting, "password_size") == 0)	passwordSize = atoi(value);
-		if (strcmp(setting, "min_special") == 0)	minSpecial = atoi(value);
-		if (strcmp(setting, "min_numeric") == 0)	minNumeric = atoi(value);
-		if (strcmp(setting, "min_uppercase") == 0)	minUppercase = atoi(value);
-		if (strcmp(setting, "window_row") == 0)		screenRow = atoi(value);
-		if (strcmp(setting, "window_col") == 0)		screenCol = atoi(value);
+		if (strcmp(setting, "password_size") == 0)	settings.passwordSize = atoi(value);
+		if (strcmp(setting, "min_special") == 0)	settings.minSpecial = atoi(value);
+		if (strcmp(setting, "min_numeric") == 0)	settings.minNumeric = atoi(value);
+		if (strcmp(setting, "min_uppercase") == 0)	settings.minUppercase = atoi(value);
+		if (strcmp(setting, "window_row") == 0)		settings.screenRow = atoi(value);
+		if (strcmp(setting, "window_col") == 0)		settings.screenCol = atoi(value);
 		if (strcmp(setting, "keygen") == 0)
 		{
-			strncpy((char *)iv, value, 16);
-			iv[16] = '\0';
+			strncpy((char *)settings.iv, value, 16);
+			settings.iv[16] = '\0';
 		}
 	}
 
-	if (strlen(iv) < IV_SIZE - 1) // keygen is missing
-		writeSettings();
+	if (strlen(settings.iv) < IV_SIZE - 1) // keygen is missing
+		writeSettings(iniFile);
 
 	fclose(f);
 }

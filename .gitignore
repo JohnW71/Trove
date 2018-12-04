@@ -9,10 +9,10 @@ a.out
 *.bin
 *.txt
 *.pdb
-gui.ini
 /CLI
 /GUI
 /Debug
 /Release
 /Trove_solution_suppressions.cfg
 /.vscode
+/x64

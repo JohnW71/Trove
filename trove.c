@@ -10,18 +10,6 @@
 	#include <termios.h>
 #endif
 
-int entryCount = 0;
-int passwordSize = 12;
-int minSpecial = 0;
-int minNumeric = 0;
-int minUppercase = 0;
-int screenCol = 0; // not used
-int screenRow = 0; // not used
-char iniFile[] = "trove.ini";
-char version[] = "\nTrove v1.33";
-uint8_t iv[IV_SIZE];
-uint8_t DBpassword[DBPASSWORDSIZE];
-
 static char heading[] = "    Title                ID                   Password             Misc";
 
 int main(int argc, char *argv[])
@@ -32,7 +20,9 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	readSettings();
+	state.entryCount = 0;
+	state.noDatabase = false;
+	readSettings(INI_FILE);
 	readEntries();
 
 	int choice = -1;
@@ -40,7 +30,7 @@ int main(int argc, char *argv[])
 
 	while (choice != 0)
 	{
-		puts(version);
+		puts(APP_VERSION);
 		puts("-----------");
 		puts("1 - List");
 		puts("2 - Add");
@@ -68,26 +58,26 @@ int main(int argc, char *argv[])
 		switch (choice)
 		{
 			case 1:
-				if (entryCount > 0)
+				if (state.entryCount > 0)
 					list();
 				break;
 			case 2:
 				add();
 				break;
 			case 3:
-				if (entryCount > 0)
+				if (state.entryCount > 0)
 					find();
 				break;
 			case 4:
-				if (entryCount > 0)
+				if (state.entryCount > 0)
 					edit();
 				break;
 			case 5:
-				if (entryCount > 0)
+				if (state.entryCount > 0)
 					delEntry();
 				break;
 			case 6:
-				if (entryCount > 0)
+				if (state.entryCount > 0)
 					clipboard();
 				break;
 			case 7:
@@ -108,7 +98,7 @@ void list(void)
 {
 	sortEntries();
 	puts(heading);
-	for (int i = 0; i < entryCount; ++i)
+	for (int i = 0; i < state.entryCount; ++i)
 		printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
 												MAXID, entries[i].id,
 												MAXPW, entries[i].pw,
@@ -118,8 +108,8 @@ void list(void)
 void add(void)
 {
 	char title[MAXLINE];
-	char password[MAXLINE];
 	char id[MAXLINE];
+	char password[MAXLINE];
 	char misc[MAXLINE];
 
 	printf("Enter title up to %d chars: ", MAXTITLE - 1);
@@ -137,7 +127,7 @@ void add(void)
 		if (title[i] == '\n' || i == MAXTITLE - 1)
 			title[i] = '\0';
 
-	for (i = 0; i < entryCount; ++i)
+	for (i = 0; i < state.entryCount; ++i)
 		if (strcmp(entries[i].title, title) == 0)
 		{
 			puts("Title is already in use");
@@ -160,7 +150,7 @@ void add(void)
 			id[i] = '\0';
 
 	printf("Enter password up to %d chars:\n(enter 'x' to generate random \
-password of %d chars)\n: ", MAXPW - 1, passwordSize);
+password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 	if (fgets(password, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -193,7 +183,7 @@ password of %d chars)\n: ", MAXPW - 1, passwordSize);
 			misc[i] = '\0';
 	}
 
-	struct Entry *temp = realloc(entries, (entryCount+1) * sizeof(*entries));
+	struct Entry *temp = realloc(entries, ((uint64_t)state.entryCount + 1) * sizeof(*entries));
 	if (temp == NULL)
 	{
 		puts("Failure reallocating memory for new entry");
@@ -204,11 +194,11 @@ password of %d chars)\n: ", MAXPW - 1, passwordSize);
 	removeCommas(title);
 	removeCommas(id);
 	removeCommas(misc);
-	strcpy(entries[entryCount].title, title);
-	strcpy(entries[entryCount].id, id);
-	strcpy(entries[entryCount].pw, password);
-	strcpy(entries[entryCount].misc, misc);
-	++entryCount;
+	strcpy(entries[state.entryCount].title, title);
+	strcpy(entries[state.entryCount].id, id);
+	strcpy(entries[state.entryCount].pw, password);
+	strcpy(entries[state.entryCount].misc, misc);
+	++state.entryCount;
 	saveEntries();
 }
 
@@ -232,7 +222,7 @@ void find(void)
 		if (title[i] == '\n')
 			title[i] = '\0';
 
-	for (i = 0; i < entryCount; ++i)
+	for (i = 0; i < state.entryCount; ++i)
 		if (strcmp(entries[i].title, title) == 0)
 		{
 			printf("\n%s\n", heading);
@@ -251,8 +241,8 @@ void edit(void)
 {
 	char line[MAXLINE];
 	char title[MAXLINE];
-	char password[MAXLINE];
 	char id[MAXLINE];
+	char password[MAXLINE];
 	char misc[MAXLINE];
 	int i;
 
@@ -268,9 +258,9 @@ void edit(void)
 
 	int choice = atoi(line);
 
-	if (choice < 1 || choice > entryCount)
+	if (choice < 1 || choice > state.entryCount)
 	{
-		printf("Range is 1 to %d\n", entryCount);
+		printf("Range is 1 to %d\n", state.entryCount);
 		return;
 	}
 
@@ -316,7 +306,7 @@ void edit(void)
 	}
 
 	printf("Enter new password up to %d chars:\n(enter 'x' to generate random \
-password of %d chars)\n: ", MAXPW - 1, passwordSize);
+password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 	if (fgets(password, MAXLINE, stdin) == NULL)
 	{
 		puts("No line");
@@ -381,16 +371,16 @@ void delEntry(void)
 
 	int choice = atoi(line);
 
-	if (choice < 1 || choice > entryCount)
+	if (choice < 1 || choice > state.entryCount)
 	{
-		printf("Range is 1 to %d\n", entryCount);
+		printf("Range is 1 to %d\n", state.entryCount);
 		return;
 	}
 
 	// recreate array without deleted row
-	struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * (entryCount-1));
+	struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * ((uint64_t)state.entryCount - 1));
 
-	for (int i = 0, j = 0; i < entryCount; ++i, ++j)
+	for (int i = 0, j = 0; i < state.entryCount; ++i, ++j)
 		if (i != (choice-1))
 		{
 			strcpy(newEntries[j].title, entries[i].title);
@@ -404,7 +394,7 @@ void delEntry(void)
 	free(entries);
 	entries = newEntries;
 	newEntries = NULL;
-	--entryCount;
+	--state.entryCount;
 	saveEntries();
 }
 
@@ -425,9 +415,9 @@ void clipboard(void)
 
 	int choice = atoi(line);
 
-	if (choice < 1 || choice > entryCount)
+	if (choice < 1 || choice > state.entryCount)
 	{
-		printf("Range is 1 to %d\n", entryCount);
+		printf("Range is 1 to %d\n", state.entryCount);
 		return;
 	}
 
@@ -471,13 +461,13 @@ void clipboard(void)
 #endif
 }
 
-void writeSettings(void)
+void writeSettings(char *iniFile)
 {
-	if (strlen(iv) < IV_SIZE - 1)
+	if (strlen(settings.iv) < IV_SIZE - 1)
 	{
 		puts("Generating new keygen");
-		generateKeygen(iv);
-		puts(iv);
+		generateKeygen(settings.iv);
+		puts(settings.iv);
 	}
 
 	FILE *f = fopen(iniFile, "w");
@@ -489,11 +479,11 @@ void writeSettings(void)
 
 	fputs("#Manually editing the keygen value will make it\n", f);
 	fputs("#impossible to decrypt your database again!\n", f);
-	fprintf(f, "password_size=%d\n", passwordSize);
-	fprintf(f, "min_special=%d\n", minSpecial);
-	fprintf(f, "min_numeric=%d\n", minNumeric);
-	fprintf(f, "min_uppercase=%d\n", minUppercase);
-	fprintf(f, "keygen=%s\n", (char *)iv);
+	fprintf(f, "password_size=%d\n", settings.passwordSize);
+	fprintf(f, "min_special=%d\n", settings.minSpecial);
+	fprintf(f, "min_numeric=%d\n", settings.minNumeric);
+	fprintf(f, "min_uppercase=%d\n", settings.minUppercase);
+	fprintf(f, "keygen=%s\n", (char *)settings.iv);
 	fclose(f);
 }
 
@@ -506,11 +496,11 @@ void updateSettings(void)
 		puts("Change Settings");
 		puts("---------------");
 		printf("1 - Change database password\n");
-		printf("2 - Set password generation size (%d)\n", passwordSize);
-		printf("3 - Set minimum special characters (%d)\n", minSpecial);
-		printf("4 - Set minimum numeric characters (%d)\n", minNumeric);
-		printf("5 - Set minimum uppercase characters (%d)\n", minUppercase);
-		printf("6 - Set new random keygen ID (%s)\n", (char *)iv);
+		printf("2 - Set password generation size (%d)\n", settings.passwordSize);
+		printf("3 - Set minimum special characters (%d)\n", settings.minSpecial);
+		printf("4 - Set minimum numeric characters (%d)\n", settings.minNumeric);
+		printf("5 - Set minimum uppercase characters (%d)\n", settings.minUppercase);
+		printf("6 - Set new random keygen ID (%s)\n", (char *)settings.iv);
 		printf("0 - Back\n");
 		printf("\n-> ");
 
@@ -584,8 +574,8 @@ void setPasswordSize(void)
 		return;
 	}
 
-	passwordSize = atoi(line);
-	writeSettings();
+	settings.passwordSize = atoi(line);
+	writeSettings(INI_FILE);
 }
 
 void setMinSpecial(void)
@@ -614,8 +604,8 @@ void setMinSpecial(void)
 		return;
 	}
 
-	minSpecial = value;
-	writeSettings();
+	settings.minSpecial = value;
+	writeSettings(INI_FILE);
 }
 
 void setMinNumeric(void)
@@ -644,8 +634,8 @@ void setMinNumeric(void)
 		return;
 	}
 
-	minNumeric = value;
-	writeSettings();
+	settings.minNumeric = value;
+	writeSettings(INI_FILE);
 }
 
 void setMinUppercase(void)
@@ -674,8 +664,8 @@ void setMinUppercase(void)
 		return;
 	}
 
-	minUppercase = value;
-	writeSettings();
+	settings.minUppercase = value;
+	writeSettings(INI_FILE);
 }
 
 void setNewKeygen(void)
@@ -696,8 +686,8 @@ void setNewKeygen(void)
 
 	if (strcmp(line, "YES\n") == 0)
 	{
-		generateKeygen(iv);
-		writeSettings();
+		generateKeygen(settings.iv);
+		writeSettings(INI_FILE);
 		saveEntries();
 		puts("Keygen updated & database saved");
 	}
@@ -705,8 +695,8 @@ void setNewKeygen(void)
 
 bool setDBpassword(void)
 {
-	uint8_t verifyPassword1[DBPASSWORDSIZE];
-	uint8_t verifyPassword2[DBPASSWORDSIZE];
+	char verifyPassword1[DBPASSWORDSIZE];
+	char verifyPassword2[DBPASSWORDSIZE];
 
 	printf("Enter new password up to %d chars, press enter for blank: ", DBPASSWORDSIZE);
 	getDBpassword(verifyPassword1);
@@ -721,9 +711,9 @@ bool setDBpassword(void)
 	puts("\n\nPassword set");
 
 	for (int i = 0; i < DBPASSWORDSIZE; ++i)
-		DBpassword[i] = '\0';
+		state.DBpassword[i] = '\0';
 
-	strcpy(DBpassword, verifyPassword1);
+	strcpy(state.DBpassword, verifyPassword1);
 	saveEntries();
 
 #ifdef _WIN32
@@ -733,7 +723,7 @@ bool setDBpassword(void)
 	return true;
 }
 
-void getDBpassword(uint8_t *password)
+void getDBpassword(char *password)
 {
 #ifdef _WIN32
 	getPasswordWindows(password);
@@ -743,7 +733,7 @@ void getDBpassword(uint8_t *password)
 }
 
 #ifdef _WIN32
-void getPasswordWindows(uint8_t *password)
+void getPasswordWindows(char *password)
 {
 	char c;
 	int i = -1;
@@ -764,7 +754,7 @@ void getPasswordWindows(uint8_t *password)
 	password[i] = '\0';
 }
 #else
-void getPasswordLinux(uint8_t *password)
+void getPasswordLinux(char *password)
 {
 	struct termios termCurrent;
 	struct termios termNew;
@@ -826,7 +816,7 @@ void handleParameters(char *parameter)
 		strcmp(parameter, "-h") == 0 ||
 		strcmp(parameter, "-help") == 0)
 	{
-		puts(version);
+		puts(APP_VERSION);
 		puts("By John Wingfield\n");
 		puts("Trove is an encrypted password database for Windows and Linux.");
 		puts("It uses AES-256 bit encryption with the tiny-AES library. The encrypion");

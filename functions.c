@@ -3,19 +3,6 @@
 #include "gui.h"
 #include "shared.h"
 
-extern int entryCount;
-extern int passwordSize;
-extern int minSpecial;
-extern int minNumeric;
-extern int minUppercase;
-extern int screenRow;
-extern int screenCol;
-extern bool debugging;
-extern bool running;
-extern char logFile[];
-extern char iniFile[];
-extern char iv[];
-extern char DBpassword[];
 extern HWND lbList;
 extern HWND bAdd;
 extern HWND bEdit;
@@ -23,7 +10,6 @@ extern HWND bDelete;
 extern HWND bSettings;
 extern HWND bQuit;
 extern HWND eFind;
-extern LRESULT selectedRow;
 
 void disableControls(void)
 {
@@ -47,7 +33,7 @@ void enableControls(void)
 
 void centerWindow(HWND hwnd)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("centerWindow()");
 
 	RECT rc = {0};
@@ -69,7 +55,7 @@ void restoreWindow(HWND hwnd, int x, int y)
 
 void fillListbox(void)
 {
-	for (int i = 0; i < entryCount; ++i)
+	for (int i = 0; i < state.entryCount; ++i)
 	{
 		char row[MAXLINE];
 		strcpy(row, entries[i].title);
@@ -79,7 +65,7 @@ void fillListbox(void)
 
 void updateListbox(void)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("updateListbox()");
 
 	// deselect all entries
@@ -87,31 +73,31 @@ void updateListbox(void)
 	EnableWindow(bEdit, FALSE);
 	EnableWindow(bDelete, FALSE);
 	sortEntries();
-	selectedRow = LB_ERR;
+	state.selectedRow = LB_ERR;
 }
 
 void deleteEntry(void)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("deleteEntry()");
 
-	if (selectedRow != LB_ERR)
+	if (state.selectedRow != LB_ERR)
 	{
 		if (MessageBox(NULL, "Are you sure you want to delete this entry?", "Confirm delete", MB_YESNO | MB_ICONWARNING) == IDYES)
 		{
 			// delete row
-			SendMessage(lbList, LB_DELETESTRING, selectedRow, 0);
+			SendMessage(lbList, LB_DELETESTRING, state.selectedRow, 0);
 
 			// recreate array without deleted row
-			struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * (entryCount - 1));
+			struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * ((uint64_t)state.entryCount - 1));
 			if (!newEntries)
 			{
 				outs("Failed to allocate memory for new array during deletion");
 				return;
 			}
 
-			for (int i = 0, j = 0; i < entryCount; ++i, ++j)
-				if (i != (selectedRow))
+			for (int i = 0, j = 0; i < state.entryCount; ++i, ++j)
+				if (i != (state.selectedRow))
 				{
 					strcpy(newEntries[j].title, entries[i].title);
 					strcpy(newEntries[j].id, entries[i].id);
@@ -124,7 +110,7 @@ void deleteEntry(void)
 			free(entries);
 			entries = newEntries;
 			newEntries = NULL;
-			--entryCount;
+			--state.entryCount;
 		}
 		updateListbox();
 	}
@@ -132,7 +118,7 @@ void deleteEntry(void)
 
 void outs(char *s)
 {
-	FILE *lf = fopen(logFile, "a");
+	FILE *lf = fopen(LOG_FILE, "a");
 	if (lf == NULL)
 	{
 		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
@@ -146,7 +132,7 @@ void outs(char *s)
 //TODO handle 2nd char in password?
 bool isNumeric(char *buf)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("isNumeric()");
 
 	if ((int)buf[0] < 48 || (int)buf[0] > 57)
@@ -157,7 +143,7 @@ bool isNumeric(char *buf)
 
 void fillDropdown(HWND hwnd, int min, int max)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("fillDropdown()");
 
 	for (int i = min; i <= max; ++i)
@@ -168,16 +154,16 @@ void fillDropdown(HWND hwnd, int min, int max)
 	}
 }
 
-void writeSettings(void)
+void writeSettings(char *iniFile)
 {
-	if (debugging)
+	if (state.debugging)
 		outs("writeSettings()");
 
-	if (strlen(iv) < IV_SIZE - 1)
+	if (strlen(settings.iv) < IV_SIZE - 1)
 	{
 		outs("Generating new keygen");
-		generateKeygen(iv);
-		outs(iv);
+		generateKeygen(settings.iv);
+		outs(settings.iv);
 	}
 
 	FILE *f = fopen(iniFile, "w");
@@ -189,13 +175,13 @@ void writeSettings(void)
 
 	fputs("#Manually editing the keygen value will make it\n", f);
 	fputs("#impossible to decrypt your database again!\n", f);
-	fprintf(f, "password_size=%d\n", passwordSize);
-	fprintf(f, "min_special=%d\n", minSpecial);
-	fprintf(f, "min_numeric=%d\n", minNumeric);
-	fprintf(f, "min_uppercase=%d\n", minUppercase);
-	fprintf(f, "keygen=%s\n", iv);
-	fprintf(f, "window_row=%d\n", screenRow);
-	fprintf(f, "window_col=%d\n", screenCol);
+	fprintf(f, "password_size=%d\n", settings.passwordSize);
+	fprintf(f, "min_special=%d\n", settings.minSpecial);
+	fprintf(f, "min_numeric=%d\n", settings.minNumeric);
+	fprintf(f, "min_uppercase=%d\n", settings.minUppercase);
+	fprintf(f, "keygen=%s\n", settings.iv);
+	fprintf(f, "window_row=%d\n", settings.screenRow);
+	fprintf(f, "window_col=%d\n", settings.screenCol);
 	fclose(f);
 }
 
@@ -203,10 +189,10 @@ void shutDown(HWND hwnd)
 {
 	RECT rc = {0};
 	GetWindowRect(hwnd, &rc);
-	screenRow = rc.top;
-	screenCol = rc.left;
-	writeSettings();
+	settings.screenRow = rc.top;
+	settings.screenCol = rc.left;
+	writeSettings(INI_FILE);
 	saveEntries();
 	PostQuitMessage(0);
-	running = false;
+	state.running = false;
 }
