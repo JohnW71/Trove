@@ -334,7 +334,7 @@ void addEntry(void)
 		"Add",
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		530, 200,
+		740, 200,
 		NULL, NULL,
 		instance, NULL);
 
@@ -362,7 +362,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				10, 10, 80, 25, hwnd, (HMENU)ID_EDIT_TITLE_LABEL, NULL, NULL);
 			eTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-				90, 10, 170, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
+				90, 10, 320, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
 			originalAddProc = (WNDPROC)SetWindowLongPtr(eTitle, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
@@ -370,7 +370,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				10, 45, 80, 25, hwnd, (HMENU)ID_EDIT_ID_LABEL, NULL, NULL);
 			eId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-				90, 45, 170, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
+				90, 45, 320, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
 			SetWindowLongPtr(eId, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
@@ -378,7 +378,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				10, 80, 80, 25, hwnd, (HMENU)ID_EDIT_PW_LABEL, NULL, NULL);
 			ePw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-				90, 80, 170, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
+				90, 80, 200, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
 			SetWindowLongPtr(ePw, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
@@ -386,20 +386,20 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
 			eMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-				90, 115, 410, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
+				90, 115, 580, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
 			SetWindowLongPtr(eMisc, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				320, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
+				520, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
 
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				320, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
+				520, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
 
 			bGenerate = CreateWindowEx(WS_EX_LEFT, "Button", "Generate password",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				280, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
+				480, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
 			SetFocus(eTitle);
 			break;
@@ -521,7 +521,7 @@ void editEntry(void)
 		"Edit",
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		530, 200,
+		740, 200,
 		NULL, NULL,
 		instance, NULL);
 
@@ -549,7 +549,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				10, 10, 80, 25, hwnd, (HMENU)ID_EDIT_TITLE_LABEL, NULL, NULL);
 			eTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-				90, 10, 170, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
+				90, 10, 320, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
 			originalEditProc = (WNDPROC)SetWindowLongPtr(eTitle, GWLP_WNDPROC, (LONG_PTR)customEditProc);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
@@ -557,7 +557,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				10, 45, 80, 25, hwnd, (HMENU)ID_EDIT_ID_LABEL, NULL, NULL);
 			eId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-				90, 45, 170, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
+				90, 45, 320, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
 			SetWindowLongPtr(eId, GWLP_WNDPROC, (LONG_PTR)customEditProc);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
@@ -565,7 +565,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				10, 80, 80, 25, hwnd, (HMENU)ID_EDIT_PW_LABEL, NULL, NULL);
 			ePw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-				90, 80, 170, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
+				90, 80, 200, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
 			SetWindowLongPtr(ePw, GWLP_WNDPROC, (LONG_PTR)customEditProc);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
@@ -573,20 +573,20 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
 			eMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-				90, 115, 410, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
+				90, 115, 580, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
 			SetWindowLongPtr(eMisc, GWLP_WNDPROC, (LONG_PTR)customEditProc);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				320, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
+				520, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
 
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				320, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
+				520, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
 
 			bGenerate = CreateWindowEx(WS_EX_LEFT, "Button", "Generate password",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				280, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
+				480, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
 			// get selected row
 			char title[MAXLINE];

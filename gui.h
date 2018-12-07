@@ -50,7 +50,7 @@
 #define ID_TIMER2 2
 
 #define LOG_FILE "log.txt"
-#define APP_VERSION "v1.01"
+#define APP_VERSION "v1.02"
 
 void enableControls(void);
 void disableControls(void);
