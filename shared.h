@@ -12,11 +12,11 @@
 	#include <windows.h>
 #endif
 
-#define MAXTITLE 21
-#define MAXID 21
+#define MAXTITLE 31
+#define MAXID 31
 #define MAXPW 21
 #define MAXMISC 51
-#define MAXLINE 130
+#define MAXLINE 150
 #define MINPW 6
 #define MINCHARS 0
 #define MAXCHARS 6

@@ -10,7 +10,7 @@
 	#include <termios.h>
 #endif
 
-static char heading[] = "    Title                ID                   Password             Misc";
+static char heading[] = "    Title                          ID                             Password             Misc";
 
 int main(int argc, char *argv[])
 {
