@@ -15,16 +15,20 @@
 
 #define ID_EDIT_TITLE_LABEL 10
 #define ID_EDIT_TITLE 11
-#define ID_EDIT_ID_LABEL 12
-#define ID_EDIT_ID 13
-#define ID_EDIT_PW_LABEL 14
-#define ID_EDIT_PW 15
-#define ID_EDIT_MISC_LABEL 16
-#define ID_EDIT_MISC 17
+#define ID_EDIT_TITLE_COUNT 12
+#define ID_EDIT_ID_LABEL 13
+#define ID_EDIT_ID 14
+#define ID_EDIT_ID_COUNT 15
+#define ID_EDIT_PW_LABEL 16
+#define ID_EDIT_PW 17
+#define ID_EDIT_PW_COUNT 18
+#define ID_EDIT_MISC_LABEL 19
+#define ID_EDIT_MISC 20
+#define ID_EDIT_MISC_COUNT 21
 
-#define ID_OK 20
-#define ID_CANCEL 21
-#define ID_GENERATE 22
+#define ID_OK 25
+#define ID_CANCEL 26
+#define ID_GENERATE 27
 
 #define ID_SETTINGS_PW_LABEL 30
 #define ID_SETTINGS_PW_LENGTH 31
@@ -48,9 +52,10 @@
 
 #define ID_TIMER1 1
 #define ID_TIMER2 2
+#define ID_TIMER3 3
 
 #define LOG_FILE "log.txt"
-#define APP_VERSION "v1.02"
+#define APP_VERSION "v1.03"
 
 void enableControls(void);
 void disableControls(void);
