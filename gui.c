@@ -350,11 +350,13 @@ void addEntry(void)
 
 LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bCancel, bGenerate, lTitle, eTitle, lId, eId, lPw, ePw, lMisc, eMisc;
+	static HWND bOK, bCancel, bGenerate, lTitle, eTitle, lTitleCount;
+	static HWND lId, eId, lIdCount, lPw, ePw, lPwCount, lMisc, eMisc, lMiscCount;
 
 	switch (msg)
 	{
 		case WM_CREATE:
+			SetTimer(hwnd, ID_TIMER3, 100, NULL);
 			centerWindow(hwnd);
 
 			lTitle = CreateWindowEx(WS_EX_LEFT, "Static", "Title",
@@ -363,6 +365,9 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 10, 320, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
+			lTitleCount = CreateWindowEx(WS_EX_LEFT, "Static", "0/0",
+				WS_VISIBLE | WS_CHILD,
+				415, 15, 40, 25, hwnd, (HMENU)ID_EDIT_TITLE_COUNT, NULL, NULL);
 			originalAddProc = (WNDPROC)SetWindowLongPtr(eTitle, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
@@ -371,6 +376,9 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 45, 320, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
+			lIdCount = CreateWindowEx(WS_EX_LEFT, "Static", "0/0",
+				WS_VISIBLE | WS_CHILD,
+				415, 50, 40, 25, hwnd, (HMENU)ID_EDIT_ID_COUNT, NULL, NULL);
 			SetWindowLongPtr(eId, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
@@ -379,6 +387,9 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			ePw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 80, 200, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
+			lPwCount = CreateWindowEx(WS_EX_LEFT, "Static", "0/0",
+				WS_VISIBLE | WS_CHILD,
+				295, 85, 40, 25, hwnd, (HMENU)ID_EDIT_PW_COUNT, NULL, NULL);
 			SetWindowLongPtr(ePw, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
@@ -387,6 +398,9 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 115, 580, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
+			lMiscCount = CreateWindowEx(WS_EX_LEFT, "Static", "0/0",
+				WS_VISIBLE | WS_CHILD,
+				675, 120, 40, 25, hwnd, (HMENU)ID_EDIT_MISC_COUNT, NULL, NULL);
 			SetWindowLongPtr(eMisc, GWLP_WNDPROC, (LONG_PTR)customAddProc);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
@@ -402,6 +416,29 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				480, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
 			SetFocus(eTitle);
+			break;
+		case WM_TIMER:
+			if (wParam == ID_TIMER3)
+			{
+				int i;
+				char buf[MAXMISC];
+
+				i = GetWindowTextLength(eTitle);
+				sprintf(buf, "%2d/%2d", i, MAXTITLE-1);
+				SetWindowText(lTitleCount, buf);
+
+				i = GetWindowTextLength(eId);
+				sprintf(buf, "%2d/%2d", i, MAXID-1);
+				SetWindowText(lIdCount, buf);
+
+				i = GetWindowTextLength(ePw);
+				sprintf(buf, "%2d/%2d", i, MAXPW-1);
+				SetWindowText(lPwCount, buf);
+
+				i = GetWindowTextLength(eMisc);
+				sprintf(buf, "%2d/%2d", i, MAXMISC-1);
+				SetWindowText(lMiscCount, buf);
+			}
 			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_OK)
@@ -477,6 +514,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case WM_DESTROY:
+			KillTimer(addHwnd, ID_TIMER3);
 			enableControls();
 			DestroyWindow(hwnd);
 			break;
@@ -537,11 +575,13 @@ void editEntry(void)
 
 LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bCancel, bGenerate, lTitle, eTitle, lId, eId, lPw, ePw, lMisc, eMisc;
+	static HWND bOK, bCancel, bGenerate, lTitle, eTitle, lTitleCount;
+	static HWND lId, eId, lIdCount, lPw, ePw, lPwCount, lMisc, eMisc, lMiscCount;
 
 	switch (msg)
 	{
 		case WM_CREATE:
+			SetTimer(hwnd, ID_TIMER3, 100, NULL);
 			centerWindow(hwnd);
 
 			lTitle = CreateWindowEx(WS_EX_LEFT, "Static", "Title",
@@ -550,6 +590,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eTitle = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 10, 320, 25, hwnd, (HMENU)ID_EDIT_TITLE, NULL, NULL);
+			lTitleCount = CreateWindowEx(WS_EX_LEFT, "Static", "0/0",
+				WS_VISIBLE | WS_CHILD,
+				415, 15, 40, 25, hwnd, (HMENU)ID_EDIT_TITLE_COUNT, NULL, NULL);
 			originalEditProc = (WNDPROC)SetWindowLongPtr(eTitle, GWLP_WNDPROC, (LONG_PTR)customEditProc);
 
 			lId = CreateWindowEx(WS_EX_LEFT, "Static", "ID",
@@ -558,6 +601,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eId = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 45, 320, 25, hwnd, (HMENU)ID_EDIT_ID, NULL, NULL);
+			lIdCount = CreateWindowEx(WS_EX_LEFT, "Static", "0/0",
+				WS_VISIBLE | WS_CHILD,
+				415, 50, 40, 25, hwnd, (HMENU)ID_EDIT_ID_COUNT, NULL, NULL);
 			SetWindowLongPtr(eId, GWLP_WNDPROC, (LONG_PTR)customEditProc);
 
 			lPw = CreateWindowEx(WS_EX_LEFT, "Static", "Password",
@@ -566,6 +612,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			ePw = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 80, 200, 25, hwnd, (HMENU)ID_EDIT_PW, NULL, NULL);
+			lPwCount = CreateWindowEx(WS_EX_LEFT, "Static", "0/0",
+				WS_VISIBLE | WS_CHILD,
+				295, 85, 40, 25, hwnd, (HMENU)ID_EDIT_PW_COUNT, NULL, NULL);
 			SetWindowLongPtr(ePw, GWLP_WNDPROC, (LONG_PTR)customEditProc);
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
@@ -574,6 +623,9 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
 				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
 				90, 115, 580, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
+			lMiscCount = CreateWindowEx(WS_EX_LEFT, "Static", "0/0",
+				WS_VISIBLE | WS_CHILD,
+				675, 120, 40, 25, hwnd, (HMENU)ID_EDIT_MISC_COUNT, NULL, NULL);
 			SetWindowLongPtr(eMisc, GWLP_WNDPROC, (LONG_PTR)customEditProc);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
@@ -620,6 +672,29 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 
 			SetFocus(bCancel);
+			break;
+		case WM_TIMER:
+			if (wParam == ID_TIMER3)
+			{
+				int i;
+				char buf[MAXMISC];
+
+				i = GetWindowTextLength(eTitle);
+				sprintf(buf, "%2d/%2d", i, MAXTITLE-1);
+				SetWindowText(lTitleCount, buf);
+
+				i = GetWindowTextLength(eId);
+				sprintf(buf, "%2d/%2d", i, MAXID-1);
+				SetWindowText(lIdCount, buf);
+
+				i = GetWindowTextLength(ePw);
+				sprintf(buf, "%2d/%2d", i, MAXPW-1);
+				SetWindowText(lPwCount, buf);
+
+				i = GetWindowTextLength(eMisc);
+				sprintf(buf, "%2d/%2d", i, MAXMISC-1);
+				SetWindowText(lMiscCount, buf);
+			}
 			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_OK)
@@ -686,6 +761,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case WM_DESTROY:
+			KillTimer(editHwnd, ID_TIMER3);
 			enableControls();
 			DestroyWindow(hwnd);
 			break;
