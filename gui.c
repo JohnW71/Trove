@@ -415,6 +415,10 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 				480, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
+			SendMessage(eTitle, EM_LIMITTEXT, MAXTITLE-1, 0);
+			SendMessage(eId, EM_LIMITTEXT, MAXID-1, 0);
+			SendMessage(ePw, EM_LIMITTEXT, MAXPW-1, 0);
+			SendMessage(eMisc, EM_LIMITTEXT, MAXMISC-1, 0);
 			SetFocus(eTitle);
 			break;
 		case WM_TIMER:
@@ -671,6 +675,10 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 			}
 
+			SendMessage(eTitle, EM_LIMITTEXT, MAXTITLE-1, 0);
+			SendMessage(eId, EM_LIMITTEXT, MAXID-1, 0);
+			SendMessage(ePw, EM_LIMITTEXT, MAXPW-1, 0);
+			SendMessage(eMisc, EM_LIMITTEXT, MAXMISC-1, 0);
 			SetFocus(bCancel);
 			break;
 		case WM_TIMER:
@@ -1151,6 +1159,8 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				320, 90, 140, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
 			centerWindow(hwnd);
+			SendMessage(eSetPassword1, EM_LIMITTEXT, MAXPW-1, 0);
+			SendMessage(eSetPassword2, EM_LIMITTEXT, MAXPW-1, 0);
 			SetFocus(eSetPassword1);
 			break;
 		case WM_COMMAND:
@@ -1300,6 +1310,7 @@ LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				WS_VISIBLE | WS_CHILD,
 				100, 60, 150, 25, hwnd, (HMENU)ID_PASSWORD_WARNING, NULL, NULL);
 
+			SendMessage(eGetPassword, EM_LIMITTEXT, MAXPW-1, 0);
 			centerWindow(hwnd);
 			break;
 		case WM_COMMAND:
