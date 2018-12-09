@@ -196,3 +196,24 @@ void shutDown(HWND hwnd)
 	PostQuitMessage(0);
 	state.running = false;
 }
+
+void sendTab(void)
+{
+	KEYBDINPUT kb = {0};
+	INPUT input = {0};
+
+	// generate down
+	kb.wVk = VK_TAB;
+	input.type = INPUT_KEYBOARD;
+	input.ki = kb;
+	SendInput(1, &input, sizeof(input));
+
+	// generate up
+	ZeroMemory(&kb, sizeof(KEYBDINPUT));
+	ZeroMemory(&input, sizeof(INPUT));
+	kb.dwFlags = KEYEVENTF_KEYUP;
+	kb.wVk = VK_TAB;
+	input.type = INPUT_KEYBOARD;
+	input.ki = kb;
+	SendInput(1, &input, sizeof(input));
+}
