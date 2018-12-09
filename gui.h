@@ -55,7 +55,7 @@
 #define ID_TIMER3 3
 
 #define LOG_FILE "log.txt"
-#define APP_VERSION "v1.03"
+#define APP_VERSION "v1.04"
 
 void enableControls(void);
 void disableControls(void);
@@ -72,6 +72,7 @@ void outs(char *);
 void getDBpassword(void);
 void setNewDBpassword(void);
 void shutDown(HWND);
+void sendTab(void);
 
 LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK addWndProc(HWND, UINT, WPARAM, LPARAM);
@@ -82,6 +83,8 @@ LRESULT CALLBACK getPasswordWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK customMainProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK customListboxProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK customAddProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK customAddMiscProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK customEditProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK customEditMiscProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK customSetPasswordProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK customGetPasswordProc(HWND, UINT, WPARAM, LPARAM);

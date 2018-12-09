@@ -24,7 +24,9 @@ static HWND bSetPasswordOK;
 static WNDPROC originalMainProc;
 static WNDPROC originalListboxProc;
 static WNDPROC originalAddProc;
+static WNDPROC originalAddMiscProc;
 static WNDPROC originalEditProc;
+static WNDPROC originalEditMiscProc;
 static WNDPROC originalSetPasswordProc;
 static WNDPROC originalGetPasswordProc;
 
@@ -334,7 +336,7 @@ void addEntry(void)
 		"Add",
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		740, 200,
+		640, 240,
 		NULL, NULL,
 		instance, NULL);
 
@@ -396,24 +398,24 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				WS_VISIBLE | WS_CHILD,
 				10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
 			eMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
-				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-				90, 115, 580, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
+				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP | ES_MULTILINE,
+				90, 115, 200, 75, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
 			lMiscCount = CreateWindowEx(WS_EX_LEFT, "Static", "0/0",
 				WS_VISIBLE | WS_CHILD,
-				675, 120, 40, 25, hwnd, (HMENU)ID_EDIT_MISC_COUNT, NULL, NULL);
-			SetWindowLongPtr(eMisc, GWLP_WNDPROC, (LONG_PTR)customAddProc);
+				295, 120, 40, 25, hwnd, (HMENU)ID_EDIT_MISC_COUNT, NULL, NULL);
+			originalAddMiscProc = (WNDPROC)SetWindowLongPtr(eMisc, GWLP_WNDPROC, (LONG_PTR)customAddMiscProc);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				520, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
+				480, 45, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
 
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				520, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
+				480, 80, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
 
 			bGenerate = CreateWindowEx(WS_EX_LEFT, "Button", "Generate password",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				480, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
+				440, 115, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
 			SendMessage(eTitle, EM_LIMITTEXT, MAXTITLE-1, 0);
 			SendMessage(eId, EM_LIMITTEXT, MAXID-1, 0);
@@ -444,6 +446,14 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				SetWindowText(lMiscCount, buf);
 			}
 			break;
+		case WM_KEYUP:
+			switch (wParam)
+			{
+				case VK_ESCAPE:
+					DestroyWindow(addHwnd);
+					break;
+			}
+			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_OK)
 			{
@@ -459,10 +469,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 				// test that title field is not empty
 				if (strlen(title) == 0)
-				{
-					SetFocus(eTitle);
 					return DefWindowProc(hwnd, msg, wParam, lParam);
-				}
 
 				// test for pre-existing title
 				for (int i = 0; i < state.entryCount; ++i)
@@ -563,7 +570,7 @@ void editEntry(void)
 		"Edit",
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		740, 200,
+		640, 240,
 		NULL, NULL,
 		instance, NULL);
 
@@ -625,24 +632,24 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				WS_VISIBLE | WS_CHILD,
 				10, 115, 80, 25, hwnd, (HMENU)ID_EDIT_MISC_LABEL, NULL, NULL);
 			eMisc = CreateWindowEx(WS_EX_LEFT, "Edit", "",
-				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP,
-				90, 115, 580, 25, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
+				WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP | ES_MULTILINE,
+				90, 115, 200, 75, hwnd, (HMENU)ID_EDIT_MISC, NULL, NULL);
 			lMiscCount = CreateWindowEx(WS_EX_LEFT, "Static", "0/0",
 				WS_VISIBLE | WS_CHILD,
-				675, 120, 40, 25, hwnd, (HMENU)ID_EDIT_MISC_COUNT, NULL, NULL);
-			SetWindowLongPtr(eMisc, GWLP_WNDPROC, (LONG_PTR)customEditProc);
+				295, 120, 40, 25, hwnd, (HMENU)ID_EDIT_MISC_COUNT, NULL, NULL);
+			originalEditMiscProc = (WNDPROC)SetWindowLongPtr(eMisc, GWLP_WNDPROC, (LONG_PTR)customEditMiscProc);
 
 			bOK = CreateWindowEx(WS_EX_LEFT, "Button", "OK",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				520, 10, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
+				480, 45, 80, 25, hwnd, (HMENU)ID_OK, NULL, NULL);
 
 			bCancel = CreateWindowEx(WS_EX_LEFT, "Button", "Cancel",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				520, 45, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
+				480, 80, 80, 25, hwnd, (HMENU)ID_CANCEL, NULL, NULL);
 
 			bGenerate = CreateWindowEx(WS_EX_LEFT, "Button", "Generate password",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				480, 80, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
+				440, 115, 160, 25, hwnd, (HMENU)ID_GENERATE, NULL, NULL);
 
 			// get selected row
 			char title[MAXLINE];
@@ -679,7 +686,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			SendMessage(eId, EM_LIMITTEXT, MAXID-1, 0);
 			SendMessage(ePw, EM_LIMITTEXT, MAXPW-1, 0);
 			SendMessage(eMisc, EM_LIMITTEXT, MAXMISC-1, 0);
-			SetFocus(bCancel);
+			SetFocus(eTitle);
 			break;
 		case WM_TIMER:
 			if (wParam == ID_TIMER3)
@@ -704,6 +711,14 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				SetWindowText(lMiscCount, buf);
 			}
 			break;
+		case WM_KEYUP:
+			switch (wParam)
+			{
+				case VK_ESCAPE:
+					DestroyWindow(addHwnd);
+					break;
+			}
+			break;
 		case WM_COMMAND:
 			if (LOWORD(wParam) == ID_OK)
 			{
@@ -719,10 +734,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 				// test that title field is not empty
 				if (strlen(title) == 0)
-				{
-					SetFocus(eTitle);
 					return DefWindowProc(hwnd, msg, wParam, lParam);
-				}
 
 				// test for pre-existing title
 				for (int i = 0; i < state.entryCount; ++i)
@@ -1391,12 +1403,8 @@ LRESULT CALLBACK customMainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 					if (GetAsyncKeyState(VK_CONTROL))
 						SendMessage(hwnd, EM_SETSEL, 0, -1);
 					break;
-				default:
-					return CallWindowProc(originalMainProc, hwnd, msg, wParam, lParam);
 			}
 			break;
-		default:
-			return CallWindowProc(originalMainProc, hwnd, msg, wParam, lParam);
 	}
 
 	return CallWindowProc(originalMainProc, hwnd, msg, wParam, lParam);
@@ -1416,12 +1424,8 @@ LRESULT CALLBACK customListboxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 					if (state.selectedRow != LB_ERR)
 						editEntry();
 					break;
-				default:
-					return CallWindowProc(originalListboxProc, hwnd, msg, wParam, lParam);
 			}
 			break;
-		default:
-			return CallWindowProc(originalListboxProc, hwnd, msg, wParam, lParam);
 	}
 
 	return CallWindowProc(originalListboxProc, hwnd, msg, wParam, lParam);
@@ -1434,36 +1438,18 @@ LRESULT CALLBACK customAddProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 		case WM_KEYUP:
 			switch (wParam)
 			{
-				case VK_RETURN: // catch Enter and send a Tab
-				{
-					KEYBDINPUT kb = {0};
-					INPUT input = {0};
-
-					// generate down
-					kb.wVk = VK_TAB;
-					input.type = INPUT_KEYBOARD;
-					input.ki = kb;
-					SendInput(1, &input, sizeof(input));
-
-					// generate up
-					ZeroMemory(&kb, sizeof(KEYBDINPUT));
-					ZeroMemory(&input, sizeof(INPUT));
-					kb.dwFlags = KEYEVENTF_KEYUP;
-					kb.wVk = VK_TAB;
-					input.type = INPUT_KEYBOARD;
-					input.ki = kb;
-					SendInput(1, &input, sizeof(input));
-
+				case VK_ESCAPE:
+					DestroyWindow(addHwnd);
 					break;
-				}
+				case VK_RETURN: // catch Enter and send a Tab
+					sendTab();
+					break;
 				case 'A': // CTRL A
 					if (GetAsyncKeyState(VK_CONTROL))
 						SendMessage(hwnd, EM_SETSEL, 0, -1);
 					break;
-				default:
-					return CallWindowProc(originalAddProc, hwnd, msg, wParam, lParam);
 			}
-		break;
+			break;
 	}
 
 	return CallWindowProc(originalAddProc, hwnd, msg, wParam, lParam);
@@ -1476,39 +1462,83 @@ LRESULT CALLBACK customEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 		case WM_KEYUP:
 			switch (wParam)
 			{
-				case VK_RETURN: // catch Enter and send a Tab
-				{
-					KEYBDINPUT kb = {0};
-					INPUT input = {0};
-
-					// generate down
-					kb.wVk = VK_TAB;
-					input.type = INPUT_KEYBOARD;
-					input.ki = kb;
-					SendInput(1, &input, sizeof(input));
-
-					// generate up
-					ZeroMemory(&kb, sizeof(KEYBDINPUT));
-					ZeroMemory(&input, sizeof(INPUT));
-					kb.dwFlags = KEYEVENTF_KEYUP;
-					kb.wVk = VK_TAB;
-					input.type = INPUT_KEYBOARD;
-					input.ki = kb;
-					SendInput(1, &input, sizeof(input));
-
+				case VK_ESCAPE:
+					DestroyWindow(editHwnd);
 					break;
-				}
+				case VK_RETURN: // catch Enter and send a Tab
+					sendTab();
+					break;
 				case 'A': // CTRL A
 					if (GetAsyncKeyState(VK_CONTROL))
 						SendMessage(hwnd, EM_SETSEL, 0, -1);
 					break;
-				default:
-					return CallWindowProc(originalEditProc, hwnd, msg, wParam, lParam);
 			}
-		break;
+			break;
 	}
 
 	return CallWindowProc(originalEditProc, hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK customAddMiscProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+		case WM_GETDLGCODE: // removed this to allow message handling to accept Tab for multiline field
+		{
+			LRESULT res = CallWindowProc(originalAddMiscProc, hwnd, msg, wParam, lParam);
+			res &= ~DLGC_WANTALLKEYS;
+			return res;
+		}
+		case WM_KEYUP:
+			switch (wParam)
+			{
+				case VK_ESCAPE:
+					DestroyWindow(addHwnd);
+					break;
+				case VK_RETURN: // catch Enter and send a Tab
+					if (!GetAsyncKeyState(VK_CONTROL))
+						sendTab();
+					break;
+				case 'A': // CTRL A
+					if (GetAsyncKeyState(VK_CONTROL))
+						SendMessage(hwnd, EM_SETSEL, 0, -1);
+					break;
+			}
+			break;
+	}
+
+	return CallWindowProc(originalAddProc, hwnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK customEditMiscProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+		case WM_GETDLGCODE: // removed this to allow message handling to accept Tab for multiline field
+		{
+			LRESULT res = CallWindowProc(originalEditMiscProc, hwnd, msg, wParam, lParam);
+			res &= ~DLGC_WANTALLKEYS;
+			return res;
+		}
+		case WM_KEYUP:
+			switch (wParam)
+			{
+				case VK_ESCAPE:
+					DestroyWindow(editHwnd);
+					break;
+				case VK_RETURN: // catch Enter and send a Tab
+					if (!GetAsyncKeyState(VK_CONTROL))
+						sendTab();
+					break;
+				case 'A': // CTRL A
+					if (GetAsyncKeyState(VK_CONTROL))
+						SendMessage(hwnd, EM_SETSEL, 0, -1);
+					break;
+			}
+			break;
+	}
+
+	return CallWindowProc(originalAddProc, hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK customSetPasswordProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -1528,12 +1558,8 @@ LRESULT CALLBACK customSetPasswordProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 					if (GetAsyncKeyState(VK_CONTROL))
 						SendMessage(hwnd, EM_SETSEL, 0, -1);
 					break;
-				default:
-					return CallWindowProc(originalSetPasswordProc, hwnd, msg, wParam, lParam);
 			}
 			break;
-		default:
-			return CallWindowProc(originalSetPasswordProc, hwnd, msg, wParam, lParam);
 	}
 
 	return CallWindowProc(originalSetPasswordProc, hwnd, msg, wParam, lParam);
@@ -1556,12 +1582,8 @@ LRESULT CALLBACK customGetPasswordProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 					if (GetAsyncKeyState(VK_CONTROL))
 						SendMessage(hwnd, EM_SETSEL, 0, -1);
 					break;
-				default:
-					return CallWindowProc(originalGetPasswordProc, hwnd, msg, wParam, lParam);
 			}
 			break;
-		default:
-			return CallWindowProc(originalGetPasswordProc, hwnd, msg, wParam, lParam);
 	}
 
 	return CallWindowProc(originalGetPasswordProc, hwnd, msg, wParam, lParam);
