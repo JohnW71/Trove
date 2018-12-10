@@ -4,11 +4,11 @@
 
 #define APP_VERSION "\nTrove v1.35"
 
-void list(void);
 void add(void);
 void find(void);
 void edit(void);
 void delEntry(void);
+void showEntry(int);
 void clipboard(void);
 void updateSettings(void);
 void handleParameters(char *);

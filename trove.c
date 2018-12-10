@@ -10,8 +10,6 @@
 	#include <termios.h>
 #endif
 
-static char heading[] = "    Title                          ID                             Password             Misc";
-
 int main(int argc, char *argv[])
 {
 	if (argc > 1)
@@ -59,7 +57,11 @@ int main(int argc, char *argv[])
 		{
 			case 1:
 				if (state.entryCount > 0)
-					list();
+				{
+					sortEntries();
+					for (int i = 0; i < state.entryCount; ++i)
+						showEntry(i);
+				}
 				break;
 			case 2:
 				add();
@@ -92,17 +94,6 @@ int main(int argc, char *argv[])
 	puts("");
 #endif
 	return 0;
-}
-
-void list(void)
-{
-	sortEntries();
-	puts(heading);
-	for (int i = 0; i < state.entryCount; ++i)
-		printf("%2d: %-*s%-*s%-*s%s\n", i + 1, MAXTITLE, entries[i].title,
-												MAXID, entries[i].id,
-												MAXPW, entries[i].pw,
-												entries[i].misc);
 }
 
 void add(void)
@@ -225,12 +216,8 @@ void find(void)
 	for (i = 0; i < state.entryCount; ++i)
 		if (strcmp(entries[i].title, title) == 0)
 		{
-			printf("\n%s\n", heading);
-			printf("%2d: %-*s%-*s%-*s%s\n", i + 1,
-				   MAXTITLE, entries[i].title,
-				   MAXID, entries[i].id,
-				   MAXPW, entries[i].pw,
-				   entries[i].misc);
+			puts("");
+			showEntry(i);
 			return;
 		}
 
@@ -265,12 +252,8 @@ void edit(void)
 	}
 
 	--choice;
-	printf("\n%s\n", heading);
-	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1,
-		   MAXTITLE, entries[choice].title,
-		   MAXID, entries[choice].id,
-		   MAXPW, entries[choice].pw,
-		   entries[choice].misc);
+	puts("");
+	showEntry(choice);
 	printf("\nEnter new title up to %d chars: ", MAXTITLE - 1);
 	if (fgets(title, MAXLINE, stdin) == NULL)
 	{
@@ -422,12 +405,8 @@ void clipboard(void)
 	}
 
 	--choice;
-	printf("\n%s\n", heading);
-	printf("%2d: %-*s%-*s%-*s%s\n", choice + 1,
-		   MAXTITLE, entries[choice].title,
-		   MAXID, entries[choice].id,
-		   MAXPW, entries[choice].pw,
-		   entries[choice].misc);
+	puts("");
+	showEntry(choice);
 
 	const char *output = entries[choice].pw;
 	const size_t len = strlen(output) + 1;
@@ -830,4 +809,15 @@ void handleParameters(char *parameter)
 	{
 		puts("Use just \"trove_cli\" or with \"-v\" for the info page\n");
 	}
+}
+
+void showEntry(int position)
+{
+	printf("%2d: %s, %s, %s\n", position + 1,
+								entries[position].title,
+								entries[position].id,
+								entries[position].pw);
+
+	if (strlen(entries[position].misc) > 0)
+		printf("\t%s\n", entries[position].misc);
 }
