@@ -798,7 +798,7 @@ void handleParameters(char *parameter)
 		puts(APP_VERSION);
 		puts("By John Wingfield\n");
 		puts("Trove is an encrypted password database for Windows and Linux.");
-		puts("It uses AES-256 bit encryption with the tiny-AES library. The encrypion");
+		puts("It uses AES-256 bit encryption with the tiny-AES library. The encryption");
 		puts("uses a random keygen stored in the INI file. You can generate a new key");
 		puts("from the application settings menu if required. Changing the key manually");
 		puts("will make it impossible to decrypt your database.\n");
@@ -818,6 +818,6 @@ void showEntry(int position)
 								entries[position].id,
 								entries[position].pw);
 
-	if (strlen(entries[position].misc) > 0)
+	if (strlen(entries[position].misc) > 0 && entries[position].misc[0] != ' ')
 		printf("\t%s\n", entries[position].misc);
 }
