@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#define APP_VERSION "\nTrove v1.36"
+#define APP_VERSION "\nTrove v1.37"
 
 void add(void);
 void find(void);

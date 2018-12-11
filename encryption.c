@@ -36,7 +36,7 @@ void readEntries(void)
 		readFile(DB_FILE);
 
 	// decrypt buffer into buffer
-	decrypt_cbc(buffer, settings.iv);
+	decrypt_cbc((uint8_t *)buffer, (uint8_t *)settings.iv);
 
 	// load data from buffer and split into entries
 	loadEncryptedEntries();
@@ -82,7 +82,7 @@ void readFile(char *dbFile)
 void decrypt_cbc(uint8_t *text, uint8_t *init)
 {
 	struct AES_ctx ctx;
-	AES_init_ctx_iv(&ctx, state.DBpassword, init);
+	AES_init_ctx_iv(&ctx, (uint8_t *)state.DBpassword, (uint8_t *) init);
 	AES_CBC_decrypt_buffer(&ctx, text, state.bufferSize);
 }
 
@@ -141,7 +141,7 @@ void saveEntries(void)
 	addPadding(buffer);
 
 	// encrypt paddedBuffer
-	encrypt_cbc(paddedBuffer, settings.iv);
+	encrypt_cbc((uint8_t *)paddedBuffer, (uint8_t *)settings.iv);
 
 	// save paddedBuffer to dbFile
 	writeFile(DB_FILE);
@@ -206,7 +206,7 @@ void addPadding(char *text)
 void encrypt_cbc(uint8_t *text, uint8_t *init)
 {
 	struct AES_ctx ctx;
-	AES_init_ctx_iv(&ctx, state.DBpassword, init);
+	AES_init_ctx_iv(&ctx, (uint8_t *)state.DBpassword, (uint8_t *)init);
 	AES_CBC_encrypt_buffer(&ctx, text, state.paddedSize);
 }
 

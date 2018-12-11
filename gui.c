@@ -189,7 +189,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					EnableWindow(bAdd, FALSE);
 					EnableWindow(bEdit, FALSE);
 					EnableWindow(bDelete, FALSE);
-					SendMessage(lbList, LB_SETCURSEL, -1, 0);
+					SendMessage(lbList, LB_SETCURSEL, (WPARAM)-1, 0);
 				}
 
 				// find text was changed
@@ -212,7 +212,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					}
 
 					// deselect all entries
-					SendMessage(lbList, LB_SETCURSEL, -1, 0);
+					SendMessage(lbList, LB_SETCURSEL, (WPARAM)-1, 0);
 				}
 			}
 
@@ -226,7 +226,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					GetWindowText(eFind, find, MAXTITLE);
 
 					// deselect all entries
-					SendMessage(lbList, LB_SETCURSEL, -1, 0);
+					SendMessage(lbList, LB_SETCURSEL, (WPARAM)-1, 0);
 
 					static int i = 0;
 					int attempts = 0;
@@ -586,12 +586,13 @@ void editEntry(void)
 
 LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bCancel, bGenerate, lTitle, eTitle, lTitleCount;
-	static HWND lId, eId, lIdCount, lPw, ePw, lPwCount, lMisc, eMisc, lMiscCount;
+	static HWND eTitle, eId, ePw, eMisc, lTitleCount, lIdCount, lPwCount, lMiscCount;
 
 	switch (msg)
 	{
 		case WM_CREATE:
+		{
+			static HWND bOK, bCancel, bGenerate, lTitle, lId, lPw, lMisc;
 			SetTimer(hwnd, ID_TIMER3, 100, NULL);
 			centerWindow(hwnd);
 
@@ -688,6 +689,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			SendMessage(eMisc, EM_LIMITTEXT, MAXMISC-1, 0);
 			SetFocus(eTitle);
 			break;
+		}
 		case WM_TIMER:
 			if (wParam == ID_TIMER3)
 			{
@@ -1538,7 +1540,7 @@ LRESULT CALLBACK customEditMiscProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			break;
 	}
 
-	return CallWindowProc(originalAddProc, hwnd, msg, wParam, lParam);
+	return CallWindowProc(originalEditProc, hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK customSetPasswordProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)

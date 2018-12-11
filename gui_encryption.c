@@ -13,7 +13,7 @@ void readEntries(void)
 		readFile(DB_FILE);
 
 	// decrypt buffer into buffer
-	decrypt_cbc(buffer, settings.iv);
+	decrypt_cbc((uint8_t *)buffer, (uint8_t *)settings.iv);
 
 	// load data from buffer and split into entries
 	loadEncryptedEntries();
@@ -66,7 +66,7 @@ void decrypt_cbc(uint8_t *text, uint8_t *init)
 		outs("decrypt()");
 
 	struct AES_ctx ctx;
-	AES_init_ctx_iv(&ctx, state.DBpassword, init);
+	AES_init_ctx_iv(&ctx, (uint8_t *)state.DBpassword, (uint8_t *)init);
 	AES_CBC_decrypt_buffer(&ctx, text, state.bufferSize);
 }
 
@@ -116,11 +116,10 @@ void loadEncryptedEntries(void)
 		if (state.debugging)
 		{
 			char row[120];
-			snprintf(row, 120, "%s,%s,%s,%s\n",
-						entries[state.entryCount].title,
-						entries[state.entryCount].id,
-						entries[state.entryCount].pw,
-						entries[state.entryCount].misc);
+			snprintf(row, 120, "%s,%s,%s,%s\n", entries[state.entryCount].title,
+												entries[state.entryCount].id,
+												entries[state.entryCount].pw,
+												entries[state.entryCount].misc);
 			outs("row loaded in=");
 			outs(row);
 		}
@@ -143,7 +142,7 @@ void saveEntries(void)
 	addPadding(buffer);
 
 	// encrypt paddedBuffer
-	encrypt_cbc(paddedBuffer, settings.iv);
+	encrypt_cbc((uint8_t *)paddedBuffer, (uint8_t *)settings.iv);
 
 	// save paddedBuffer to dbFile
 	writeFile(DB_FILE);
@@ -182,9 +181,9 @@ void updateBuffer(void)
 	for (int i = 0; i < state.entryCount; ++i)
 	{
 		snprintf(row, MAXLINE, "%s,%s,%s,%s\n", entries[i].title,
-													entries[i].id,
-													entries[i].pw,
-													entries[i].misc);
+												entries[i].id,
+												entries[i].pw,
+												entries[i].misc);
 		if (state.debugging)
 		{
 			outs("row to save to buffer=");
@@ -229,13 +228,13 @@ void encrypt_cbc(uint8_t *text, uint8_t *init)
 	if (state.debugging)
 	{
 		outs("buffer to encrypt=");
-		outs(text);
+		outs((char *)text);
 		outs("iv to encrypt=");
-		outs(init);
+		outs((char *)init);
 	}
 
 	struct AES_ctx ctx;
-	AES_init_ctx_iv(&ctx, state.DBpassword, init);
+	AES_init_ctx_iv(&ctx, (uint8_t *)state.DBpassword, (uint8_t *)init);
 	AES_CBC_encrypt_buffer(&ctx, text, state.paddedSize);
 }
 

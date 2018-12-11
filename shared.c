@@ -212,7 +212,7 @@ void readSettings(char *iniFile)
 		if (strcmp(setting, "window_col") == 0)		settings.screenCol = atoi(value);
 		if (strcmp(setting, "keygen") == 0)
 		{
-			strncpy((char *)settings.iv, value, 16);
+			strncpy(settings.iv, value, 16);
 			settings.iv[16] = '\0';
 		}
 	}

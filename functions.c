@@ -69,7 +69,7 @@ void updateListbox(void)
 		outs("updateListbox()");
 
 	// deselect all entries
-	SendMessage(lbList, LB_SETCURSEL, -1, 0);
+	SendMessage(lbList, LB_SETCURSEL, (WPARAM)-1, 0);
 	EnableWindow(bEdit, FALSE);
 	EnableWindow(bDelete, FALSE);
 	sortEntries();
