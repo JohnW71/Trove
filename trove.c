@@ -462,7 +462,7 @@ void writeSettings(char *iniFile)
 	fprintf(f, "min_special=%d\n", settings.minSpecial);
 	fprintf(f, "min_numeric=%d\n", settings.minNumeric);
 	fprintf(f, "min_uppercase=%d\n", settings.minUppercase);
-	fprintf(f, "keygen=%s\n", (char *)settings.iv);
+	fprintf(f, "keygen=%s\n", settings.iv);
 	fclose(f);
 }
 
@@ -479,7 +479,7 @@ void updateSettings(void)
 		printf("3 - Set minimum special characters (%d)\n", settings.minSpecial);
 		printf("4 - Set minimum numeric characters (%d)\n", settings.minNumeric);
 		printf("5 - Set minimum uppercase characters (%d)\n", settings.minUppercase);
-		printf("6 - Set new random keygen ID (%s)\n", (char *)settings.iv);
+		printf("6 - Set new random keygen ID (%s)\n", settings.iv);
 		printf("0 - Back\n");
 		printf("\n-> ");
 

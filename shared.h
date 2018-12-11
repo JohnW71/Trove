@@ -59,7 +59,7 @@ struct Settings
 	int minUppercase;
 	int screenRow;
 	int screenCol;
-	uint8_t iv[IV_SIZE];
+	char iv[IV_SIZE];
 } settings;
 
 struct State
