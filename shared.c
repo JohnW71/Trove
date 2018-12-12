@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "shared.h"
+#include "ctype.h"
 
 void sortEntries(void)
 {
@@ -11,7 +12,16 @@ void sortEntries(void)
 
 		for (int i = 0; i < state.entryCount - 1; ++i)
 		{
-			if (strcmp(entries[i].title, entries[i + 1].title) > 0) // s1 > s2
+			char t1[MAXTITLE];
+			char t2[MAXTITLE];
+
+			for (int j = 0; j < strlen(entries[i].title); ++j)
+				t1[j] = (char)toupper(entries[i].title[j]);
+			for (int j = 0; j < strlen(entries[i + 1].title); ++j)
+				t2[j] = (char)toupper(entries[i + 1].title[j]);
+
+			// if (strcmp(entries[i].title, entries[i + 1].title) > 0) // s1 > s2
+			if (strcmp(t1, t2) > 0)
 			{
 				changed = true;
 				struct Entry tmp;
