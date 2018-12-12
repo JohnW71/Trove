@@ -21,7 +21,7 @@ static HWND getPasswordHwnd;
 static HWND bFind;
 static HWND bGetPasswordOK;
 static HWND bSetPasswordOK;
-static WNDPROC originalMainProc;
+static WNDPROC originalFindProc;
 static WNDPROC originalListboxProc;
 static WNDPROC originalAddProc;
 static WNDPROC originalAddMiscProc;
@@ -133,7 +133,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			eFind = CreateWindowEx(WS_EX_LEFT, "Edit", NULL,
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_BORDER,
 				10, 45, 190, 25, hwnd, (HMENU)ID_MAIN_FINDTEXT, NULL, NULL);
-			originalMainProc = (WNDPROC)SetWindowLongPtr(eFind, GWLP_WNDPROC, (LONG_PTR)customMainProc);
+			originalFindProc = (WNDPROC)SetWindowLongPtr(eFind, GWLP_WNDPROC, (LONG_PTR)customFindProc);
 
 			bFind = CreateWindowEx(WS_EX_LEFT, "Button", "Find",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_DISABLED,
@@ -1387,7 +1387,7 @@ LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK customMainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK customFindProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
@@ -1409,7 +1409,7 @@ LRESULT CALLBACK customMainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 			break;
 	}
 
-	return CallWindowProc(originalMainProc, hwnd, msg, wParam, lParam);
+	return CallWindowProc(originalFindProc, hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK customListboxProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
