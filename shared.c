@@ -15,9 +15,9 @@ void sortEntries(void)
 			char t1[MAXTITLE];
 			char t2[MAXTITLE];
 
-			for (int j = 0; j < strlen(entries[i].title); ++j)
+			for (size_t j = 0; j < strlen(entries[i].title); ++j)
 				t1[j] = (char)toupper(entries[i].title[j]);
-			for (int j = 0; j < strlen(entries[i + 1].title); ++j)
+			for (size_t j = 0; j < strlen(entries[i + 1].title); ++j)
 				t2[j] = (char)toupper(entries[i + 1].title[j]);
 
 			// if (strcmp(entries[i].title, entries[i + 1].title) > 0) // s1 > s2
