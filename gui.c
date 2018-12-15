@@ -292,6 +292,14 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 			}
 			break;
+		case WM_KEYUP:
+			switch (wParam)
+			{
+				case VK_ESCAPE:
+					shutDown(mainHwnd);
+					break;
+			}
+			break;
 		case WM_DESTROY:
 			shutDown(mainHwnd);
 			break;
@@ -1071,6 +1079,14 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			{
 				state.changingPassword = true;
 				setNewDBpassword();
+			}
+			break;
+		case WM_KEYUP:
+			switch (wParam)
+			{
+				case VK_ESCAPE:
+					DestroyWindow(hwnd);
+					break;
 			}
 			break;
 		case WM_DESTROY:
