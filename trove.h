@@ -1,8 +1,9 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 
-#define APP_VERSION "\nTrove v1.37"
+#define APP_VERSION "\nTrove v1.38"
 
 void add(void);
 void find(void);
@@ -23,3 +24,7 @@ void getPasswordWindows(char *);
 #else
 void getPasswordLinux(char *);
 #endif
+void importFromUPM();
+void readUntilComma(char *, int);
+void readMisc(char *, int);
+bool copyBuffer(char *, char *, int *, int, int);
