@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
 		puts("6 - Copy to clipboard");
 #endif
 		puts("7 - Change settings");
+		puts("8 - Import from UPM");
 		puts("0 - Quit");
 		printf("\n-> ");
 
@@ -84,6 +85,9 @@ int main(int argc, char *argv[])
 				break;
 			case 7:
 				updateSettings();
+				break;
+			case 8:
+				importFromUPM();
 				break;
 		}
 	}
@@ -689,8 +693,9 @@ bool setDBpassword(void)
 	}
 	puts("\n\nPassword set");
 
-	for (int i = 0; i < DBPASSWORDSIZE; ++i)
-		state.DBpassword[i] = '\0';
+	//for (int i = 0; i < DBPASSWORDSIZE; ++i)
+	//	state.DBpassword[i] = '\0';
+	clearArray(state.DBpassword, DBPASSWORDSIZE);
 
 	strcpy(state.DBpassword, verifyPassword1);
 	saveEntries();
@@ -757,8 +762,9 @@ void getPasswordLinux(char *password)
 		exit(1);
 	}
 
-	for (int i = 0; i < DBPASSWORDSIZE; ++i)
-		password[i] = '\0';
+	//for (int i = 0; i < DBPASSWORDSIZE; ++i)
+	//	password[i] = '\0';
+	clearArray(password, DBPASSWORDSIZE);
 
 	char c;
 	int i = -1;
@@ -820,4 +826,256 @@ void showEntry(int position)
 
 	if (strlen(entries[position].misc) > 0 && entries[position].misc[0] != ' ')
 		printf("\t%s\n", entries[position].misc);
+}
+
+static bool running = true;
+static FILE *f;
+
+void importFromUPM()
+{
+	f = fopen("import.txt", "r");
+	// f = fopen("c:\\upm.txt", "r");
+	if (f == NULL)
+	{
+		puts("can't open file");
+		return;
+	}
+
+	char title[31];
+	char id[31];
+	char pw[21];
+	char misc[51];
+
+	while (running)
+	{
+		clearArray(title, 31);
+		clearArray(id, 31);
+		clearArray(pw, 21);
+		clearArray(misc, 51);
+
+		readUntilComma(title, 30);
+		readUntilComma(id, 30);
+		readUntilComma(pw, 20);
+		readUntilComma(misc, 1); // URL field
+		readMisc(misc, 50);
+
+		printf("Title: %s\nID: %s\nPW: %s\nMisc: %s\n\n", title, id, pw, misc);
+	}
+
+	fclose(f);
+}
+
+void readUntilComma(char *text, int len)
+{
+	char c, charAhead;
+	int pos = 0;
+	bool inQuotes = false;
+
+	if ((c = (char)fgetc(f)) == EOF)
+	{
+		running = false;
+		fclose(f);
+		exit(0);
+	}
+
+	if (c == '"')
+		inQuotes = true;
+
+	while (c != EOF && pos < len)
+	{
+		if (c == ',' && !inQuotes)
+			break;
+
+		charAhead = (char)fgetc(f);
+
+		switch (c)
+		{
+			case '"':
+				if (charAhead == '"' && !inQuotes)
+				{
+					text[pos++] = c;
+					inQuotes = true;
+					break;
+				}
+
+				if (charAhead == ',')// && inQuotes)
+				{
+					inQuotes = false;
+					break;
+				}
+
+				if (charAhead == '"' && inQuotes)
+				{
+					if (text[pos - 1] != '"')
+						text[pos++] = c;
+					break;
+				}
+
+				break;
+			case ',':
+				if (inQuotes)
+					text[pos++] = c;
+				else
+				{
+					text[pos] = '\0';
+					return;
+				}
+				break;
+			default:
+				text[pos++] = c;
+				break;
+		}
+
+		c = charAhead;
+		if (c == EOF)
+		{
+			running = false;
+			text[pos] = '\0';
+			return;
+		}
+	}
+}
+
+bool copyBuffer(char *text, char *buf, int *count, int pos, int len)
+{
+	if (*count >= len)
+		return true;
+
+	for (int t = *count, b = 0; b < pos; ++t, ++b)
+	{
+		if (buf[b] == '"' && buf[b + 1] == '"' && buf[b + 2] != '"')
+			++b;
+		if (buf[b] == '"' && buf[b + 1] == '"' && buf[b + 2] == '"')
+			b += 2;
+
+		text[t] = buf[b];
+
+		if (++(*count) > len)
+		{
+			text[*count] = '\0';
+			return true;
+		}
+	}
+	return false;
+}
+
+void readMisc(char *text, int len)
+{
+	char buf[1000];
+	char c;
+	int pos = 0;
+	int count = 0;
+	int *pCount = &count;
+	bool inQuotes = false;
+	bool multiLine = false;
+	bool finished = false;
+
+	if ((c = (char)fgetc(f)) == EOF)
+	{
+		running = false;
+		fclose(f);
+		exit(0);
+	}
+
+	if (c == '\n') // blank misc
+		return;
+
+	if (c == '"')
+	{
+		inQuotes = true;
+		c = (char)fgetc(f);
+	}
+
+	while (!finished)
+	{
+		clearArray(buf, 1000);
+		pos = 0;
+
+		// read rest of line until \n
+		while (c != EOF && c != '\n')
+		{
+			buf[pos++] = c;
+			c = (char)fgetc(f);
+		}
+
+		// handle blank lines
+		if ((c == '\n' || c == '\r') && pos == 0)
+		{
+			c = (char)fgetc(f);
+			if ((c == '\n' || c == '\r') && pos == 0)
+			{
+				text[count++] = '\n';
+				c = (char)fgetc(f);
+			}
+			continue;
+		}
+
+		if (c == EOF)
+			finished = true;
+
+		if (inQuotes && (c == '\n' || c == '\r') && buf[pos] != '"')
+			multiLine = true;
+
+		// normal text
+		if ((c == '\n' || c == '\r') && !inQuotes && !multiLine)
+		{
+			// copy to text[]
+			for (int t = 0, b = 0; b < pos; ++t, ++b)
+				text[t] = buf[b];
+			text[pos] = '\0';
+			break;
+		}
+
+		buf[pos] = '\n';
+
+		// multiline ending """\n
+		if (inQuotes &&
+			((buf[pos] == '\n'
+				&& buf[pos - 1] == '\r'
+				&& buf[pos - 2] == '"'
+				&& buf[pos - 3] == '"'
+				&& buf[pos - 4] == '"')
+				||
+				(buf[pos] == '\n'
+					&& buf[pos - 1] == '"'
+					&& buf[pos - 2] == '"'
+					&& buf[pos - 3] == '"')))
+		{
+			if (copyBuffer(text, buf, pCount, pos, len))
+				return;
+
+			text[count] = '\0';
+			finished = true;
+			break;
+		}
+
+		// multiline ending "\n
+		if (inQuotes &&
+			((buf[pos] == '\n' &&
+				buf[pos - 1] == '\r' &&
+				buf[pos - 2] == '"' &&
+				buf[pos - 3] != '"')
+				||
+				(buf[pos] == '\n' &&
+					buf[pos - 1] == '"' &&
+					buf[pos - 2] != '"')))
+		{
+			--pos; // hide the last "
+
+			if (copyBuffer(text, buf, pCount, pos, len))
+				return;
+
+			text[count] = '\0';
+			finished = true;
+			break;
+		}
+
+		// multiline middle
+		copyBuffer(text, buf, pCount, pos, len);
+
+		if (count < len)
+			text[count++] = '\n';
+		else
+			text[count] = '\0';
+	}
 }

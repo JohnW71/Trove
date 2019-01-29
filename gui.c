@@ -1209,8 +1209,9 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 					return DefWindowProc(hwnd, msg, wParam, lParam);
 				}
 
-				for (int i = 0; i < DBPASSWORDSIZE; ++i)
-					state.DBpassword[i] = '\0';
+				//for (int i = 0; i < DBPASSWORDSIZE; ++i)
+				//	state.DBpassword[i] = '\0';
+				clearArray(state.DBpassword, DBPASSWORDSIZE);
 				strcpy(state.DBpassword, pw1);
 				if (state.debugging)
 				{
@@ -1366,8 +1367,9 @@ LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				}
 				else
 				{
-					for (int i = 0; i < MAXPW; ++i)
-						state.DBpassword[i] = '\0';
+					//for (int i = 0; i < MAXPW; ++i)
+					//	state.DBpassword[i] = '\0';
+					clearArray(state.DBpassword, MAXPW);
 
 					SetWindowText(lWarning, "Incorrect password");
 					readFile(DB_FILE); // reset buffer to pre-decrypted
