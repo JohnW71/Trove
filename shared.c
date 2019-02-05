@@ -14,6 +14,8 @@ void sortEntries(void)
 		{
 			char t1[MAXTITLE];
 			char t2[MAXTITLE];
+			clearArray(t1, MAXTITLE);
+			clearArray(t2, MAXTITLE);
 
 			for (size_t j = 0; j < strlen(entries[i].title); ++j)
 				t1[j] = (char)toupper(entries[i].title[j]);
