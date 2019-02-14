@@ -61,7 +61,7 @@ void generatePassword(char *buf)
 	for (int specialCount = 0; specialCount < settings.minSpecial; ++specialCount)
 	{
 		int rn = rand() % 127;
-		if (rn < 33 || rn == 44)
+		if (rn < 33 || rn == 44) // prevent control characters and commas
 		{
 			--specialCount;
 			continue;
