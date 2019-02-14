@@ -136,15 +136,12 @@ void add(void)
 		return;
 	}
 
-	if (id[0] == '\n')
-		return;
-
 	i = -1;
 	while (id[++i] != '\0')
 		if (id[i] == '\n' || i == MAXID - 1)
 			id[i] = '\0';
 
-	printf("Enter password up to %d chars:\n(enter 'x' to generate random \
+	printf("Enter password up to %d chars (no commas):\n(enter 'x' to generate random \
 password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 	if (fgets(password, MAXLINE, stdin) == NULL)
 	{
@@ -158,8 +155,15 @@ password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 	{
 		i = -1;
 		while (password[++i] != '\0')
+		{
+			if (password[i] == ',')
+			{
+				puts("Commas not allowed");
+				return;
+			}
 			if (password[i] == '\n' || i == MAXPW - 1)
 				password[i] = '\0';
+		}
 	}
 
 	printf("Enter misc up to %d chars:\n", MAXMISC - 1);
@@ -292,7 +296,7 @@ void edit(void)
 				id[i] = '\0';
 	}
 
-	printf("Enter new password up to %d chars:\n(enter 'x' to generate random \
+	printf("Enter new password up to %d chars: (no commas)\n(enter 'x' to generate random \
 password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 	if (fgets(password, MAXLINE, stdin) == NULL)
 	{
@@ -310,8 +314,15 @@ password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 		{
 			i = -1;
 			while (password[++i] != '\0')
+			{
+				if (password[i] == ',')
+				{
+					puts("Commas not allowed");
+					return;
+				}
 				if (password[i] == '\n' || i == MAXPW - 1)
 					password[i] = '\0';
+			}
 		}
 	}
 
@@ -833,35 +844,63 @@ static FILE *f;
 
 void importFromUPM()
 {
-	f = fopen("import.txt", "r");
-	// f = fopen("c:\\upm.txt", "r");
+	f = fopen("upm.txt", "r");
 	if (f == NULL)
 	{
 		puts("can't open file");
 		return;
 	}
 
-	char title[31];
-	char id[31];
-	char pw[21];
-	char misc[51];
-
+	char title[MAXTITLE];
+	char id[MAXID];
+	char pw[MAXPW];
+	char misc[MAXMISC];
+	
 	while (running)
 	{
-		clearArray(title, 31);
-		clearArray(id, 31);
-		clearArray(pw, 21);
-		clearArray(misc, 51);
+		clearArray(title, MAXTITLE);
+		clearArray(id, MAXID);
+		clearArray(pw, MAXPW);
+		clearArray(misc, MAXMISC);
 
-		readUntilComma(title, 30);
-		readUntilComma(id, 30);
-		readUntilComma(pw, 20);
+		readUntilComma(title, MAXTITLE-1);
+		readUntilComma(id, MAXID-1);
+		readUntilComma(pw, MAXPW-1);
 		readUntilComma(misc, 1); // URL field
-		readMisc(misc, 50);
+		readMisc(misc, MAXMISC-1);
 
-		printf("Title: %s\nID: %s\nPW: %s\nMisc: %s\n\n", title, id, pw, misc);
+		if (strlen(id) == 0) strcpy(id, " ");
+		if (strlen(pw) == 0) strcpy(pw, " ");
+		if (strlen(misc) == 0) strcpy(misc, " ");
+
+		for (int i = 0; i < MAXMISC; ++i)
+			if (misc[i] == '\n')
+				misc[i] = ' ';
+
+		if (strlen(title))
+		{
+			printf("%s, %s, %s, %s\n", title, id, pw, misc);
+
+			struct Entry *temp = realloc(entries, ((uint64_t)state.entryCount + 1) * sizeof(*entries));
+			if (temp == NULL)
+			{
+				puts("Failure reallocating memory for new entry");
+				return;
+			}
+			entries = temp;
+
+			removeCommas(title, (int)strlen(title));
+			removeCommas(id, (int)strlen(id));
+			removeCommas(pw, (int)strlen(pw));
+			removeCommas(misc, (int)strlen(misc));
+			strcpy(entries[state.entryCount].title, title);
+			strcpy(entries[state.entryCount].id, id);
+			strcpy(entries[state.entryCount].pw, pw);
+			strcpy(entries[state.entryCount].misc, misc);
+			++state.entryCount;
+		}
 	}
-
+	saveEntries();
 	fclose(f);
 }
 
@@ -872,11 +911,7 @@ void readUntilComma(char *text, int len)
 	bool inQuotes = false;
 
 	if ((c = (char)fgetc(f)) == EOF)
-	{
-		running = false;
-		fclose(f);
-		exit(0);
-	}
+		return;
 
 	if (c == '"')
 		inQuotes = true;
@@ -898,7 +933,7 @@ void readUntilComma(char *text, int len)
 					break;
 				}
 
-				if (charAhead == ',')// && inQuotes)
+				if (charAhead == ',')
 				{
 					inQuotes = false;
 					break;
@@ -973,8 +1008,7 @@ void readMisc(char *text, int len)
 	if ((c = (char)fgetc(f)) == EOF)
 	{
 		running = false;
-		fclose(f);
-		exit(0);
+		return;
 	}
 
 	if (c == '\n') // blank misc
