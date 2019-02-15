@@ -855,7 +855,7 @@ void importFromUPM()
 	char id[MAXID];
 	char pw[MAXPW];
 	char misc[MAXMISC];
-	
+
 	while (running)
 	{
 		clearArray(title, MAXTITLE);
@@ -985,7 +985,7 @@ bool copyBuffer(char *text, char *buf, int *count, int pos, int len)
 
 		text[t] = buf[b];
 
-		if (++(*count) > len)
+		if (++(*count) >= len)
 		{
 			text[*count] = '\0';
 			return true;
@@ -1078,7 +1078,7 @@ void readMisc(char *text, int len)
 			if (copyBuffer(text, buf, pCount, pos, len))
 				return;
 
-			text[count] = '\0';
+			text[count-1] = '\0';
 			finished = true;
 			break;
 		}
@@ -1099,7 +1099,7 @@ void readMisc(char *text, int len)
 			if (copyBuffer(text, buf, pCount, pos, len))
 				return;
 
-			text[count] = '\0';
+			text[count-1] = '\0';
 			finished = true;
 			break;
 		}
@@ -1110,6 +1110,6 @@ void readMisc(char *text, int len)
 		if (count < len)
 			text[count++] = '\n';
 		else
-			text[count] = '\0';
+			text[count-1] = '\0';
 	}
 }
