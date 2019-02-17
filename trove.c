@@ -1038,8 +1038,11 @@ void readMisc(char *text, int len)
 			c = (char)fgetc(f);
 			if ((c == '\n' || c == '\r') && pos == 0)
 			{
-				text[count++] = '\n';
-				c = (char)fgetc(f);
+				if (count < len)
+				{
+					text[count++] = '\n';
+					c = (char)fgetc(f);
+				}
 			}
 			continue;
 		}
@@ -1108,7 +1111,7 @@ void readMisc(char *text, int len)
 		copyBuffer(text, buf, pCount, pos, len);
 
 		if (count < len)
-			text[count++] = '\n';
+			text[count++] = ' ';
 		else
 			text[count-1] = '\0';
 	}
