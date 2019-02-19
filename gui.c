@@ -490,6 +490,17 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					}
 				}
 
+				// test for commas in password field
+				for (int i = 0; i < MAXPW; ++i)
+				{
+					if (pw[i] == ',')
+					{
+						MessageBox(NULL, "Don't use commas in passwords", "Error", MB_ICONEXCLAMATION | MB_OK);
+						SetFocus(ePw);
+						return DefWindowProc(hwnd, msg, wParam, lParam);
+					}
+				}
+
 				// avoid any completely blank fields
 				if (strlen(id) == 0) strcpy(id, " ");
 				if (strlen(pw) == 0) strcpy(pw, " ");
@@ -753,6 +764,17 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					{
 						MessageBox(NULL, "That title is already in use", "Error", MB_ICONEXCLAMATION | MB_OK);
 						SetFocus(eTitle);
+						return DefWindowProc(hwnd, msg, wParam, lParam);
+					}
+				}
+
+				// test for commas in password field
+				for (int i = 0; i < MAXPW; ++i)
+				{
+					if (pw[i] == ',')
+					{
+						MessageBox(NULL, "Don't use commas in passwords", "Error", MB_ICONEXCLAMATION | MB_OK);
+						SetFocus(ePw);
 						return DefWindowProc(hwnd, msg, wParam, lParam);
 					}
 				}
