@@ -467,7 +467,7 @@ void writeSettings(char *iniFile)
 	FILE *f = fopen(iniFile, "w");
 	if (f == NULL)
 	{
-		puts("Error saving entries!");
+		puts("Error saving settings!");
 		return;
 	}
 
