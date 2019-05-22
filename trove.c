@@ -136,6 +136,12 @@ void add(void)
 		return;
 	}
 
+	if (id[0] == '\n')
+	{
+		id[0] = ' ';
+		id[1] = '\0';
+	}
+
 	i = -1;
 	while (id[++i] != '\0')
 		if (id[i] == '\n' || i == MAXID - 1)
@@ -153,6 +159,12 @@ password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 		generatePassword(password);
 	else
 	{
+		if (password[0] == '\n')
+		{
+			password[0] = ' ';
+			password[1] = '\0';
+		}
+
 		i = -1;
 		while (password[++i] != '\0')
 		{
@@ -171,6 +183,12 @@ password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 	{
 		puts("No line");
 		return;
+	}
+
+	if (misc[0] == '\n')
+	{
+		misc[0] = ' ';
+		misc[1] = '\0';
 	}
 
 	i = -1;
