@@ -858,7 +858,7 @@ void editSettings(void)
 		"Settings",
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		410, 300,
+		410, 330,
 		NULL, NULL,
 		instance, NULL);
 
@@ -880,7 +880,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	{
 		case WM_CREATE:
 		{
-			static HWND bOK, bCancel, bSetPassword, lPassword, lSpecial, lNumeric, lUppercase, lKeygen, bGenerate, lVersion;
+			static HWND bOK, bCancel, bSetPassword, bExportDB, lPassword, lSpecial, lNumeric, lUppercase, lKeygen, bGenerate, lVersion;
 			char title[40];
 			sprintf(title, "Password length from %d to %d", MINPW, MAXPW - 1);
 
@@ -937,11 +937,15 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 			bSetPassword = CreateWindowEx(WS_EX_LEFT, "Button", "Change database password",
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-				100, 215, 210, 25, hwnd, (HMENU)ID_SETTINGS_SET_PASSWORD, NULL, NULL);
+				90, 215, 210, 25, hwnd, (HMENU)ID_SETTINGS_SET_PASSWORD, NULL, NULL);
 
 			lVersion = CreateWindowEx(WS_EX_LEFT, "Static", APP_VERSION,
 				WS_VISIBLE | WS_CHILD,
 				320, 85, 210, 25, hwnd, (HMENU)ID_SETTINGS_VERSION, NULL, NULL);
+
+			bExportDB = CreateWindowEx(WS_EX_LEFT, "Button", "Export to file",
+				WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+				130, 250, 130, 25, hwnd, (HMENU)ID_SETTINGS_EXPORT_DB, NULL, NULL);
 
 			// populate each box
 			char buf[4];
@@ -1101,6 +1105,12 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			{
 				state.changingPassword = true;
 				setNewDBpassword();
+			}
+
+			if (LOWORD(wParam) == ID_SETTINGS_EXPORT_DB)
+			{
+				exportDB();
+				MessageBox(NULL, "Database exported", "Export", MB_OK);
 			}
 			break;
 		case WM_KEYUP:

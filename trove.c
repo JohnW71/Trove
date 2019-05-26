@@ -39,7 +39,6 @@ int main(int argc, char *argv[])
 		puts("6 - Copy to clipboard");
 #endif
 		puts("7 - Change settings");
-		puts("8 - Import from UPM");
 		puts("0 - Quit");
 		printf("\n-> ");
 
@@ -86,9 +85,6 @@ int main(int argc, char *argv[])
 			case 7:
 				updateSettings();
 				break;
-			case 8:
-				importFromUPM();
-				break;
 		}
 	}
 
@@ -100,7 +96,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-void add(void)
+static void add(void)
 {
 	char title[MAXLINE];
 	char id[MAXLINE];
@@ -219,7 +215,7 @@ password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 	saveEntries();
 }
 
-void find(void)
+static void find(void)
 {
 	char title[MAXTITLE];
 	printf("Enter title to find: ");
@@ -250,7 +246,7 @@ void find(void)
 	puts("Not found");
 }
 
-void edit(void)
+static void edit(void)
 {
 	char line[MAXLINE];
 	char title[MAXLINE];
@@ -371,7 +367,7 @@ password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 	saveEntries();
 }
 
-void delEntry(void)
+static void delEntry(void)
 {
 	char line[MAXLINE];
 	printf("Enter # to delete: ");
@@ -414,7 +410,7 @@ void delEntry(void)
 	saveEntries();
 }
 
-void clipboard(void)
+static void clipboard(void)
 {
 #ifdef _WIN32
 	char line[MAXLINE];
@@ -499,7 +495,7 @@ void writeSettings(char *iniFile)
 	fclose(f);
 }
 
-void updateSettings(void)
+static void updateSettings(void)
 {
 	int choice = -1;
 
@@ -513,6 +509,8 @@ void updateSettings(void)
 		printf("4 - Set minimum numeric characters (%d)\n", settings.minNumeric);
 		printf("5 - Set minimum uppercase characters (%d)\n", settings.minUppercase);
 		printf("6 - Set new random keygen ID (%s)\n", settings.iv);
+		printf("7 - Export database to text file\n");
+		printf("8 - Import from UPM\n");
 		printf("0 - Back\n");
 		printf("\n-> ");
 
@@ -547,6 +545,12 @@ void updateSettings(void)
 			case 6:
 				setNewKeygen();
 				break;
+			case 7:
+				exportDB();
+				break;
+			case 8:
+				importFromUPM();
+				break;
 			case 0:
 				return;
 		}
@@ -555,7 +559,7 @@ void updateSettings(void)
 	}
 }
 
-void setPasswordSize(void)
+static void setPasswordSize(void)
 {
 	char line[MAXLINE];
 
@@ -590,7 +594,7 @@ void setPasswordSize(void)
 	writeSettings(INI_FILE);
 }
 
-void setMinSpecial(void)
+static void setMinSpecial(void)
 {
 	char line[MAXLINE];
 
@@ -620,7 +624,7 @@ void setMinSpecial(void)
 	writeSettings(INI_FILE);
 }
 
-void setMinNumeric(void)
+static void setMinNumeric(void)
 {
 	char line[MAXLINE];
 
@@ -650,7 +654,7 @@ void setMinNumeric(void)
 	writeSettings(INI_FILE);
 }
 
-void setMinUppercase(void)
+static void setMinUppercase(void)
 {
 	char line[MAXLINE];
 
@@ -680,7 +684,7 @@ void setMinUppercase(void)
 	writeSettings(INI_FILE);
 }
 
-void setNewKeygen(void)
+static void setNewKeygen(void)
 {
 	char line[MAXLINE];
 
@@ -746,7 +750,7 @@ void getDBpassword(char *password)
 }
 
 #ifdef _WIN32
-void getPasswordWindows(char *password)
+static void getPasswordWindows(char *password)
 {
 	char c;
 	int i = -1;
@@ -767,7 +771,7 @@ void getPasswordWindows(char *password)
 	password[i] = '\0';
 }
 #else
-void getPasswordLinux(char *password)
+static void getPasswordLinux(char *password)
 {
 	struct termios termCurrent;
 	struct termios termNew;
@@ -823,7 +827,7 @@ void getPasswordLinux(char *password)
 }
 #endif
 
-void handleParameters(char *parameter)
+static void handleParameters(char *parameter)
 {
 	if (strcmp(parameter, "-v") == 0 ||
 		strcmp(parameter, "-version") == 0 ||
@@ -846,7 +850,7 @@ void handleParameters(char *parameter)
 	}
 }
 
-void showEntry(int position)
+static void showEntry(int position)
 {
 	printf("%2d: %s, %s, %s\n", position + 1,
 								entries[position].title,
@@ -860,7 +864,7 @@ void showEntry(int position)
 static bool running = true;
 static FILE *f;
 
-void importFromUPM()
+static void importFromUPM()
 {
 	f = fopen("upm.txt", "r");
 	if (f == NULL)
@@ -922,7 +926,7 @@ void importFromUPM()
 	fclose(f);
 }
 
-void readUntilComma(char *text, int len)
+static void readUntilComma(char *text, int len)
 {
 	char c, charAhead;
 	int pos = 0;
@@ -989,7 +993,7 @@ void readUntilComma(char *text, int len)
 	}
 }
 
-bool copyBuffer(char *text, char *buf, int *count, int pos, int len)
+static bool copyBuffer(char *text, char *buf, int *count, int pos, int len)
 {
 	if (*count >= len)
 		return true;
@@ -1012,7 +1016,7 @@ bool copyBuffer(char *text, char *buf, int *count, int pos, int len)
 	return false;
 }
 
-void readMisc(char *text, int len)
+static void readMisc(char *text, int len)
 {
 	char buf[1000];
 	char c;

@@ -250,3 +250,21 @@ void clearArray(char *arr, int len)
 	for (int i = 0; i < len; ++i)
 		arr[i] = '\0';
 }
+
+void exportDB(void)
+{
+	FILE *exportFile;
+	exportFile = fopen("Trove_export.txt", "w");
+
+	for (int i = 0; i < state.entryCount; ++i)
+	{
+		char buf[MAXLINE];
+		sprintf(buf, "%s, %s, %s, %s\n", entries[i].title,
+			entries[i].id,
+			entries[i].pw,
+			entries[i].misc);
+
+		fwrite(buf, strlen(buf), 1, exportFile);
+	}
+	fclose(exportFile);
+}
