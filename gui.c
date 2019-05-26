@@ -30,6 +30,12 @@ static WNDPROC originalEditMiscProc;
 static WNDPROC originalSetPasswordProc;
 static WNDPROC originalGetPasswordProc;
 
+static void addEntry(void);
+static void editEntry(void);
+static void editSettings(void);
+static void setNewDBpassword(void);
+static void getDBpassword(void);
+
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPWSTR lpCmdLine, _In_ int nShowCmd)
 {
@@ -307,7 +313,7 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-void addEntry(void)
+static void addEntry(void)
 {
 	if (state.debugging)
 		outs("addEntry()");
@@ -552,7 +558,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-void editEntry(void)
+static void editEntry(void)
 {
 	if (state.debugging)
 		outs("editEntry()");
@@ -821,7 +827,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-void editSettings(void)
+static void editSettings(void)
 {
 	if (state.debugging)
 		outs("editSettings()");
@@ -1129,7 +1135,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-void setNewDBpassword(void)
+static void setNewDBpassword(void)
 {
 	if (state.debugging)
 		outs("setNewDBpassword()");
@@ -1291,7 +1297,7 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-void getDBpassword(void)
+static void getDBpassword(void)
 {
 	if (state.debugging)
 		outs("getDBpassword()");
