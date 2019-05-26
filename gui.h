@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <windows.h>
 
+#define LOG_FILE "log.txt"
+#define APP_VERSION "v1.11"
+
 #define ID_MAIN_ADD 60
 #define ID_MAIN_EDIT 61
 #define ID_MAIN_DELETE 62
@@ -55,23 +58,15 @@
 #define ID_TIMER2 2
 #define ID_TIMER3 3
 
-#define LOG_FILE "log.txt"
-#define APP_VERSION "v1.1"
-
 void enableControls(void);
 void disableControls(void);
 void centerWindow(HWND);
 void fillListbox(void);
 void updateListbox(void);
-void addEntry(void);
-void editEntry(void);
 void deleteEntry(void);
-void editSettings(void);
 bool isNumeric(char *buf);
 void fillDropdown(HWND, int, int);
 void outs(char *);
-void getDBpassword(void);
-void setNewDBpassword(void);
 void shutDown(HWND);
 void sendTab(void);
 
