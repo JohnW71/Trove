@@ -223,10 +223,8 @@ void addPadding(char *text)
 void encrypt_cbc(uint8_t *text, uint8_t *init)
 {
 	if (state.debugging)
-		outs("encrypt()");
-
-	if (state.debugging)
 	{
+		outs("encrypt_cbc()");
 		outs("buffer to encrypt=");
 		outs((char *)text);
 		outs("iv to encrypt=");

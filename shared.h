@@ -43,6 +43,7 @@ void loadEncryptedEntries(void);
 void updateBuffer(void);
 void removeCommas(char *, int);
 void clearArray(char *, int);
+void exportDB(void);
 
 struct Entry
 {

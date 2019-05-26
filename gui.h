@@ -42,6 +42,7 @@
 #define ID_SETTINGS_KEYGEN_LENGTH 39
 #define ID_SETTINGS_SET_PASSWORD 40
 #define ID_SETTINGS_VERSION 41
+#define ID_SETTINGS_EXPORT_DB 42
 
 #define ID_PASSWORD_LABEL1 50
 #define ID_PASSWORD_PASSWORD1 51
@@ -55,7 +56,7 @@
 #define ID_TIMER3 3
 
 #define LOG_FILE "log.txt"
-#define APP_VERSION "v1.09"
+#define APP_VERSION "v1.1"
 
 void enableControls(void);
 void disableControls(void);
