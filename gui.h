@@ -5,7 +5,7 @@
 #include <windows.h>
 
 #define LOG_FILE "log.txt"
-#define APP_VERSION "v1.11"
+#define APP_VERSION "v1.12"
 
 #define ID_MAIN_ADD 60
 #define ID_MAIN_EDIT 61
@@ -28,6 +28,7 @@
 #define ID_EDIT_MISC_LABEL 19
 #define ID_EDIT_MISC 20
 #define ID_EDIT_MISC_COUNT 21
+#define ID_EDIT_COPY_PASSWORD 22
 
 #define ID_OK 25
 #define ID_CANCEL 26
