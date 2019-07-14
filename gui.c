@@ -1,7 +1,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+#pragma comment(lib, "comctl32.lib")
+
 #include "gui.h"
 #include "shared.h"
+#include <CommCtrl.h>
 
 HWND lbList;
 HWND bAdd;
@@ -35,6 +38,7 @@ static void editEntry(void);
 static void editSettings(void);
 static void setNewDBpassword(void);
 static void getDBpassword(void);
+static HWND createToolTip(int, HWND, PTSTR);
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPWSTR lpCmdLine, _In_ int nShowCmd)
@@ -662,6 +666,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				MessageBox(NULL, "Icon not loaded", "Error", MB_ICONEXCLAMATION | MB_OK);
 			else
 				SendMessage(bCopyPassword, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hImage);
+			createToolTip(ID_EDIT_COPY_PASSWORD, hwnd, "Copy to clipboard");
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
 				WS_VISIBLE | WS_CHILD,
@@ -1687,4 +1692,36 @@ LRESULT CALLBACK customGetPasswordProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	}
 
 	return CallWindowProc(originalGetPasswordProc, hwnd, msg, wParam, lParam);
+}
+
+static HWND createToolTip(int id, HWND hDlg, PTSTR text)
+{
+	if (!id || !hDlg || !text)
+		return NULL;
+
+	// get window of tool
+	HWND hwndTool = GetDlgItem(hDlg, id);
+
+	if (!hwndTool)
+		return NULL;
+
+	// create tool tip
+	HWND hwndTip = CreateWindow(TOOLTIPS_CLASS, NULL,
+								WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON,
+								CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+								hDlg, NULL, instance, NULL);
+
+	if (!hwndTip)
+		return NULL;
+
+	// associate the tool tip with the tool
+	TOOLINFO toolInfo = {0};
+	toolInfo.cbSize = sizeof(toolInfo);
+	toolInfo.hwnd = hDlg;
+	toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+	toolInfo.uId = (UINT_PTR)hwndTool;
+	toolInfo.lpszText = text;
+	SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+
+	return hwndTip;
 }
