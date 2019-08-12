@@ -252,20 +252,32 @@ static void find(void)
 	if (title[0] == '\n')
 		return;
 
-	// remove \n from entered line
+	// remove \n from entered line and convert to uppercase
 	int i = -1;
 	while (title[++i] != '\0')
+	{
+		title[i] = toupper(title[i]);
 		if (title[i] == '\n')
 			title[i] = '\0';
+	}
 
+	// search for match
 	for (i = 0; i < state.entryCount; ++i)
-		if (strcmp(entries[i].title, title) == 0)
+	{
+		// convert to uppercase
+		int j = 0;
+		char upper[MAXTITLE];
+		strcpy(upper, entries[i].title);
+		while (upper[++j] != '\0')
+			upper[j] = toupper(upper[j]);
+
+		if (strcmp(upper, title) == 0)
 		{
 			puts("");
 			showEntry(i);
 			return;
 		}
-
+	}
 	puts("Not found");
 }
 
