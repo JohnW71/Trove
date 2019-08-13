@@ -662,7 +662,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_ICON,
 				340, 80, 30, 30, hwnd, (HMENU)ID_EDIT_COPY_PASSWORD, NULL, NULL);
 			HANDLE hImage = NULL;
-			if ((hImage = LoadImage(NULL, "C:\\Dropbox\\C\\Trove\\clipboard.ico", IMAGE_ICON, 30, 30, LR_DEFAULTCOLOR | LR_LOADFROMFILE)) == NULL)
+			if ((hImage = LoadImage(NULL, "clipboard.ico", IMAGE_ICON, 30, 30, LR_DEFAULTCOLOR | LR_LOADFROMFILE)) == NULL)
 				MessageBox(NULL, "Icon not loaded", "Error", MB_ICONEXCLAMATION | MB_OK);
 			else
 				SendMessage(bCopyPassword, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hImage);
