@@ -53,8 +53,6 @@ void generatePassword(char *buf)
 	int rpos;
 
 	// clear password array first
-	//for (int i = 0; i < MAXPW; ++i)
-	//	buf[i] = '\0';
 	clearArray(buf, MAXPW);
 
 	// add random special chars
@@ -192,11 +190,6 @@ void readSettings(char *iniFile)
 		char *s = setting;
 		char *v = value;
 
-		//for (int i = 0; i < MAXLINE; ++i)
-		//{
-		//	setting[i] = '\0';
-		//	value[i] = '\0';
-		//}
 		clearArray(setting, MAXLINE);
 		clearArray(value, MAXLINE);
 
@@ -245,10 +238,16 @@ void removeCommas(char *text, int length)
 			text[i] = ' ';
 }
 
-void clearArray(char *arr, int len)
+void lowerCase(char *text, int length)
 {
-	for (int i = 0; i < len; ++i)
-		arr[i] = '\0';
+	for (int i = 0; i < length; ++i)
+		text[i] = tolower(text[i]);
+}
+
+void clearArray(char *text, int length)
+{
+	for (int i = 0; i < length; ++i)
+		text[i] = '\0';
 }
 
 void exportDB(void)

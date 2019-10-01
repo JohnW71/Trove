@@ -232,8 +232,10 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (HIWORD(wParam) == BN_CLICKED)
 				{
 					bool found = false;
-					char find[MAXTITLE];
-					GetWindowText(eFind, find, MAXTITLE);
+					char findText[MAXTITLE];
+
+					GetWindowText(eFind, findText, MAXTITLE);
+					lowerCase(findText, (int)strlen(findText));
 
 					// deselect all entries
 					SendMessage(lbList, LB_SETCURSEL, (WPARAM)-1, 0);
@@ -243,10 +245,14 @@ LRESULT CALLBACK mainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 					while (attempts <= state.entryCount)
 					{
-						if (i == state.selectedRow && strstr(entries[i].title, find))
+						char entry[MAXTITLE];
+						strcpy(entry, entries[i].title);
+						lowerCase(entry, (int)strlen(entry));
+
+						if (i == state.selectedRow && strstr(entry, findText))
 							found = true;
 
-						if (i != state.selectedRow && strstr(entries[i].title, find))
+						if (i != state.selectedRow && strstr(entry, findText))
 						{
 							state.selectedRow = i;
 							found = true;
@@ -1294,8 +1300,6 @@ LRESULT CALLBACK setPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 					return DefWindowProc(hwnd, msg, wParam, lParam);
 				}
 
-				//for (int i = 0; i < DBPASSWORDSIZE; ++i)
-				//	state.DBpassword[i] = '\0';
 				clearArray(state.DBpassword, DBPASSWORDSIZE);
 				strcpy(state.DBpassword, pw1);
 				if (state.debugging)
@@ -1452,8 +1456,6 @@ LRESULT CALLBACK getPasswordWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				}
 				else
 				{
-					//for (int i = 0; i < MAXPW; ++i)
-					//	state.DBpassword[i] = '\0';
 					clearArray(state.DBpassword, MAXPW);
 
 					SetWindowText(lWarning, "Incorrect password");
