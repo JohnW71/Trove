@@ -761,10 +761,7 @@ bool setDBpassword(void)
 	}
 	puts("\n\nPassword set");
 
-	//for (int i = 0; i < DBPASSWORDSIZE; ++i)
-	//	state.DBpassword[i] = '\0';
 	clearArray(state.DBpassword, DBPASSWORDSIZE);
-
 	strcpy(state.DBpassword, verifyPassword1);
 	saveEntries();
 
@@ -830,10 +827,7 @@ static void getPasswordLinux(char *password)
 		exit(1);
 	}
 
-	//for (int i = 0; i < DBPASSWORDSIZE; ++i)
-	//	password[i] = '\0';
 	clearArray(password, DBPASSWORDSIZE);
-
 	char c;
 	int i = -1;
 

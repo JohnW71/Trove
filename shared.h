@@ -42,6 +42,7 @@ void addPadding(char *);
 void loadEncryptedEntries(void);
 void updateBuffer(void);
 void removeCommas(char *, int);
+void lowerCase(char *, int);
 void clearArray(char *, int);
 void exportDB(void);
 
