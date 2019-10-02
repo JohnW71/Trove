@@ -256,7 +256,7 @@ static void find(void)
 	int i = -1;
 	while (title[++i] != '\0')
 	{
-		title[i] = toupper(title[i]);
+		title[i] = (char)toupper(title[i]);
 		if (title[i] == '\n')
 			title[i] = '\0';
 	}
@@ -269,7 +269,7 @@ static void find(void)
 		char upper[MAXTITLE];
 		strcpy(upper, entries[i].title);
 		while (upper[++j] != '\0')
-			upper[j] = toupper(upper[j]);
+			upper[j] = (char)toupper(upper[j]);
 
 		if (strcmp(upper, title) == 0)
 		{
