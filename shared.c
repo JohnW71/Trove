@@ -241,7 +241,7 @@ void removeCommas(char *text, int length)
 void lowerCase(char *text, int length)
 {
 	for (int i = 0; i < length; ++i)
-		text[i] = tolower(text[i]);
+		text[i] = (char)tolower(text[i]);
 }
 
 void clearArray(char *text, int length)
