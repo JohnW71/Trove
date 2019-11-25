@@ -240,45 +240,47 @@ password of %d chars)\n: ", MAXPW - 1, settings.passwordSize);
 
 static void find(void)
 {
-	char title[MAXTITLE];
+	char text[MAXTITLE];
 	printf("Enter title to find: ");
 
-	if (fgets(title, MAXTITLE, stdin) == NULL)
+	if (fgets(text, MAXTITLE, stdin) == NULL)
 	{
 		puts("No line");
 		return;
 	}
 
-	if (title[0] == '\n')
+	if (text[0] == '\n')
 		return;
 
-	// remove \n from entered line and convert to uppercase
+	// remove \n and convert search text to uppercase
 	int i = -1;
-	while (title[++i] != '\0')
+	while (text[++i] != '\0')
 	{
-		title[i] = (char)toupper(title[i]);
-		if (title[i] == '\n')
-			title[i] = '\0';
+		text[i] = (char)toupper(text[i]);
+		if (text[i] == '\n')
+			text[i] = '\0';
 	}
 
 	// search for match
-	for (i = 0; i < state.entryCount; ++i)
+	bool found = false;
+	for (int entryPos = 0; entryPos < state.entryCount; ++entryPos)
 	{
-		// convert to uppercase
-		int j = 0;
-		char upper[MAXTITLE];
-		strcpy(upper, entries[i].title);
-		while (upper[++j] != '\0')
-			upper[j] = (char)toupper(upper[j]);
+		// convert entry to uppercase
+		int titlePos = -1;
+		char entryTitle[MAXTITLE];
+		strcpy(entryTitle, entries[entryPos].title);
+		while (entryTitle[++titlePos] != '\0')
+			entryTitle[titlePos] = (char)toupper(entryTitle[titlePos]);
 
-		if (strcmp(upper, title) == 0)
+		if (strstr(entryTitle, text))
 		{
-			puts("");
-			showEntry(i);
-			return;
+			showEntry(entryPos);
+			found = true;
 		}
 	}
-	puts("Not found");
+
+	if (!found)
+		puts("Not found");
 }
 
 static void edit(void)
