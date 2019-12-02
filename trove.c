@@ -548,6 +548,7 @@ static void updateSettings(void)
 		printf("6 - Set new random keygen ID (%s)\n", settings.iv);
 		printf("7 - Export database to text file\n");
 		printf("8 - Import from UPM\n");
+		printf("9 - List passwords below minimum length\n");
 		printf("0 - Back\n");
 		printf("\n-> ");
 
@@ -588,6 +589,14 @@ static void updateSettings(void)
 			case 8:
 				importFromUPM();
 				break;
+			case 9:
+				if (state.entryCount > 0)
+				{
+					sortEntries();
+					for (int i = 0; i < state.entryCount; ++i)
+						if (strlen(entries[i].pw) < (size_t)settings.passwordSize)
+							showEntry(i);
+				}
 			case 0:
 				return;
 		}
