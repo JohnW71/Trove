@@ -376,7 +376,7 @@ static void addEntry(void)
 
 LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND bOK, bCancel, bGenerate, lTitle, eTitle, lTitleCount;
+	static HWND bOK, bCancel, bGenerate, lTitle, eTitle, lTitleCount, bCopyPassword;
 	static HWND lId, eId, lIdCount, lPw, ePw, lPwCount, lMisc, eMisc, lMiscCount;
 
 	switch (msg)
@@ -417,6 +417,16 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				WS_VISIBLE | WS_CHILD,
 				295, 85, 40, 25, hwnd, (HMENU)ID_EDIT_PW_COUNT, NULL, NULL);
 			SetWindowLongPtr(ePw, GWLP_WNDPROC, (LONG_PTR)customAddProc);
+
+			bCopyPassword = CreateWindowEx(WS_EX_LEFT, "Button", "Copy",
+				WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_ICON,
+				340, 80, 30, 30, hwnd, (HMENU)ID_EDIT_COPY_PASSWORD, NULL, NULL);
+			HANDLE hImage = NULL;
+			if ((hImage = LoadImage(NULL, "clipboard.ico", IMAGE_ICON, 30, 30, LR_DEFAULTCOLOR | LR_LOADFROMFILE)) == NULL)
+				MessageBox(NULL, "Icon not loaded", "Error", MB_ICONEXCLAMATION | MB_OK);
+			else
+				SendMessage(bCopyPassword, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hImage);
+			createToolTip(ID_EDIT_COPY_PASSWORD, hwnd, "Copy to clipboard");
 
 			lMisc = CreateWindowEx(WS_EX_LEFT, "Static", "Misc",
 				WS_VISIBLE | WS_CHILD,
@@ -550,6 +560,39 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LOWORD(wParam) == ID_CANCEL)
 			{
 				DestroyWindow(hwnd);
+			}
+
+			if (LOWORD(wParam) == ID_EDIT_COPY_PASSWORD)
+			{
+				char pw[MAXPW];
+				GetWindowText(ePw, pw, MAXPW);
+				size_t len = strlen(pw) + 1;
+
+				HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+				if (!hMem)
+				{
+					outs("Failure allocating memory for clipboard");
+					break;
+				}
+
+				hMem = GlobalLock(hMem);
+				if (!hMem)
+				{
+					outs("Failure locking memory for clipboard");
+					break;
+				}
+
+				memcpy(hMem, pw, len);
+				GlobalUnlock(hMem);
+				OpenClipboard(0);
+				EmptyClipboard();
+
+				// automatically does GlobalFree(hMem) if it succeeds
+				if (!SetClipboardData(CF_TEXT, hMem))
+					if (hMem)
+						GlobalFree(hMem);
+
+				CloseClipboard();
 			}
 
 			if (LOWORD(wParam) == ID_GENERATE)
