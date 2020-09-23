@@ -5,7 +5,6 @@
 #include <windows.h>
 
 #define LOG_FILE "log.txt"
-#define APP_VERSION "v1.15"
 
 #define ID_MAIN_ADD 60
 #define ID_MAIN_EDIT 61
