@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
 
 	while (choice != 0)
 	{
+		printf("\nTrove ");
 		puts(APP_VERSION);
 		puts("-----------");
 		puts("1 - List");
