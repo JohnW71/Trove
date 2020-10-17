@@ -155,7 +155,7 @@ void updateBuffer(void)
 
 	buffer = NULL;
 	if (state.entryCount > 0)
-		buffer = (char *)malloc(state.entryCount * MAXLINE);
+		buffer = (char*)malloc((uint64_t)state.entryCount * MAXLINE);
 	else
 		buffer = (char *)malloc(16);
 

@@ -589,8 +589,7 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 				// automatically does GlobalFree(hMem) if it succeeds
 				if (!SetClipboardData(CF_TEXT, hMem))
-					if (hMem)
-						GlobalFree(hMem);
+					GlobalFree(hMem);
 
 				CloseClipboard();
 			}
@@ -664,13 +663,13 @@ static void editEntry(void)
 
 LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HWND eTitle, eId, ePw, eMisc, lTitleCount, lIdCount, lPwCount, lMiscCount, bCopyPassword;
+	static HWND eTitle, eId, ePw, eMisc, lTitleCount, lIdCount, lPwCount, lMiscCount;
 
 	switch (msg)
 	{
 		case WM_CREATE:
 		{
-			static HWND bOK, bCancel, bGenerate, lTitle, lId, lPw, lMisc;
+			static HWND bOK, bCancel, bGenerate, lTitle, lId, lPw, lMisc, bCopyPassword;
 			SetTimer(hwnd, ID_TIMER3, 100, NULL);
 			centerWindow(hwnd);
 
@@ -901,8 +900,7 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 				// automatically does GlobalFree(hMem) if it succeeds
 				if (!SetClipboardData(CF_TEXT, hMem))
-					if (hMem)
-						GlobalFree(hMem);
+					GlobalFree(hMem);
 
 				CloseClipboard();
 			}

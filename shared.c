@@ -22,11 +22,10 @@ void sortEntries(void)
 			for (size_t j = 0; j < strlen(entries[i + 1].title); ++j)
 				t2[j] = (char)toupper(entries[i + 1].title[j]);
 
-			// if (strcmp(entries[i].title, entries[i + 1].title) > 0) // s1 > s2
 			if (strcmp(t1, t2) > 0)
 			{
 				changed = true;
-				struct Entry tmp;
+				struct Entry tmp = { 0 };
 
 				strcpy(tmp.title, entries[i].title);
 				strcpy(tmp.id, entries[i].id);

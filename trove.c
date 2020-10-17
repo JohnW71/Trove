@@ -428,7 +428,12 @@ static void delEntry(void)
 	}
 
 	// recreate array without deleted row
-	struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * ((uint64_t)state.entryCount - 1));
+	struct Entry* newEntries = (struct Entry*)malloc(sizeof(struct Entry) * ((uint64_t)state.entryCount - 1));
+	if (!newEntries)
+	{
+		puts("Failed to allocate memory for new array during deletion");
+		return;
+	}
 
 	for (int i = 0, j = 0; i < state.entryCount; ++i, ++j)
 		if (i != (choice-1))
@@ -498,8 +503,7 @@ static void clipboard(void)
 
 	// automatically does GlobalFree(hMem) if it succeeds
 	if (!SetClipboardData(CF_TEXT, hMem))
-		if (hMem)
-			GlobalFree(hMem);
+		GlobalFree(hMem);
 
 	CloseClipboard();
 
@@ -969,7 +973,7 @@ static void importFromUPM()
 
 static void readUntilComma(char *text, int len)
 {
-	char c, charAhead;
+	char c;
 	int pos = 0;
 	bool inQuotes = false;
 
@@ -981,6 +985,8 @@ static void readUntilComma(char *text, int len)
 
 	while (c != EOF && pos < len)
 	{
+		char charAhead;
+
 		if (c == ',' && !inQuotes)
 			break;
 
@@ -1061,7 +1067,6 @@ static void readMisc(char *text, int len)
 {
 	char buf[1000];
 	char c;
-	int pos = 0;
 	int count = 0;
 	int *pCount = &count;
 	bool inQuotes = false;
@@ -1085,8 +1090,8 @@ static void readMisc(char *text, int len)
 
 	while (!finished)
 	{
+		int pos = 0;
 		clearArray(buf, 1000);
-		pos = 0;
 
 		// read rest of line until \n
 		while (c != EOF && c != '\n')
@@ -1129,28 +1134,25 @@ static void readMisc(char *text, int len)
 		buf[pos] = '\n';
 
 		// multiline ending """\n
-		if (inQuotes &&
-			((buf[pos] == '\n'
-				&& buf[pos - 1] == '\r'
-				&& buf[pos - 2] == '"'
-				&& buf[pos - 3] == '"'
-				&& buf[pos - 4] == '"')
-				||
-				(buf[pos] == '\n'
-					&& buf[pos - 1] == '"'
-					&& buf[pos - 2] == '"'
-					&& buf[pos - 3] == '"')))
+		if (inQuotes && pos >= 4 &&
+			((buf[pos - 1] == '\r' &&
+			 buf[pos - 2] == '"' &&
+			 buf[pos - 3] == '"' &&
+			 buf[pos - 4] == '"')
+			||
+			(buf[pos - 1] == '"' &&
+				buf[pos - 2] == '"' &&
+				buf[pos - 3] == '"')))
 		{
 			if (copyBuffer(text, buf, pCount, pos, len))
 				return;
 
 			text[count-1] = '\0';
-			finished = true;
 			break;
 		}
 
 		// multiline ending "\n
-		if (inQuotes &&
+		if (inQuotes && pos >= 3 &&
 			((buf[pos] == '\n' &&
 				buf[pos - 1] == '\r' &&
 				buf[pos - 2] == '"' &&
@@ -1166,7 +1168,6 @@ static void readMisc(char *text, int len)
 				return;
 
 			text[count-1] = '\0';
-			finished = true;
 			break;
 		}
 
