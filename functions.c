@@ -97,7 +97,7 @@ void deleteEntry(void)
 			}
 
 			for (int i = 0, j = 0; i < state.entryCount; ++i, ++j)
-				if (i != (state.selectedRow))
+				if (i != state.selectedRow)
 				{
 					strcpy(newEntries[j].title, entries[i].title);
 					strcpy(newEntries[j].id, entries[i].id);
