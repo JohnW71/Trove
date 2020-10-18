@@ -907,12 +907,12 @@ static void showEntry(int position)
 }
 
 static bool running = true;
-static FILE *f;
+static FILE *upmFile;
 
 static void importFromUPM()
 {
-	f = fopen("upm.txt", "r");
-	if (f == NULL)
+	upmFile = fopen("upm.txt", "r");
+	if (upmFile == NULL)
 	{
 		puts("can't open file");
 		return;
@@ -968,7 +968,7 @@ static void importFromUPM()
 		}
 	}
 	saveEntries();
-	fclose(f);
+	fclose(upmFile);
 }
 
 static void readUntilComma(char *text, int len)
@@ -977,7 +977,7 @@ static void readUntilComma(char *text, int len)
 	int pos = 0;
 	bool inQuotes = false;
 
-	if ((c = (char)fgetc(f)) == EOF)
+	if ((c = (char)fgetc(upmFile)) == EOF)
 		return;
 
 	if (c == '"')
@@ -990,7 +990,7 @@ static void readUntilComma(char *text, int len)
 		if (c == ',' && !inQuotes)
 			break;
 
-		charAhead = (char)fgetc(f);
+		charAhead = (char)fgetc(upmFile);
 
 		switch (c)
 		{
@@ -1073,7 +1073,7 @@ static void readMisc(char *text, int len)
 	bool multiLine = false;
 	bool finished = false;
 
-	if ((c = (char)fgetc(f)) == EOF)
+	if ((c = (char)fgetc(upmFile)) == EOF)
 	{
 		running = false;
 		return;
@@ -1085,7 +1085,7 @@ static void readMisc(char *text, int len)
 	if (c == '"')
 	{
 		inQuotes = true;
-		c = (char)fgetc(f);
+		c = (char)fgetc(upmFile);
 	}
 
 	while (!finished)
@@ -1097,19 +1097,19 @@ static void readMisc(char *text, int len)
 		while (c != EOF && c != '\n')
 		{
 			buf[pos++] = c;
-			c = (char)fgetc(f);
+			c = (char)fgetc(upmFile);
 		}
 
 		// handle blank lines
 		if ((c == '\n' || c == '\r') && pos == 0)
 		{
-			c = (char)fgetc(f);
+			c = (char)fgetc(upmFile);
 			if ((c == '\n' || c == '\r') && pos == 0)
 			{
 				if (count < len)
 				{
 					text[count++] = '\n';
-					c = (char)fgetc(f);
+					c = (char)fgetc(upmFile);
 				}
 			}
 			continue;
