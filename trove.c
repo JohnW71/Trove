@@ -23,6 +23,7 @@ static void setMinSpecial(void);
 static void setMinNumeric(void);
 static void setMinUppercase(void);
 static void setNewKeygen(void);
+static void shortPasswords(void);
 #ifdef _WIN32
 static void getPasswordWindows(char *);
 #else
@@ -59,10 +60,11 @@ int main(int argc, char *argv[])
 		puts("3 - Find");
 		puts("4 - Edit");
 		puts("5 - Delete");
+		puts("6 - Short passwords");
 #ifdef _WIN32
-		puts("6 - Copy to clipboard");
+		puts("7 - Copy to clipboard");
 #endif
-		puts("7 - Change settings");
+		puts("8 - Change settings");
 		puts("0 - Quit");
 		printf("\n-> ");
 
@@ -104,9 +106,13 @@ int main(int argc, char *argv[])
 				break;
 			case 6:
 				if (state.entryCount > 0)
-					clipboard();
+					shortPasswords();
 				break;
 			case 7:
+				if (state.entryCount > 0)
+					clipboard();
+				break;
+			case 8:
 				updateSettings();
 				break;
 		}
@@ -1179,4 +1185,38 @@ static void readMisc(char *text, int len)
 		else
 			text[count-1] = '\0';
 	}
+}
+
+static void shortPasswords()
+{
+	char line[MAXLINE];
+
+	puts("List passwords of length less than: ");
+	if (fgets(line, MAXLINE, stdin) == NULL)
+	{
+		puts("No line");
+		return;
+	}
+
+	if (line[0] == '\n')
+		return;
+
+	size_t len = strlen(line);
+
+	for (size_t i = 0; i < len - 1; ++i)
+		if ((int)line[i] < 48 || (int)line[i] > 57)
+		{
+			puts("\nInvalid character");
+			return;
+		}
+
+	puts("");
+
+	int length = atoi(line);
+	if (length >= MAXPW)
+		length = MAXPW -1;
+
+	for (int entryPos = 0; entryPos < state.entryCount; ++entryPos)
+		if (strlen(entries[entryPos].pw) < length)
+			showEntry(entryPos);
 }
