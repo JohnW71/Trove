@@ -1217,6 +1217,6 @@ static void shortPasswords()
 		length = MAXPW -1;
 
 	for (int entryPos = 0; entryPos < state.entryCount; ++entryPos)
-		if (strlen(entries[entryPos].pw) < length)
+		if (strlen(entries[entryPos].pw) < (size_t)length)
 			showEntry(entryPos);
 }
