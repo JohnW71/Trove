@@ -527,6 +527,14 @@ LRESULT CALLBACK addWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					}
 				}
 
+				// test for line breaks in Misc
+				size_t miscLen = strlen(misc);
+				for (size_t i = 0; i < miscLen; ++i)
+				{
+					if (misc[i] == '\r' || misc[i] == '\n')
+						misc[i] = ' ';
+				}
+
 				// avoid any completely blank fields
 				if (strlen(id) == 0) strcpy(id, " ");
 				if (strlen(pw) == 0) strcpy(pw, " ");
@@ -845,6 +853,14 @@ LRESULT CALLBACK editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						SetFocus(ePw);
 						return DefWindowProc(hwnd, msg, wParam, lParam);
 					}
+				}
+
+				// test for line breaks in Misc
+				size_t miscLen = strlen(misc);
+				for (size_t i = 0; i < miscLen; ++i)
+				{
+					if (misc[i] == '\r' || misc[i] == '\n')
+						misc[i] = ' ';
 				}
 
 				// avoid any completely blank fields
