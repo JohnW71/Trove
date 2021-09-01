@@ -803,6 +803,7 @@ void getDBpassword(char *password)
 #endif
 }
 
+//TODO handle Backspace key
 #ifdef _WIN32
 static void getPasswordWindows(char *password)
 {
@@ -1110,7 +1111,7 @@ static void readMisc(char *text, int len)
 		if ((c == '\n' || c == '\r') && pos == 0)
 		{
 			c = (char)fgetc(upmFile);
-			if ((c == '\n' || c == '\r') && pos == 0)
+			if (c == '\n' || c == '\r')
 			{
 				if (count < len)
 				{
