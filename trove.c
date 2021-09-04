@@ -4,10 +4,10 @@
 #include "shared.h"
 
 #ifdef _WIN32
-	#include <windows.h>
-	#include <conio.h>
+#include <windows.h>
+#include <conio.h>
 #else
-	#include <termios.h>
+#include <termios.h>
 #endif
 
 static void add(void);
@@ -18,6 +18,8 @@ static void showEntry(int);
 static void clipboard(void);
 static void updateSettings(void);
 static void handleParameters(char *);
+static void passwordsWithSpaces(void);
+static void reports(void);
 static void setPasswordSize(void);
 static void setMinSpecial(void);
 static void setMinNumeric(void);
@@ -60,7 +62,7 @@ int main(int argc, char *argv[])
 		puts("3 - Find");
 		puts("4 - Edit");
 		puts("5 - Delete");
-		puts("6 - Short passwords");
+		puts("6 - Reports");
 #ifdef _WIN32
 		puts("7 - Copy to clipboard");
 #endif
@@ -81,40 +83,39 @@ int main(int argc, char *argv[])
 
 		switch (choice)
 		{
-			case 1:
-				if (state.entryCount > 0)
-				{
-					sortEntries();
-					for (int i = 0; i < state.entryCount; ++i)
-						showEntry(i);
-				}
-				break;
-			case 2:
-				add();
-				break;
-			case 3:
-				if (state.entryCount > 0)
-					find();
-				break;
-			case 4:
-				if (state.entryCount > 0)
-					edit();
-				break;
-			case 5:
-				if (state.entryCount > 0)
-					delEntry();
-				break;
-			case 6:
-				if (state.entryCount > 0)
-					shortPasswords();
-				break;
-			case 7:
-				if (state.entryCount > 0)
-					clipboard();
-				break;
-			case 8:
-				updateSettings();
-				break;
+		case 1:
+			if (state.entryCount > 0)
+			{
+				sortEntries();
+				for (int i = 0; i < state.entryCount; ++i)
+					showEntry(i);
+			}
+			break;
+		case 2:
+			add();
+			break;
+		case 3:
+			if (state.entryCount > 0)
+				find();
+			break;
+		case 4:
+			if (state.entryCount > 0)
+				edit();
+			break;
+		case 5:
+			if (state.entryCount > 0)
+				delEntry();
+			break;
+		case 6:
+			reports();
+			break;
+		case 7:
+			if (state.entryCount > 0)
+				clipboard();
+			break;
+		case 8:
+			updateSettings();
+			break;
 		}
 	}
 
@@ -434,7 +435,7 @@ static void delEntry(void)
 	}
 
 	// recreate array without deleted row
-	struct Entry* newEntries = (struct Entry*)malloc(sizeof(struct Entry) * ((uint64_t)state.entryCount - 1));
+	struct Entry *newEntries = (struct Entry *)malloc(sizeof(struct Entry) * ((uint64_t)state.entryCount - 1));
 	if (!newEntries)
 	{
 		puts("Failed to allocate memory for new array during deletion");
@@ -442,7 +443,7 @@ static void delEntry(void)
 	}
 
 	for (int i = 0, j = 0; i < state.entryCount; ++i, ++j)
-		if (i != (choice-1))
+		if (i != (choice - 1))
 		{
 			strcpy(newEntries[j].title, entries[i].title);
 			strcpy(newEntries[j].id, entries[i].id);
@@ -559,7 +560,6 @@ static void updateSettings(void)
 		printf("6 - Set new random keygen ID (%s)\n", settings.iv);
 		printf("7 - Export database to text file\n");
 		printf("8 - Import from UPM\n");
-		printf("9 - List passwords below minimum length\n");
 		printf("0 - Back\n");
 		printf("\n-> ");
 
@@ -576,40 +576,32 @@ static void updateSettings(void)
 
 		switch (choice)
 		{
-			case 1:
-				setDBpassword();
-				break;
-			case 2:
-				setPasswordSize();
-				break;
-			case 3:
-				setMinSpecial();
-				break;
-			case 4:
-				setMinNumeric();
-				break;
-			case 5:
-				setMinUppercase();
-				break;
-			case 6:
-				setNewKeygen();
-				break;
-			case 7:
-				exportDB();
-				break;
-			case 8:
-				importFromUPM();
-				break;
-			case 9:
-				if (state.entryCount > 0)
-				{
-					sortEntries();
-					for (int i = 0; i < state.entryCount; ++i)
-						if (strlen(entries[i].pw) < (size_t)settings.passwordSize)
-							showEntry(i);
-				}
-			case 0:
-				return;
+		case 1:
+			setDBpassword();
+			break;
+		case 2:
+			setPasswordSize();
+			break;
+		case 3:
+			setMinSpecial();
+			break;
+		case 4:
+			setMinNumeric();
+			break;
+		case 5:
+			setMinUppercase();
+			break;
+		case 6:
+			setNewKeygen();
+			break;
+		case 7:
+			exportDB();
+			break;
+		case 8:
+			importFromUPM();
+			break;
+		case 0:
+			return;
 		}
 
 		puts("");
@@ -820,8 +812,7 @@ static void getPasswordWindows(char *password)
 			printf("*");
 			password[i] = c;
 		}
-	}
-	while (c != '\r' && i < DBPASSWORDSIZE);
+	} while (c != '\r' && i < DBPASSWORDSIZE);
 
 	password[i] = '\0';
 }
@@ -864,8 +855,7 @@ static void getPasswordLinux(char *password)
 			printf("*");
 			password[i] = c;
 		}
-	}
-	while (c != '\n' && i < DBPASSWORDSIZE);
+	} while (c != '\n' && i < DBPASSWORDSIZE);
 
 	password[i] = '\0';
 
@@ -905,9 +895,9 @@ static void handleParameters(char *parameter)
 static void showEntry(int position)
 {
 	printf("%2d: %s, %s, %s\n", position + 1,
-								entries[position].title,
-								entries[position].id,
-								entries[position].pw);
+		entries[position].title,
+		entries[position].id,
+		entries[position].pw);
 
 	if (strlen(entries[position].misc) > 0 && entries[position].misc[0] != ' ')
 		printf("\t%s\n", entries[position].misc);
@@ -937,11 +927,11 @@ static void importFromUPM()
 		clearArray(pw, MAXPW);
 		clearArray(misc, MAXMISC);
 
-		readUntilComma(title, MAXTITLE-1);
-		readUntilComma(id, MAXID-1);
-		readUntilComma(pw, MAXPW-1);
+		readUntilComma(title, MAXTITLE - 1);
+		readUntilComma(id, MAXID - 1);
+		readUntilComma(pw, MAXPW - 1);
 		readUntilComma(misc, 1); // URL field
-		readMisc(misc, MAXMISC-1);
+		readMisc(misc, MAXMISC - 1);
 
 		if (strlen(id) == 0) strcpy(id, " ");
 		if (strlen(pw) == 0) strcpy(pw, " ");
@@ -1001,40 +991,40 @@ static void readUntilComma(char *text, int len)
 
 		switch (c)
 		{
-			case '"':
-				if (charAhead == '"' && !inQuotes)
-				{
-					text[pos++] = c;
-					inQuotes = true;
-					break;
-				}
-
-				if (charAhead == ',')
-				{
-					inQuotes = false;
-					break;
-				}
-
-				if (charAhead == '"' && inQuotes)
-				{
-					if (text[pos - 1] != '"')
-						text[pos++] = c;
-					break;
-				}
-
-				break;
-			case ',':
-				if (inQuotes)
-					text[pos++] = c;
-				else
-				{
-					text[pos] = '\0';
-					return;
-				}
-				break;
-			default:
+		case '"':
+			if (charAhead == '"' && !inQuotes)
+			{
 				text[pos++] = c;
+				inQuotes = true;
 				break;
+			}
+
+			if (charAhead == ',')
+			{
+				inQuotes = false;
+				break;
+			}
+
+			if (charAhead == '"' && inQuotes)
+			{
+				if (text[pos - 1] != '"')
+					text[pos++] = c;
+				break;
+			}
+
+			break;
+		case ',':
+			if (inQuotes)
+				text[pos++] = c;
+			else
+			{
+				text[pos] = '\0';
+				return;
+			}
+			break;
+		default:
+			text[pos++] = c;
+			break;
 		}
 
 		c = charAhead;
@@ -1143,18 +1133,18 @@ static void readMisc(char *text, int len)
 		// multiline ending """\n
 		if (inQuotes && pos >= 4 &&
 			((buf[pos - 1] == '\r' &&
-			 buf[pos - 2] == '"' &&
-			 buf[pos - 3] == '"' &&
-			 buf[pos - 4] == '"')
-			||
-			(buf[pos - 1] == '"' &&
 				buf[pos - 2] == '"' &&
-				buf[pos - 3] == '"')))
+				buf[pos - 3] == '"' &&
+				buf[pos - 4] == '"')
+				||
+				(buf[pos - 1] == '"' &&
+					buf[pos - 2] == '"' &&
+					buf[pos - 3] == '"')))
 		{
 			if (copyBuffer(text, buf, pCount, pos, len))
 				return;
 
-			text[count-1] = '\0';
+			text[count - 1] = '\0';
 			break;
 		}
 
@@ -1174,7 +1164,7 @@ static void readMisc(char *text, int len)
 			if (copyBuffer(text, buf, pCount, pos, len))
 				return;
 
-			text[count-1] = '\0';
+			text[count - 1] = '\0';
 			break;
 		}
 
@@ -1184,11 +1174,63 @@ static void readMisc(char *text, int len)
 		if (count < len)
 			text[count++] = ' ';
 		else
-			text[count-1] = '\0';
+			text[count - 1] = '\0';
 	}
 }
 
-static void shortPasswords()
+static void reports(void)
+{
+	int choice = -1;
+
+	while (choice != 0)
+	{
+		puts("Reports");
+		puts("---------------");
+		puts("1 - List passwords below minimum length");
+		puts("2 - List passwords below specified length");
+		puts("3 - List passwords with spaces or pound sign");
+		puts("0 - Back");
+		printf("\n-> ");
+
+		char line[MAXLINE];
+		if (fgets(line, MAXLINE, stdin) == NULL)
+			continue;
+
+		if (line[1] != '\n' || (int)line[0] < 48 || (int)line[0] > 57)
+			continue;
+
+		choice = (int)line[0] - 48;
+		if (choice != 0)
+			puts("");
+
+		switch (choice)
+		{
+		case 1:
+			if (state.entryCount > 0)
+			{
+				sortEntries();
+				for (int i = 0; i < state.entryCount; ++i)
+					if (strlen(entries[i].pw) < (size_t)settings.passwordSize)
+						showEntry(i);
+			}
+			break;
+		case 2:
+			if (state.entryCount > 0)
+				shortPasswords();
+			break;
+		case 3:
+			if (state.entryCount > 0)
+				passwordsWithSpaces();
+			break;
+		case 0:
+			return;
+		}
+
+		puts("");
+	}
+}
+
+static void shortPasswords(void)
 {
 	char line[MAXLINE];
 
@@ -1215,9 +1257,24 @@ static void shortPasswords()
 
 	int length = atoi(line);
 	if (length >= MAXPW)
-		length = MAXPW -1;
+		length = MAXPW - 1;
 
 	for (int entryPos = 0; entryPos < state.entryCount; ++entryPos)
 		if (strlen(entries[entryPos].pw) < (size_t)length)
 			showEntry(entryPos);
+}
+
+static void passwordsWithSpaces(void)
+{
+	for (int entryPos = 0; entryPos < state.entryCount; ++entryPos)
+	{
+		size_t length = strlen(entries[entryPos].pw);
+
+		for (size_t i = 0; i < length; ++i)
+			if (entries[entryPos].pw[i] == ' ' || entries[entryPos].pw[i] == '#' || entries[entryPos].pw[i] == '£')
+			{
+				showEntry(entryPos);
+				break;
+			}
+	}
 }

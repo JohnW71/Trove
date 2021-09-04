@@ -12,7 +12,7 @@
 	#include <windows.h>
 #endif
 
-#define APP_VERSION "v1.71"
+#define APP_VERSION "v1.72"
 #define MAXTITLE 31
 #define MAXID 31
 #define MAXPW 21
